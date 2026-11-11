@@ -1,0 +1,52 @@
+#!/usr/bin/env python3
+
+import os
+import re
+import sys
+
+
+ЗДЕСЬ = os.path.dirname(os.path.abspath(__file__))
+КОРЕНЬ = os.path.dirname(ЗДЕСЬ)
+sys.path.insert(0, КОРЕНЬ)
+
+if not getattr(sys, "_лексика_загрузка", False):
+    _загрузка = os.path.join(КОРЕНЬ, "лексика", "загрузка.lek")
+    with open(_загрузка, encoding="utf-8") as _файл:
+        exec(compile(_файл.read(), _загрузка, "exec"),
+             {"__name__": "лексика.загрузка", "__file__": _загрузка})
+
+
+from лексика import грамматика
+
+КУСОК = re.compile(r"```лексика\n(.*?)```", re.S)
+
+
+def main():
+    папка = os.path.join(КОРЕНЬ, "документы")
+    файлы = [os.path.join(КОРЕНЬ, "читай.lek")]
+    файлы += [os.path.join(папка, имя) for имя in sorted(os.listdir(папка))
+              if имя.endswith(".md")]
+    файлы += [os.path.join(КОРЕНЬ, "README.md")]
+
+    всего, ошибок = 0, 0
+    for путь in файлы:
+        if not os.path.isfile(путь):
+            continue
+        with open(путь, encoding="utf-8") as файл:
+            текст = файл.read()
+        куски = КУСКИ = КУСОК.findall(текст) if путь.endswith(".md") else [текст]
+        for номер, кусок in enumerate(КУСКИ, 1):
+            if "..." in кусок:
+                continue
+            всего += 1
+            try:
+                грамматика.разобрать(кусок, f"{os.path.basename(путь)}#{номер}")
+            except Exception as ошибка:
+                ошибок += 1
+                print(f"  ОШИБКА  {os.path.basename(путь)} кусок {номер}: {ошибка}")
+    print(f"проверено кусков: {всего}, ошибок: {ошибок}")
+    return 0 if ошибок == 0 else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

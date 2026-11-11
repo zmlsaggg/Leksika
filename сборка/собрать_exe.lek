@@ -1,0 +1,360 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+import shutil
+import struct
+import subprocess
+import sys
+import urllib.request
+import zipfile
+import zlib
+
+ЗДЕСЬ = os.path.dirname(os.path.abspath(__file__))
+КОРЕНЬ = os.path.dirname(ЗДЕСЬ)
+ГРУЗ_ПАПКА = os.path.join(ЗДЕСЬ, "груз")
+ВЫХОД = os.path.join(ЗДЕСЬ, "Лексус-установщик.exe")
+ИСХОДНИК = os.path.join(ЗДЕСЬ, "установщик.c")
+
+MAGIC_TABLE = b"LEKSUS01"
+MAGIC_TRAILER = b"LEKSUSZZ"
+
+ПИТОН_ССЫЛКА = "https://www.python.org/ftp/python/3.12.7/python-3.12.7-embed-amd64.zip"
+ПИТОН_ФАЙЛ = os.path.join(ЗДЕСЬ, "python-embed-amd64.zip")
+
+ЧТО_БРАТЬ = [
+    ("лексус.lek", "лексус.lek"),
+    ("читай.lek", "читай.lek"),
+    ("README.md", "README.md"),
+    ("лексика", "лексика"),
+    ("примеры", "примеры"),
+    ("словари", "словари"),
+    ("документы", "документы"),
+    ("значки", "значки"),
+    ("ядро", "ядро"),
+]
+
+
+def собрать_груз():
+    if os.path.isdir(ГРУЗ_ПАПКА):
+        shutil.rmtree(ГРУЗ_ПАПКА)
+    os.makedirs(ГРУЗ_ПАПКА)
+
+    всего = 0
+    for источник, цель in ЧТО_БРАТЬ:
+        полный = os.path.join(КОРЕНЬ, источник)
+        if not os.path.exists(полный):
+            print(f"  пропущено (нет файла): {источник}")
+            continue
+        куда = os.path.join(ГРУЗ_ПАПКА, цель)
+        if os.path.isdir(полный):
+            shutil.copytree(полный, куда,
+                            ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+        else:
+            shutil.copy2(полный, куда)
+        всего += 1
+    print(f"  частей движка: {всего}")
+    return всего
+
+
+def скачать_питон():
+    папка = os.path.join(ГРУЗ_ПАПКА, "питон")
+    if os.path.isdir(папка):
+        shutil.rmtree(папка)
+    if not os.path.isfile(ПИТОН_ФАЙЛ):
+        print("  качаю встроенный python для Windows (≈ 11 МБ)...")
+        try:
+            urllib.request.urlretrieve(ПИТОН_ССЫЛКА, ПИТОН_ФАЙЛ)
+        except Exception as ошибка:
+            print(f"  не удалось скачать python: {ошибка}")
+            print("  установщик соберётся без него и возьмёт системный python")
+            return False
+    os.makedirs(папка)
+    with zipfile.ZipFile(ПИТОН_ФАЙЛ) as архив:
+        архив.extractall(папка)
+    файлов = sum(len(имена) for _, _, имена in os.walk(папка))
+    print(f"  встроенный python: {файлов} файлов")
+    return True
+
+
+def файлы_груза():
+    итог = []
+    for корень, папки, имена in os.walk(ГРУЗ_ПАПКА):
+        папки[:] = sorted(п for п in папки if п != "__pycache__")
+        for имя in sorted(имена):
+            if имя.endswith(".pyc"):
+                continue
+            полный = os.path.join(корень, имя)
+            внутри = os.path.relpath(полный, ГРУЗ_ПАПКА).replace(os.sep, "/")
+            итог.append((внутри, полный))
+    return итог
+
+
+def упаковать(файлы, цель):
+    таблица_размер = 8 + 4 + sum(2 + len(имя.encode("utf-8")) + 16 for имя, _ in файлы)
+    смещение_данных = таблица_размер
+    куски = []
+    with open(цель, "wb") as груз:
+        груз.write(MAGIC_TABLE)
+        груз.write(struct.pack("<I", len(файлы)))
+        for имя, полный in файлы:
+            имя_б = имя.encode("utf-8")
+            размер = os.path.getsize(полный)
+            груз.write(struct.pack("<H", len(имя_б)))
+            груз.write(имя_б)
+            груз.write(struct.pack("<Q", размер))
+            груз.write(struct.pack("<Q", смещение_данных))
+            смещение_данных += размер
+            куски.append((полный, размер))
+        for полный, размер in куски:
+            with open(полный, "rb") as ф:
+                осталось = размер
+                while осталось:
+                    кусок = ф.read(min(осталось, 1 << 20))
+                    if not кусок:
+                        break
+                    груз.write(кусок)
+                    осталось -= len(кусок)
+    return os.path.getsize(цель)
+
+
+def _png_уменьшить_до_256(данные):
+    """Уменьшает обычный RGB/RGBA PNG до размера, допустимого для ICO."""
+    if данные[:8] != bytes((137, 80, 78, 71, 13, 10, 26, 10)):
+        return None
+    место = 8
+    куски = []
+    заголовок = None
+    while место + 12 <= len(данные):
+        длина = struct.unpack(">I", данные[место:место + 4])[0]
+        вид = данные[место + 4:место + 8]
+        содержимое = данные[место + 8:место + 8 + длина]
+        место += длина + 12
+        if вид == b"IHDR":
+            заголовок = содержимое
+        elif вид == b"IDAT":
+            куски.append(содержимое)
+        elif вид == b"IEND":
+            break
+    if заголовок is None:
+        return None
+    ширина, высота, глубина, цвет, сжатие, фильтр, чересстрочность = struct.unpack(">IIBBBBB", заголовок)
+    if ширина <= 256 and высота <= 256:
+        return данные
+    if глубина != 8 or цвет not in (2, 6) or чересстрочность != 0:
+        print("  значок пропущен: формат PNG не поддерживается для встроенного уменьшения")
+        return None
+    bpp = 3 if цвет == 2 else 4
+    строка_байт = ширина * bpp
+    распаковано = zlib.decompress(b"".join(куски))
+    строки = []
+    смещение = 0
+    предыдущая = bytearray(строка_байт)
+
+    def паэт(a, b, c):
+        p = a + b - c
+        pa, pb, pc = abs(p - a), abs(p - b), abs(p - c)
+        return a if pa <= pb and pa <= pc else b if pb <= pc else c
+
+    for _ in range(высота):
+        вид_фильтра = распаковано[смещение]
+        смещение += 1
+        исходная = распаковано[смещение:смещение + строка_байт]
+        смещение += строка_байт
+        текущая = bytearray(строка_байт)
+        for i, значение in enumerate(исходная):
+            слева = текущая[i - bpp] if i >= bpp else 0
+            сверху = предыдущая[i]
+            верх_слева = предыдущая[i - bpp] if i >= bpp else 0
+            if вид_фильтра == 0:
+                предсказание = 0
+            elif вид_фильтра == 1:
+                предсказание = слева
+            elif вид_фильтра == 2:
+                предсказание = сверху
+            elif вид_фильтра == 3:
+                предсказание = (слева + сверху) // 2
+            elif вид_фильтра == 4:
+                предсказание = паэт(слева, сверху, верх_слева)
+            else:
+                return None
+            текущая[i] = (значение + предсказание) & 255
+        строки.append(текущая)
+        предыдущая = текущая
+
+    # Выборка ближайшего пикселя: детерминировано, без графических библиотек.
+    новая_ширина = min(256, ширина)
+    новая_высота = min(256, высота)
+    выход = bytearray()
+    for y in range(новая_высота):
+        исходная_y = min(высота - 1, y * высота // новая_высота)
+        выход.append(0)
+        строка = строки[исходная_y]
+        for x in range(новая_ширина):
+            исходная_x = min(ширина - 1, x * ширина // новая_ширина)
+            начало = исходная_x * bpp
+            выход.extend(строка[начало:начало + bpp])
+
+    def блок(имя, содержимое):
+        return (struct.pack(">I", len(содержимое)) + имя + содержимое +
+                struct.pack(">I", zlib.crc32(имя + содержимое) & 0xFFFFFFFF))
+
+    ihdr = struct.pack(">IIBBBBB", новая_ширина, новая_высота, 8, цвет, 0, 0, 0)
+    return (bytes((137, 80, 78, 71, 13, 10, 26, 10)) +
+            блок(b"IHDR", ihdr) + блок(b"IDAT", zlib.compress(bytes(выход), 9)) +
+            блок(b"IEND", b""))
+
+
+def собрать_значок():
+    """Собирает корректный ICO из текущего PNG-знака без сторонних библиотек."""
+    png = os.path.join(КОРЕНЬ, "значки", "знак.png")
+    ico = os.path.join(ЗДЕСЬ, "значок.ico")
+    описание = os.path.join(ЗДЕСЬ, "значок.rc")
+    windres = shutil.which("x86_64-w64-mingw32-windres") or (shutil.which("windres") if os.name == "nt" else None)
+    if not windres or not os.path.isfile(png):
+        print("  значок пропущен: нет windres или значки/знак.png")
+        return None
+    with open(png, "rb") as файл:
+        исходное = файл.read()
+    изображение = _png_уменьшить_до_256(исходное)
+    if изображение is None:
+        print("  значок пропущен: не удалось подготовить PNG для ICO")
+        return None
+    ширина, высота = struct.unpack(">II", изображение[16:24])
+    ширина_ico = 0 if ширина == 256 else ширина
+    высота_ico = 0 if высота == 256 else высота
+    заголовок = struct.pack("<HHH", 0, 1, 1)
+    запись = struct.pack("<BBBBHHII", ширина_ico, высота_ico, 0, 0, 1, 32,
+                         len(изображение), 22)
+    with open(ico, "wb") as файл:
+        файл.write(заголовок + запись + изображение)
+    with open(описание, "w", encoding="utf-8") as файл:
+        файл.write('1 ICON "значок.ico"\n')
+    вывод = os.path.join(ЗДЕСЬ, "значок.obj")
+    итог = subprocess.run([windres, "значок.rc", "-O", "coff", "-o", вывод],
+                          capture_output=True, text=True, cwd=ЗДЕСЬ)
+    if итог.returncode != 0:
+        print("  значок не собрался: " + итог.stderr.strip(), file=sys.stderr)
+        return None
+    return вывод
+
+def собрать_exe():
+    компилятор = shutil.which("x86_64-w64-mingw32-gcc") or (shutil.which("gcc") if os.name == "nt" else None)
+    if not компилятор:
+        print("нужен MinGW-w64: в Linux установите mingw-w64; в Windows используйте терминал MSYS2 UCRT64", file=sys.stderr)
+        return None
+    вывод = os.path.join(ЗДЕСЬ, "установщик.exe")
+    значок = собрать_значок()
+    итог = subprocess.run(
+        [компилятор, "-std=c11", "-O2", "-s", "-mwindows", "-o", вывод, ИСХОДНИК] + ([значок] if значок else []) +
+        ["-lole32", "-luuid", "-lshell32", "-luser32", "-ladvapi32", "-lcomctl32", "-lgdi32"],
+        capture_output=True, text=True,
+    )
+    if итог.returncode != 0:
+        print(итог.stderr, file=sys.stderr)
+        return None
+    return вывод
+
+
+def склеить(установщик, груз_файл, выход):
+    размер_установщика = os.path.getsize(установщик)
+    смещение_груза = размер_установщика
+    with open(выход, "wb") as выходной:
+        with open(установщик, "rb") as ф:
+            shutil.copyfileobj(ф, выходной)
+        with open(груз_файл, "rb") as ф:
+            shutil.copyfileobj(ф, выходной)
+        выходной.write(MAGIC_TRAILER)
+        выходной.write(struct.pack("<Q", смещение_груза))
+        выходной.write(struct.pack("<Q", os.path.getsize(груз_файл)))
+    return os.path.getsize(выход)
+
+
+def разобрать_оглавление(данные, смещение, размер):
+    кусок = данные[смещение:смещение + размер]
+    assert кусок[:8] == MAGIC_TABLE, "нет оглавления"
+    count = struct.unpack("<I", кусок[8:12])[0]
+    позиция = 12
+    записи = []
+    for _ in range(count):
+        длина = struct.unpack("<H", кусок[позиция:позиция + 2])[0]
+        позиция += 2
+        имя = кусок[позиция:позиция + длина].decode("utf-8")
+        позиция += длина
+        размер_файла, отступ = struct.unpack("<QQ", кусок[позиция:позиция + 16])
+        позиция += 16
+        записи.append((имя, размер_файла, отступ))
+    return записи
+
+
+def проверить_груз(путь):
+    with open(путь, "rb") as ф:
+        данные = ф.read()
+    if данные[-24:-16] == MAGIC_TRAILER:
+        смещение, размер = struct.unpack("<QQ", данные[-16:])
+    else:
+        смещение, размер = 0, len(данные)
+    return разобрать_оглавление(данные, смещение, размер)
+
+
+def собрать_нативное_ядро():
+    """Собирает первый нативный модуль, не требующий Python при запуске."""
+    компилятор = shutil.which("x86_64-w64-mingw32-gcc") or (shutil.which("gcc") if os.name == "nt" else None)
+    исходник = os.path.join(КОРЕНЬ, "ядро", "лексус.c")
+    if not компилятор or not os.path.isfile(исходник):
+        print("  нативное ядро: пропуск (нужен mingw-w64)")
+        return False
+    вывод = os.path.join(ГРУЗ_ПАПКА, "лексус-ядро.exe")
+    ресурс = собрать_значок()
+    команда = [компилятор, "-std=c11", "-O2", "-s", "-Wall", "-Wextra",
+               "-o", вывод, исходник]
+    if ресурс:
+        команда.append(ресурс)
+    итог = subprocess.run(команда, capture_output=True, text=True)
+    if итог.returncode != 0:
+        print("  нативное ядро не собралось: " + итог.stderr.strip(), file=sys.stderr)
+        return False
+    print("  нативное ядро: лексус-ядро.exe")
+    return True
+
+def main():
+    разборщик = argparse.ArgumentParser(prog="собрать_exe")
+    разборщик.add_argument("--без-питона", action="store_true")
+    разборщик.add_argument("--без-сборки", action="store_true")
+    аргументы = разборщик.parse_args()
+
+    print("сборка установщика Лексус\n")
+    собрать_груз()
+    собрать_нативное_ядро()
+    if not аргументы.без_питона:
+        if not скачать_питон():
+            print("сборка остановлена: встроенная среда Python обязательна для автономного установщика", file=sys.stderr)
+            return 3
+
+    файлы = файлы_груза()
+    груз_файл = os.path.join(ЗДЕСЬ, "груз.пакет")
+    размер = упаковать(файлы, груз_файл)
+    print(f"  груз: {len(файлы)} файлов, {размер / 1048576:.1f} МБ")
+
+    записи = проверить_груз(груз_файл)
+    print(f"  проверка груза: оглавление в порядке, записей {len(записи)}")
+
+    if аргументы.без_сборки:
+        print("  сборка exe пропущена")
+        return 0
+
+    установщик = собрать_exe()
+    if not установщик:
+        print("установщик не собран", file=sys.stderr)
+        return 2
+    print(f"  сам установщик: {os.path.getsize(установщик) / 1024:.0f} КБ")
+
+    размер_выхода = склеить(установщик, груз_файл, ВЫХОД)
+    print(f"\nготово: {ВЫХОД}")
+    print(f"  весь файл: {размер_выхода / 1048576:.1f} МБ")
+    print("  это настоящий PE-файл для Windows, внутри и установщик, и груз")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

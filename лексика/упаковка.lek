@@ -1,0 +1,122 @@
+import os
+import sys
+
+ЗНАК = b"LEKSUSPK"
+ХВОСТ = b"LEKSUSPZ"
+МАСКА = 0xFFFFFFFFFFFFFFFF
+
+
+def отпечаток(данные):
+    хеш = 0xCBF29CE484222325
+    for байт in данные:
+        хеш = ((хеш ^ байт) * 0x100000001B3) & МАСКА
+    return "%016x" % хеш
+
+
+def отпечаток_файла(путь):
+    with open(путь, "rb") as файл:
+        return отпечаток(файл.read())
+
+
+def упаковать(записи, цель):
+    данные = []
+    for имя, содержимое in записи:
+        if isinstance(содержимое, bytes):
+            готово = содержимое
+        elif isinstance(содержимое, str) and os.path.isfile(содержимое):
+            with open(содержимое, "rb") as файл:
+                готово = файл.read()
+        elif isinstance(содержимое, str):
+            готово = содержимое.encode("utf-8")
+        else:
+            with open(содержимое, "rb") as файл:
+                готово = файл.read()
+        данные.append((имя, готово))
+
+    таблица = 8 + 4 + sum(2 + len(имя.encode("utf-8")) + 16 for имя, _ in данные)
+    смещение = таблица
+    with open(цель, "wb") as файл:
+        файл.write(ЗНАК)
+        файл.write(len(данные).to_bytes(4, "little"))
+        for имя, содержимое in данные:
+            имя_б = имя.encode("utf-8")
+            файл.write(len(имя_б).to_bytes(2, "little"))
+            файл.write(имя_б)
+            файл.write(len(содержимое).to_bytes(8, "little"))
+            файл.write(смещение.to_bytes(8, "little"))
+            смещение += len(содержимое)
+        for _, содержимое in данные:
+            файл.write(содержимое)
+    return os.path.getsize(цель)
+
+
+def разобрать(путь):
+    with open(путь, "rb") as файл:
+        всё = файл.read()
+    return разобрать_данные(всё, имя_файла=путь)
+
+
+def разобрать_данные(всё, имя_файла=""):
+    if not всё.startswith(ЗНАК):
+        raise ValueError(f"«{имя_файла}» не похож на наш упакованный файл")
+    число = int.from_bytes(всё[8:12], "little")
+    позиция = 12
+    записи = []
+    for _ in range(число):
+        длина = int.from_bytes(всё[позиция:позиция + 2], "little")
+        позиция += 2
+        имя = всё[позиция:позиция + длина].decode("utf-8")
+        позиция += длина
+        размер = int.from_bytes(всё[позиция:позиция + 8], "little")
+        смещение = int.from_bytes(всё[позиция + 8:позиция + 16], "little")
+        позиция += 16
+        записи.append((имя, всё[смещение:смещение + размер]))
+    return записи
+
+
+def имена(путь):
+    return [имя for имя, _ in разобрать(путь)]
+
+
+def прочитать(путь, имя):
+    for запись, содержимое in разобрать(путь):
+        if запись == имя:
+            return содержимое
+    raise KeyError(имя)
+
+
+def распаковать(путь, куда):
+    for имя, содержимое in разобрать(путь):
+        цель = os.path.join(куда, имя.replace("/", os.sep))
+        папка = os.path.dirname(цель)
+        if папка:
+            os.makedirs(папка, exist_ok=True)
+        with open(цель, "wb") as файл:
+            файл.write(содержимое)
+    return путь
+
+
+def удалить_дерево(путь):
+    if not os.path.isdir(путь):
+        return
+    for запись in os.listdir(путь):
+        полный = os.path.join(путь, запись)
+        if os.path.isdir(полный) and not os.path.islink(полный):
+            удалить_дерево(полный)
+        else:
+            os.remove(полный)
+    os.rmdir(путь)
+
+
+def где(программа):
+    for папка in os.environ.get("PATH", "").split(os.pathsep):
+        if not папка:
+            continue
+        полный = os.path.join(папка, программа)
+        if os.path.isfile(полный) and os.access(полный, os.X_OK):
+            return полный
+    return None
+
+
+def сказать(строка):
+    sys.stdout.write(строка + "\n")

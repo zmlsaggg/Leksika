@@ -1,0 +1,187 @@
+import os
+
+РАЗДЕЛИТЕЛЬ = os.sep
+
+
+def есть(путь):
+    return os.path.exists(путь)
+
+
+def файл(путь):
+    return os.path.isfile(путь)
+
+
+def каталог(путь):
+    return os.path.isdir(путь)
+
+
+def размер(путь):
+    return os.path.getsize(путь)
+
+
+def список(путь):
+    try:
+        return sorted(os.listdir(путь))
+    except OSError:
+        return []
+
+
+def прочитать(путь):
+    with open(путь, encoding="utf-8") as открытый:
+        return открытый.read()
+
+
+def прочитать_байты(путь):
+    with open(путь, "rb") as открытый:
+        return открытый.read()
+
+
+def записать(путь, текст):
+    папка_пути = папка(путь)
+    if папка_пути:
+        создать(папка_пути)
+    with open(путь, "w", encoding="utf-8") as открытый:
+        открытый.write(текст)
+    return путь
+
+
+def записать_байты(путь, данные):
+    папка_пути = папка(путь)
+    if папка_пути:
+        создать(папка_пути)
+    with open(путь, "wb") as открытый:
+        открытый.write(данные)
+    return путь
+
+
+def дописать(путь, текст):
+    with open(путь, "a", encoding="utf-8") as открытый:
+        открытый.write(текст)
+    return путь
+
+
+def создать(путь):
+    if путь:
+        os.makedirs(путь, exist_ok=True)
+    return путь
+
+
+def удалить(путь):
+    if файл(путь) or os.path.islink(путь):
+        os.remove(путь)
+    return путь
+
+
+def удалить_дерево(путь):
+    if каталог(путь):
+        for запись in список(путь):
+            полный = соединить(путь, запись)
+            if каталог(полный) and not os.path.islink(полный):
+                удалить_дерево(полный)
+            else:
+                удалить(полный)
+        os.rmdir(путь)
+    elif файл(путь):
+        удалить(путь)
+    return путь
+
+
+def переименовать(откуда, куда):
+    os.replace(откуда, куда)
+    return куда
+
+
+def копировать(откуда, куда):
+    папка_пути = папка(куда)
+    if папка_пути:
+        создать(папка_пути)
+    with open(откуда, "rb") as источник, open(куда, "wb") as приёмник:
+        while True:
+            кусок = источник.read(1 << 20)
+            if not кусок:
+                break
+            приёмник.write(кусок)
+    return куда
+
+
+def копировать_дерево(откуда, куда):
+    создать(куда)
+    for запись in список(откуда):
+        полный = соединить(откуда, запись)
+        цель = соединить(куда, запись)
+        if каталог(полный):
+            копировать_дерево(полный, цель)
+        else:
+            копировать(полный, цель)
+    return куда
+
+
+def соединить(*куски):
+    return os.path.join(*куски)
+
+
+def имя(путь):
+    return os.path.basename(путь)
+
+
+def папка(путь):
+    return os.path.dirname(путь)
+
+
+def конец(путь):
+    основа, точка, концовка = имя(путь).rpartition(".")
+    return концовка.lower() if точка and основа else ""
+
+
+def основа(путь):
+    return os.path.splitext(имя(путь))[0]
+
+
+def сменить_конец(путь, концовка):
+    папка_пути = папка(путь)
+    новое = основа(путь) + "." + концовка
+    return соединить(папка_пути, новое) if папка_пути else новое
+
+
+def полный(путь):
+    return os.path.abspath(путь)
+
+
+def дом():
+    return os.path.expanduser("~")
+
+
+def здесь():
+    return os.getcwd()
+
+
+def перейти(путь):
+    os.chdir(путь)
+    return os.getcwd()
+
+
+def родной(путь):
+    return путь.replace("/", РАЗДЕЛИТЕЛЬ).replace("\\", РАЗДЕЛИТЕЛЬ)
+
+
+def где(программа):
+    for папка_пути in os.environ.get("PATH", "").split(os.pathsep):
+        if not папка_пути:
+            continue
+        полный_путь = соединить(папка_пути, программа)
+        if файл(полный_путь) and os.access(полный_путь, os.X_OK):
+            return полный_путь
+    return None
+
+
+def оболочка(команда, ждать=True):
+    import subprocess
+    if не_строки(команда):
+        итог = subprocess.run(list(команда), capture_output=True, text=True)
+    else:
+        итог = subprocess.run(команда, shell=True, capture_output=True, text=True)
+    return итог.returncode, итог.stdout, итог.stderr
+
+
+def не_строки(значение):
+    return isinstance(значение, (list, tuple))

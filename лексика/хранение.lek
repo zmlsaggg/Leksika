@@ -1,0 +1,192 @@
+ПРАВДА = "истина"
+ЛОЖЬ = "ложь"
+НИЧТО = "ничто"
+
+ОТСТУП = "  "
+
+
+def записать(значение, уровень=0):
+    if значение is True:
+        return ПРАВДА
+    if значение is False:
+        return ЛОЖЬ
+    if значение is None:
+        return НИЧТО
+    if isinstance(значение, str):
+        return записать_строку(значение)
+    if isinstance(значение, (int, float)):
+        return записать_число(значение)
+    if isinstance(значение, (list, tuple)):
+        if not значение:
+            return "[]"
+        шаг = ОТСТУП * (уровень + 1)
+        внутри = (",\n").join(шаг + записать(элемент, уровень + 1) for элемент in значение)
+        return "[\n" + внутри + "\n" + ОТСТУП * уровень + "]"
+    if isinstance(значение, dict):
+        if not значение:
+            return "{}"
+        шаг = ОТСТУП * (уровень + 1)
+        внутри = (",\n").join(
+            шаг + записать_строку(str(ключ)) + ": " + записать(значение[ключ], уровень + 1)
+            for ключ in значение
+        )
+        return "{\n" + внутри + "\n" + ОТСТУП * уровень + "}"
+    return записать_строку(str(значение))
+
+
+def записать_строку(строка):
+    куски = ['"']
+    for знак in строка:
+        if знак == '"':
+            куски.append('\\"')
+        elif знак == "\\":
+            куски.append("\\\\")
+        elif знак == "\n":
+            куски.append("\\n")
+        elif знак == "\t":
+            куски.append("\\t")
+        else:
+            куски.append(знак)
+    куски.append('"')
+    return "".join(куски)
+
+
+def записать_число(число):
+    if isinstance(число, int):
+        return str(число)
+    if число != число or число in (float("inf"), float("-inf")):
+        return "ничто"
+    запись = repr(число)
+    if запись.endswith(".0"):
+        запись = запись[:-2]
+    return запись
+
+
+class Разбор:
+    def __init__(self, текст):
+        self.текст = текст or ""
+        self.место = 0
+
+    def ошибиться(self, что):
+        строка = self.текст.count("\n", 0, self.место) + 1
+        raise ValueError(f"не разобрать {что}, строка {строка}")
+
+    def пропустить(self):
+        while self.место < len(self.текст) and self.текст[self.место] in " \t\r\n":
+            self.место += 1
+
+    def смотрю(self):
+        self.пропустить()
+        if self.место >= len(self.текст):
+            return ""
+        return self.текст[self.место]
+
+    def значение(self):
+        знак = self.смотрю()
+        if знак == "{":
+            return self.словарь()
+        if знак == "[":
+            return self.список()
+        if знак == '"':
+            return self.строка()
+        if not знак:
+            self.ошибиться("значение")
+        return self.простое()
+
+    def словарь(self):
+        self.место += 1
+        итог = {}
+        while True:
+            знак = self.смотрю()
+            if знак == "}":
+                self.место += 1
+                return итог
+            if знак != '"':
+                self.ошибиться("имя поля")
+            ключ = self.строка()
+            if self.смотрю() != ":":
+                self.ошибиться("двоеточие после имени поля")
+            self.место += 1
+            итог[ключ] = self.значение()
+            знак = self.смотрю()
+            if знак == ",":
+                self.место += 1
+            elif знак != "}":
+                self.ошибиться("конец словаря")
+
+    def список(self):
+        self.место += 1
+        итог = []
+        while True:
+            знак = self.смотрю()
+            if знак == "]":
+                self.место += 1
+                return итог
+            итог.append(self.значение())
+            знак = self.смотрю()
+            if знак == ",":
+                self.место += 1
+            elif знак != "]":
+                self.ошибиться("конец списка")
+
+    def строка(self):
+        self.место += 1
+        куски = []
+        while self.место < len(self.текст):
+            знак = self.текст[self.место]
+            if знак == '"':
+                self.место += 1
+                return "".join(куски)
+            if знак != "\\":
+                куски.append(знак)
+                self.место += 1
+                continue
+            self.место += 1
+            далее = self.текст[self.место:self.место + 1]
+            if далее == "n":
+                куски.append("\n")
+            elif далее == "t":
+                куски.append("\t")
+            elif далее == "u":
+                код = self.текст[self.место + 1:self.место + 5]
+                куски.append(chr(int(код, 16)))
+                self.место += 4
+            else:
+                куски.append(далее)
+            self.место += 1
+        self.ошибиться("строка")
+
+    def простое(self):
+        начало = self.место
+        while self.место < len(self.текст) and self.текст[self.место] not in " \t\r\n,]}:[":
+            self.место += 1
+        слово = self.текст[начало:self.место]
+        if слово in (ПРАВДА, "true", "True"):
+            return True
+        if слово in (ЛОЖЬ, "false", "False"):
+            return False
+        if слово in (НИЧТО, "null", "None"):
+            return None
+        try:
+            if "." in слово or "e" in слово or "E" in слово:
+                return float(слово)
+            return int(слово)
+        except ValueError:
+            return слово
+
+
+def прочитать(текст):
+    разбор = Разбор(текст)
+    значение = разбор.значение()
+    return значение
+
+
+def прочитать_файл(путь):
+    with open(путь, encoding="utf-8") as файл:
+        return прочитать(файл.read())
+
+
+def записать_файл(путь, значение):
+    with open(путь, "w", encoding="utf-8") as файл:
+        файл.write(записать(значение) + "\n")
+    return путь

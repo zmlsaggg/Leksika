@@ -1,0 +1,30 @@
+name: Проверка нативного ядра
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "ядро/**"
+      - ".github/workflows/нативное-ядро.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "ядро/**"
+      - ".github/workflows/нативное-ядро.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  сборка-и-тесты:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Получить исходный код
+        uses: actions/checkout@v4
+      - name: Проверить версию компилятора
+        run: cc --version
+      - name: Собрать и проверить ядро
+        run: make -C ядро clean all test

@@ -1,0 +1,137 @@
+import os
+import sys
+
+КОНЦОВКИ = (".lek",)
+ЗНАК_ГОТОВНОСТИ = "_лексика_загрузка"
+
+
+class Часть:
+
+    def __init__(self, имя, файл, места=None):
+        self.__name__ = имя
+        self.__file__ = файл
+        self.__doc__ = None
+        self.__loader__ = self
+        self.__package__ = имя.rpartition(".")[0] or имя
+        self.__spec__ = None
+        self.__dict__["__builtins__"] = __builtins__
+        if места is not None:
+            self.__path__ = list(места)
+
+    def сказать(self, строка):
+        sys.stdout.write(строка + "\n")
+
+
+class Описание:
+
+    def __init__(self, имя, файл, места=None):
+        self.name = имя
+        self.origin = файл
+        self.loader = ЗагрузчикЧасти(имя, файл)
+        self.submodule_search_locations = list(места) if места else None
+        self.has_location = True
+        self.cached = None
+        self.parent = имя.rpartition(".")[0]
+        self._set_fileattr = True
+        self._initializing = False
+        self._uninitialized_submodules = []
+
+    def __getattr__(self, имя):
+        if имя.startswith("_"):
+            return [] if имя.endswith("submodules") else None
+        raise AttributeError(имя)
+
+
+class ЗагрузчикЧасти:
+
+    def __init__(self, имя, файл):
+        self.имя = имя
+        self.файл = файл
+
+    def create_module(self, описание):
+        return None
+
+    def exec_module(self, часть):
+        текст = прочитать(self.файл)
+        собирать = compile(текст, self.файл, "exec")
+        exec(собирать, часть.__dict__)
+
+    def is_package(self, имя):
+        основа = os.path.basename(self.файл)
+        return основа.startswith("__init__.")
+
+    def get_filename(self, имя=None):
+        return self.файл
+
+
+def прочитать(файл):
+    with open(файл, encoding="utf-8") as открытый:
+        return открытый.read()
+
+
+def _файлы(каталог, короткое):
+    for концовка in КОНЦОВКИ:
+        yield os.path.join(каталог, короткое + концовка), None
+    подкаталог = os.path.join(каталог, короткое)
+    if os.path.isdir(подкаталог):
+        for концовка in КОНЦОВКИ:
+            yield os.path.join(подкаталог, "__init__" + концовка), [подкаталог]
+
+
+def найти(имя, путь_пакета=None):
+    короткое = имя.rpartition(".")[2]
+    каталоги = путь_пакета if путь_пакета is not None else sys.path
+    for каталог in каталоги:
+        каталог = каталог or "."
+        for файл, места in _файлы(каталог, короткое):
+            if os.path.isfile(файл):
+                return файл, места
+    return None, None
+
+
+class Искатель:
+
+    def find_spec(self, имя, путь=None, цель=None):
+        короткое = имя.rpartition(".")[2]
+        if not короткое or короткое == "__main__":
+            return None
+        файл, места = найти(имя, путь)
+        if файл is None:
+            return None
+        return Описание(имя, файл, места)
+
+    def invalidate_caches(self):
+        return None
+
+
+def загрузить(файл, имя=None):
+    имя = имя or os.path.splitext(os.path.basename(файл))[0]
+    часть = Часть(имя, файл)
+    ЗагрузчикЧасти(имя, файл).exec_module(часть)
+    return часть
+
+
+def загрузить_каталог(каталог, имя):
+    главное, места = найти(имя, [каталог])
+    if главное is None:
+        raise ImportError("нет пакета «" + имя + "» в " + каталог)
+    часть = Часть(имя, главное, места or [каталог])
+    ЗагрузчикЧасти(имя, главное).exec_module(часть)
+    for запись in sorted(os.listdir(каталог)):
+        основа, концовка = os.path.splitext(запись)
+        if концовка not in КОНЦОВКИ or основа.startswith("__"):
+            continue
+        под = Часть(имя + "." + основа, os.path.join(каталог, запись))
+        ЗагрузчикЧасти(под.__name__, под.__file__).exec_module(под)
+        setattr(часть, основа, под)
+    return часть
+
+
+def установить():
+    if getattr(sys, ЗНАК_ГОТОВНОСТИ, False):
+        return
+    sys.meta_path.insert(0, Искатель())
+    setattr(sys, ЗНАК_ГОТОВНОСТИ, True)
+
+
+установить()

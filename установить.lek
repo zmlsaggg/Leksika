@@ -1,0 +1,182 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+import shutil
+import stat
+import subprocess
+import sys
+
+ЗДЕСЬ = os.path.dirname(os.path.abspath(__file__))
+ДОМ = os.path.expanduser("~")
+ПО_УМОЛЧАНИЮ_ПАПКА = os.path.join(ДОМ, ".лексус")
+ПО_УМОЛЧАНИЮ_КУДА = os.path.join(ДОМ, ".local", "bin")
+
+ЧТО_СТАВИМ = ["лексус.lek", "лексика", "примеры", "словари", "документы", "значки", "ядро", "читай.lek"]
+
+ЯРЛЫК = """#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import os
+import sys
+
+ПАПКА = {папка!r}
+sys.path.insert(0, ПАПКА)
+
+# Свой загрузчик частей движка: importlib не нужен.
+if not getattr(sys, "_лексика_загрузка", False):
+    _загрузка = os.path.join(ПАПКА, "лексика", "загрузка.lek")
+    with open(_загрузка, encoding="utf-8") as _файл:
+        exec(compile(_файл.read(), _загрузка, "exec"),
+             {{"__name__": "лексика.загрузка", "__file__": _загрузка}})
+
+import лексус
+
+if __name__ == "__main__":
+    sys.exit(лексус.main())
+"""
+
+
+def проверить_питон():
+    if sys.version_info < (3, 8):
+        print("нужен python3 версии 3.8 или новее", file=sys.stderr)
+        raise SystemExit(2)
+
+
+ЗНАЧОК = """[Desktop Entry]
+Type=Application
+Name=Лексика
+Name[ru]=Лексика
+GenericName=Язык программирования Лексика
+Comment=Русский язык программирования, движок Лексус
+Exec={ярлык} %U
+Icon={значок}
+Terminal=true
+Categories=Development;IDE;Education;
+Keywords=лексика;лексус;лек;язык программирования;russian;lek;
+"""
+
+
+def поставить_значок(папка, ярлык):
+    картинка = os.path.join(папка, "значки", "знак.png")
+    if not os.path.isfile(картинка):
+        return
+    дом = os.path.expanduser("~")
+    меню = os.path.join(дом, ".local", "share", "applications")
+    try:
+        os.makedirs(меню, exist_ok=True)
+        with open(os.path.join(меню, "лексика.desktop"), "w", encoding="utf-8") as файл:
+            файл.write(ЗНАЧОК.format(ярлык=ярлык, значок=картинка))
+        print("значок поставлен в меню приложений")
+    except OSError:
+        pass
+
+
+def поставить(папка, куда, ярлык=True):
+    проверить_питон()
+    папка = os.path.abspath(os.path.expanduser(папка))
+    куда = os.path.abspath(os.path.expanduser(куда))
+
+    уже_на_месте = os.path.abspath(ЗДЕСЬ) == папка
+    if not уже_на_месте:
+        os.makedirs(папка, exist_ok=True)
+        for имя in ЧТО_СТАВИМ:
+            источник = os.path.join(ЗДЕСЬ, имя)
+            if not os.path.exists(источник):
+                continue
+            цель = os.path.join(папка, имя)
+            if os.path.isdir(цель):
+                shutil.rmtree(цель)
+            elif os.path.isfile(цель):
+                os.remove(цель)
+            if os.path.isdir(источник):
+                shutil.copytree(источник, цель,
+                                ignore=shutil.ignore_patterns("__pycache__"))
+            else:
+                shutil.copy2(источник, цель)
+        print(f"лексус разложен в {папка}")
+    else:
+        print(f"лексус уже на месте: {папка}")
+
+    os.makedirs(os.path.join(папка, "библиотека"), exist_ok=True)
+
+    # Необязательный нативный слой: собирается только если C-компилятор уже есть.
+    # Основной интерпретатор пока остаётся Python — установка от компилятора не зависит.
+    исходник_ядра = os.path.join(папка, "ядро", "лексус.c")
+    компилятор = shutil.which("cc") or shutil.which("clang") or shutil.which("gcc")
+    if компилятор and os.path.isfile(исходник_ядра):
+        нативный = os.path.join(папка, "лексус-ядро")
+        сборка = subprocess.run(
+            [компилятор, "-std=c11", "-O2", "-Wall", "-Wextra",
+             "-o", нативный, исходник_ядра],
+            capture_output=True, text=True,
+        )
+        if сборка.returncode == 0:
+            os.chmod(нативный, 0o755)
+            print("нативная часть Лексуса собрана: " + нативный)
+        else:
+            print("нативная часть не собрана; Python-режим сохранён")
+
+    if ярлык:
+        os.makedirs(куда, exist_ok=True)
+        путь_ярлыка = os.path.join(куда, "лексус")
+        with open(путь_ярлыка, "w", encoding="utf-8") as файл:
+            файл.write(ЯРЛЫК.format(папка=папка))
+        режим = os.stat(путь_ярлыка).st_mode
+        os.chmod(путь_ярлыка, режим | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+        print(f"ярлык поставлен: {путь_ярлыка}")
+
+        поставить_значок(папка, путь_ярлыка)
+
+        if куда not in os.environ.get("PATH", "").split(os.pathsep):
+            print()
+            print("добавьте в свою оболочку одну строку:")
+            print(f'  export PATH="{куда}:$PATH"')
+            print()
+
+    пробный = os.path.join(папка, "примеры", "привет.lek")
+    if os.path.isfile(пробный):
+        try:
+            итог = subprocess.run(
+                [sys.executable, os.path.join(папка, "лексус.lek"), "проверить", пробный],
+                capture_output=True, text=True, timeout=60,
+            )
+            if итог.returncode == 0:
+                print("проверка пройдена: " + итог.stdout.strip())
+            else:
+                print("проверка не прошла:", file=sys.stderr)
+                print(итог.stderr.strip(), file=sys.stderr)
+        except OSError as ошибка:
+            print(f"проверку сделать не удалось: {ошибка}")
+
+    print()
+    print("готово. Начните так:")
+    print("  лексус запустить примеры/привет.lek")
+    print("  лексус справка")
+
+
+def снести(папка, куда):
+    ярлык = os.path.join(куда, "лексус")
+    if os.path.isfile(ярлык):
+        os.remove(ярлык)
+        print(f"ярлык снят: {ярлык}")
+    if os.path.isdir(папка):
+        shutil.rmtree(папка)
+        print(f"папка движка удалена: {папка}")
+
+
+def main():
+    разборщик = argparse.ArgumentParser(prog="установить", add_help=True)
+    разборщик.add_argument("--папка", default=ПО_УМОЛЧАНИЮ_ПАПКА)
+    разборщик.add_argument("--куда", default=ПО_УМОЛЧАНИЮ_КУДА)
+    разборщик.add_argument("--без-ярлыка", action="store_true")
+    разборщик.add_argument("--снести", action="store_true")
+    аргументы = разборщик.parse_args()
+    if аргументы.снести:
+        снести(os.path.expanduser(аргументы.папка), os.path.expanduser(аргументы.куда))
+    else:
+        поставить(аргументы.папка, аргументы.куда, not аргументы.без_ярлыка)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
