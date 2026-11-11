@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Онлайн-песочница Лексики — запуск кода в браузере</title>
+  <meta name="description" content="Пишите и запускайте программы на русском языке Лексика прямо в браузере. Без скачивания, установки, Python и сторонних библиотек. Необязательный ИИ-помощник с вашим API-ключом.">
+  <meta name="keywords" content="Лексика онлайн, онлайн редактор русского языка программирования, песочница Лексика, запуск кода .lek, Лексус, русский язык программирования">
+  <meta name="author" content="Проект Лексика">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta name="theme-color" content="#0d0f13">
+  <link rel="canonical" href="https://zmlsaggg.github.io/Leksika/playground.html">
+  <link rel="icon" href="значки/Лексика.ico" sizes="any">
+  <link rel="stylesheet" href="playground.css">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Лексика">
+  <meta property="og:locale" content="ru_RU">
+  <meta property="og:title" content="Онлайн-песочница Лексики">
+  <meta property="og:description" content="Пробуйте русский язык программирования Лексика прямо в браузере. Без установки и скачивания.">
+  <meta property="og:url" content="https://zmlsaggg.github.io/Leksika/playground.html">
+  <meta property="og:image" content="https://zmlsaggg.github.io/Leksika/значки/Лексика.png">
+  <meta property="og:image:alt" content="Знак русского языка программирования Лексика">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Онлайн-песочница Лексики">
+  <meta name="twitter:description" content="Редактор и запуск русских программ прямо в браузере — без скачивания.">
+  <meta name="twitter:image" content="https://zmlsaggg.github.io/Leksika/значки/Лексика.png">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Онлайн-песочница Лексики",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Любой современный браузер",
+    "inLanguage": "ru",
+    "url": "https://zmlsaggg.github.io/Leksika/playground.html",
+    "isAccessibleForFree": true,
+    "browserRequirements": "JavaScript включён",
+    "description": "Браузерная площадка для знакомства с русским языком программирования Лексика.",
+    "sameAs": "https://github.com/zmlsaggg/Leksika"
+  }
+  </script>
+</head>
+<body>
+  <div class="страница">
+    <nav class="навигация" aria-label="Навигация">
+      <a class="знак" href="./">ЛЕКСИКА · ЛЕКСУС</a>
+      <a class="назад" href="./">← На главную проекта</a>
+    </nav>
+
+    <header class="шапка">
+      <div class="метка">Браузерная среда · без установки</div>
+      <h1>Попробуйте Лексику</h1>
+      <p class="описание">
+        Напишите программу на русском языке и запустите её прямо здесь.
+        Код обрабатывается локально в браузере — для обычного запуска интернет не нужен.
+      </p>
+    </header>
+
+    <main>
+      <section class="карточка" aria-label="Редактор Лексики">
+        <div class="панель-редактора">
+          <div class="панель-верх">
+            <div class="переключатели">
+              <label for="пример">Пример</label>
+              <select id="пример" aria-label="Выбрать пример">
+                <option value="начало">Первый запуск</option>
+                <option value="условие">Условие</option>
+                <option value="цикл">Цикл</option>
+                <option value="правило">Свои правила</option>
+                <option value="список">Перечень</option>
+              </select>
+            </div>
+            <div class="действия">
+              <button class="кнопка главная" id="запустить" type="button">▶ Запустить</button>
+              <button class="кнопка" id="очистить" type="button">Очистить</button>
+            </div>
+          </div>
+
+          <label class="поле" for="код">
+            <span>Программа <code>.lek</code></span>
+            <textarea id="код" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Исходный код на Лексике"></textarea>
+          </label>
+          <p class="подсказка">Подсказка: Ctrl + Enter запускает программу. Отступ для нового блока — Tab.</p>
+        </div>
+
+        <div class="вывод-панель">
+          <div class="вывод-заголовок">
+            <strong>Результат выполнения</strong>
+            <span id="состояние" role="status" aria-live="polite">Готово к запуску</span>
+          </div>
+          <pre id="вывод" aria-live="polite">Нажмите «Запустить» — результат появится здесь.</pre>
+        </div>
+      </section>
+
+      <section class="безопасность">
+        <strong>Локальный запуск</strong>
+        <p>
+          Редактор и учебная машина работают в этой вкладке. Площадка не отправляет
+          исходный код на сервер проекта, не запускает команды операционной системы,
+          не читает файлы и не обращается к сети.
+        </p>
+      </section>
+
+      <details class="ограничения">
+        <summary>Что поддерживает эта первая браузерная версия</summary>
+        <ul>
+          <li>Переменные, числа, логика и речь с подстановкой значений.</li>
+          <li>Арифметика, сравнения, скобки и вызовы встроенных действий.</li>
+          <li>Условия, циклы, перебор перечней и собственные правила с возвратом.</li>
+          <li>Перечни в квадратных скобках и вызовы вида <code>сказать(значение)</code>.</li>
+        </ul>
+        <p>
+          Это облегчённая браузерная машина для знакомства с языком, а не полная
+          замена настольного Лексуса. Пока не поддерживаются файловая система,
+          подключение модулей, системные команды, вся морфология, словари и часть
+          старых падежных команд. Полный движок продолжает развиваться отдельно.
+        </p>
+      </details>
+
+      <section class="ии-блок" aria-label="Необязательный ИИ-помощник">
+        <div class="ии-шапка">
+          <div>
+            <strong>Помощник по коду</strong>
+            <p>Подключите выбранную модель по своему API-ключу. Функция выключена по умолчанию.</p>
+          </div>
+          <label class="ии-переключатель" for="ии-включить">
+            <input id="ии-включить" type="checkbox">
+            Включить ИИ
+          </label>
+        </div>
+
+        <div id="ии-панель" class="ии-панель" hidden>
+          <div class="ии-сетка">
+            <label class="поле" for="ии-режим">
+              <span>Формат API</span>
+              <select id="ии-режим">
+                <option value="openai">OpenAI-совместимый API</option>
+                <option value="anthropic">Anthropic Messages API</option>
+              </select>
+            </label>
+            <label class="поле" for="ии-модель">
+              <span>Название модели</span>
+              <input id="ии-модель" type="text" placeholder="Укажите ID модели" autocomplete="off" spellcheck="false">
+            </label>
+            <label class="поле широкое" for="ии-адрес">
+              <span>Адрес API</span>
+              <input id="ии-адрес" type="text" value="https://api.openai.com/v1/chat/completions" autocomplete="off" spellcheck="false">
+            </label>
+            <label class="поле широкое" for="ии-ключ">
+              <span>API-ключ</span>
+              <input id="ии-ключ" type="password" placeholder="Вставьте свой ключ" autocomplete="new-password" autocapitalize="off" spellcheck="false">
+            </label>
+            <label class="поле широкое" for="ии-запрос">
+              <span>Что сделать с кодом?</span>
+              <textarea id="ии-запрос" placeholder="Например: объясни программу, найди ошибку или предложи улучшение.">Проверь программу, объясни её работу и укажи возможные ошибки.</textarea>
+            </label>
+          </div>
+          <div class="ии-действия">
+            <button class="кнопка главная" id="ии-спросить" type="button">Отправить выбранной модели</button>
+            <span class="подсказка">Запрос отправляется только после нажатия этой кнопки.</span>
+          </div>
+          <pre id="ии-вывод" aria-live="polite">ИИ-помощник включён, но пока не отправляет запросы.</pre>
+          <p class="ии-предупреждение">
+            Ключ не сохраняется сайтом в хранилище и очищается при выключении помощника.
+            При отправке выбранный провайдер получит ваш код и вопрос. Не вставляйте секреты
+            и персональные данные. Часть API не разрешает прямые запросы из браузера (CORS).
+            В этом случае нужен официальный browser endpoint провайдера или ваш личный локальный шлюз.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="подвал">
+      <span>Лексика — язык, который говорит по-русски.</span>
+      <a href="https://github.com/zmlsaggg/Leksika" rel="noopener noreferrer">Исходный код на GitHub</a>
+    </footer>
+  </div>
+  <script src="playground.js" defer></script>
+</body>
+</html>
