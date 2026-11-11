@@ -1,7 +1,4 @@
 User-agent: *
 Allow: /
 
-# Значок и картинки
-Allow: /значки/
-
-Sitemap: https://example.github.io/lexica/sitemap.xml
+Sitemap: https://zmlsaggg.github.io/Leksika/sitemap.xml
