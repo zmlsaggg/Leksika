@@ -952,11 +952,17 @@
 
   по("ии-режим").addEventListener("change", () => {
     const адрес = по("ии-адрес");
-    if (по("ии-режим").value === "anthropic"
-        && адрес.value === "https://api.openai.com/v1/chat/completions") {
+    const режим = по("ии-режим").value;
+    const стандартные = [
+      "https://api.openai.com/v1/chat/completions",
+      "https://api.anthropic.com/v1/messages",
+      "https://generativelanguage.googleapis.com/v1beta/models/MODEL_ID:generateContent"
+    ];
+    if (режим === "anthropic" && стандартные.includes(адрес.value)) {
       адрес.value = "https://api.anthropic.com/v1/messages";
-    } else if (по("ии-режим").value === "openai"
-        && адрес.value === "https://api.anthropic.com/v1/messages") {
+    } else if (режим === "gemini" && стандартные.includes(адрес.value)) {
+      адрес.value = "https://generativelanguage.googleapis.com/v1beta/models/MODEL_ID:generateContent";
+    } else if (режим === "openai" && стандартные.includes(адрес.value)) {
       адрес.value = "https://api.openai.com/v1/chat/completions";
     }
   });
@@ -967,6 +973,7 @@
     const модель = по("ии-модель").value.trim();
     const адрес = по("ии-адрес").value.trim();
     const запрос = по("ии-запрос").value.trim();
+    const режим = по("ии-режим").value;
     if (!ключ || !модель || !адрес || !запрос) {
       ииВывод.textContent = "Укажите API-ключ, модель, адрес API и вопрос.";
       return;
@@ -992,6 +999,10 @@
       ииВывод.textContent = "Не передавайте API-ключ через параметры адреса. Используйте поле ключа.";
       return;
     }
+    if (режим === "gemini"
+        && /^\\/v1beta\\/models\\/[^:]+:generateContent$/.test(ссылка.pathname)) {
+      ссылка.pathname = "/v1beta/models/" + encodeURIComponent(модель) + ":generateContent";
+    }
 
     ииКнопка.disabled = true;
     ииВывод.textContent = "Отправляем запрос выбранному провайдеру…";
@@ -1001,7 +1012,6 @@
       + "улучшать программы и писать код на русском языке. Учитывай, что онлайн-песочница "
       + "поддерживает безопасное подмножество языка.";
     try {
-      const режим = по("ии-режим").value;
       const запросПользователя = "Вопрос пользователя:\n" + запрос + "\n\nКод Лексики:\n" + код;
       const заголовки = { "Content-Type": "application/json" };
       let тело;
@@ -1014,6 +1024,13 @@
           max_tokens: 1800,
           system: системное,
           messages: [{ role: "user", content: запросПользователя }]
+        });
+      } else if (режим === "gemini") {
+        заголовки["x-goog-api-key"] = ключ;
+        тело = JSON.stringify({
+          systemInstruction: { parts: [{ text: системное }] },
+          contents: [{ role: "user", parts: [{ text: запросПользователя }] }],
+          generationConfig: { temperature: 0.2, maxOutputTokens: 1800 }
         });
       } else {
         заголовки.Authorization = "Bearer " + ключ;
@@ -1039,6 +1056,12 @@
       if (режим === "anthropic") {
         текстОтвета = Array.isArray(данные.content)
           ? данные.content.filter((часть) => часть.type === "text").map((часть) => часть.text).join("\n")
+          : "";
+      } else if (режим === "gemini") {
+        const части = данные.candidates && данные.candidates[0]
+          && данные.candidates[0].content && данные.candidates[0].content.parts;
+        текстОтвета = Array.isArray(части)
+          ? части.filter((часть) => typeof часть.text === "string").map((часть) => часть.text).join("\n")
           : "";
       } else {
         текстОтвета = данные.choices && данные.choices[0]
