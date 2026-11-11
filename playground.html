@@ -139,11 +139,12 @@
               <select id="ии-режим">
                 <option value="openai">OpenAI-совместимый API</option>
                 <option value="anthropic">Anthropic Messages API</option>
+                <option value="gemini">Google Gemini API</option>
               </select>
             </label>
             <label class="поле" for="ии-модель">
               <span>Название модели</span>
-              <input id="ии-модель" type="text" placeholder="Укажите ID модели" autocomplete="off" spellcheck="false">
+              <input id="ии-модель" type="text" placeholder="ID выбранной модели" autocomplete="off" spellcheck="false">
             </label>
             <label class="поле широкое" for="ии-адрес">
               <span>Адрес API</span>
@@ -167,7 +168,8 @@
             Ключ не сохраняется сайтом в хранилище и очищается при выключении помощника.
             При отправке выбранный провайдер получит ваш код и вопрос. Не вставляйте секреты
             и персональные данные. Часть API не разрешает прямые запросы из браузера (CORS).
-            В этом случае нужен официальный browser endpoint провайдера или ваш личный локальный шлюз.
+            Поддержаны OpenAI-совместимый формат, Anthropic и Gemini. Другие модели
+            подключаются через OpenAI-совместимый endpoint. Провайдер должен разрешать CORS-запросы из браузера;
           </p>
         </div>
       </section>
