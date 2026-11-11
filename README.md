@@ -11,6 +11,12 @@
 </p>
 
 <p align="center">
+  <a href="https://zmlsaggg.github.io/Leksika/">Сайт проекта</a> ·
+  <a href="https://zmlsaggg.github.io/Leksika/playground.html">Попробовать код в браузере</a> ·
+  <a href="https://github.com/zmlsaggg/Leksika">Исходный код</a>
+</p>
+
+<p align="center">
   <a href="#установка"><img src="https://img.shields.io/badge/Windows-готовый_установщик-2f6fd0" alt="Установщик для Windows"></a>
   <a href="#установка"><img src="https://img.shields.io/badge/Linux_и_macOS-установщик-2f6fd0" alt="Установщик для Linux и macOS"></a>
   <img src="https://img.shields.io/badge/python-3.8+-8957e5" alt="python 3.8 или новее">
