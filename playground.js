@@ -1000,7 +1000,7 @@
       return;
     }
     if (режим === "gemini"
-        && /^\\/v1beta\\/models\\/[^:]+:generateContent$/.test(ссылка.pathname)) {
+        && /^\/v1beta\/models\/[^:]+:generateContent$/.test(ссылка.pathname)) {
       ссылка.pathname = "/v1beta/models/" + encodeURIComponent(модель) + ":generateContent";
     }
 
