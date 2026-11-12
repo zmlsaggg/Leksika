@@ -29,3 +29,5 @@ __pycache__/
 сборка/словарь-сборщик*
 
 .sudo_as_admin_successful
+
+update_public.ps1
