@@ -1,0 +1,18 @@
+#!/bin/sh
+set -eu
+
+ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+export PYTHONUTF8=1
+export PYTHONIOENCODING=utf-8
+
+if ! command -v python3 >/dev/null 2>&1; then
+    printf '%s\n' "Лексика: не найден Python 3.8+. Для полной версии установите Python 3.8+ или запустите установщик." >&2
+    exit 127
+fi
+
+if ! python3 -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 8) else 1)' >/dev/null 2>&1; then
+    printf '%s\n' "Лексика: нужен Python версии 3.8 или новее." >&2
+    exit 2
+fi
+
+exec python3 "$ROOT/лексус.lek" "$@"

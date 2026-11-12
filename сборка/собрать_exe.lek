@@ -48,6 +48,7 @@ def собрать_груз():
             print(f"  пропущено (нет файла): {источник}")
             continue
         куда = os.path.join(ГРУЗ_ПАПКА, цель)
+        os.makedirs(os.path.dirname(куда), exist_ok=True)
         if os.path.isdir(полный):
             shutil.copytree(полный, куда,
                             ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
@@ -307,13 +308,17 @@ def собрать_нативное_ядро():
     значения = os.path.join(КОРЕНЬ, "ядро", "значения.c")
     байткод = os.path.join(КОРЕНЬ, "ядро", "байткод.c")
     машина = os.path.join(КОРЕНЬ, "ядро", "машина.c")
-    if not компилятор or not all(os.path.isfile(p) for p in (исходник, индекс, значения, байткод, машина)):
+    источник_компилятора = os.path.join(КОРЕНЬ, "ядро", "компилятор.c")
+    if not компилятор or not all(os.path.isfile(p) for p in
+                                 (исходник, индекс, значения, байткод, машина, источник_компилятора)):
         print("  нативное ядро: пропуск (нужен mingw-w64)")
         return False
     вывод = os.path.join(ГРУЗ_ПАПКА, "лексус-ядро.exe")
     ресурс = собрать_значок()
     команда = [компилятор, "-std=c11", "-O2", "-s", "-Wall", "-Wextra",
-               "-I", os.path.join(КОРЕНЬ, "ядро"), "-o", вывод, исходник, значения, индекс, байткод, машина]
+               "-finput-charset=UTF-8", "-fexec-charset=UTF-8",
+               "-I", os.path.join(КОРЕНЬ, "ядро"), "-o", вывод,
+               исходник, значения, индекс, байткод, машина, источник_компилятора]
     if ресурс:
         команда.append(ресурс)
     итог = subprocess.run(команда, capture_output=True, text=True)
@@ -364,7 +369,9 @@ def main():
     if not os.path.isfile(индекс_в_грузе) or not os.path.isfile(лицензия_в_грузе):
         print("сборка остановлена: встроенный индекс или MIT-уведомление не попали в пакет", file=sys.stderr)
         return 5
-    собрать_нативное_ядро()
+    if not собрать_нативное_ядро():
+        print("сборка остановлена: нативное ядро не собрано.", file=sys.stderr)
+        return 6
     if not аргументы.без_питона:
         if not скачать_питон():
             print("сборка остановлена: встроенная среда Python обязательна для автономного установщика", file=sys.stderr)

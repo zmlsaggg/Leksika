@@ -366,6 +366,103 @@ static void remove_tree(const wchar_t *dir)
     speak("удалено: "); speak("каталог установки\n");
 }
 
+static int элемент_PATH_равен(const wchar_t *начало, size_t длина,
+                              const wchar_t *цель)
+{
+    size_t длина_цели = wcslen(цель);
+    while (длина && (*начало == L' ' || *начало == L'\t' || *начало == L'"')) {
+        ++начало;
+        --длина;
+    }
+    while (длина && (начало[длина - 1] == L' ' || начало[длина - 1] == L'\t' ||
+                     начало[длина - 1] == L'"')) --длина;
+    while (длина && (начало[длина - 1] == L'\\' || начало[длина - 1] == L'/')) --длина;
+    while (длина_цели && (цель[длина_цели - 1] == L'\\' ||
+                          цель[длина_цели - 1] == L'/')) --длина_цели;
+    return длина == длина_цели &&
+           CompareStringOrdinal(начало, (int)длина, цель, (int)длина_цели, TRUE) == CSTR_EQUAL;
+}
+
+/* Добавляет каталог Лексики в пользовательский PATH или удаляет его при деинсталляции. */
+static int изменить_PATH_пользователя(int добавить)
+{
+    HKEY ключ = NULL;
+    DWORD тип = REG_EXPAND_SZ, байты = 0;
+    wchar_t *старый = NULL, *новый = NULL;
+    size_t длина, длина_папки = wcslen(g_dir), ёмкость;
+    const wchar_t *p;
+    int найден = 0, записано = 0;
+    LONG статус;
+
+    статус = RegCreateKeyExW(HKEY_CURRENT_USER, L"Environment", 0, NULL, 0,
+                             KEY_QUERY_VALUE | KEY_SET_VALUE, NULL, &ключ, NULL);
+    if (статус != ERROR_SUCCESS) return 0;
+
+    статус = RegQueryValueExW(ключ, L"Path", NULL, &тип, NULL, &байты);
+    if (статус != ERROR_SUCCESS && статус != ERROR_FILE_NOT_FOUND) goto конец;
+    if (статус == ERROR_SUCCESS && тип != REG_SZ && тип != REG_EXPAND_SZ) goto конец;
+
+    старый = (wchar_t *)calloc((size_t)байты / sizeof(wchar_t) + 2, sizeof(wchar_t));
+    if (!старый) goto конец;
+    if (байты && RegQueryValueExW(ключ, L"Path", NULL, &тип,
+                                  (BYTE *)старый, &байты) != ERROR_SUCCESS) goto конец;
+    длина = wcslen(старый);
+
+    p = старый;
+    while (*p) {
+        const wchar_t *конец = wcschr(p, L';');
+        size_t часть = конец ? (size_t)(конец - p) : wcslen(p);
+        if (элемент_PATH_равен(p, часть, g_dir)) найден = 1;
+        if (!конец) break;
+        p = конец + 1;
+    }
+    if ((добавить && найден) || (!добавить && !найден)) {
+        записано = 1;
+        goto конец;
+    }
+
+    ёмкость = длина + длина_папки + 2;
+    новый = (wchar_t *)calloc(ёмкость, sizeof(wchar_t));
+    if (!новый) goto конец;
+
+    if (добавить) {
+        wcscpy(новый, старый);
+        if (длина && новый[длина - 1] != L';') wcscat(новый, L";");
+        wcscat(новый, g_dir);
+    } else {
+        const wchar_t *часть_начала = старый;
+        size_t использовано = 0;
+        for (p = старый; ; ++p) {
+            if (*p == L';' || *p == 0) {
+                size_t часть = (size_t)(p - часть_начала);
+                if (часть && !элемент_PATH_равен(часть_начала, часть, g_dir)) {
+                    if (использовано) новый[использовано++] = L';';
+                    memcpy(новый + использовано, часть_начала, часть * sizeof(wchar_t));
+                    использовано += часть;
+                }
+                if (!*p) break;
+                часть_начала = p + 1;
+            }
+        }
+        новый[использовано] = 0;
+    }
+
+    {
+        DWORD размер = (DWORD)((wcslen(новый) + 1) * sizeof(wchar_t));
+        if (RegSetValueExW(ключ, L"Path", 0, тип, (const BYTE *)новый, размер) != ERROR_SUCCESS)
+            goto конец;
+    }
+    SendMessageTimeoutW(HWND_BROADCAST, WM_SETTINGCHANGE, 0, (LPARAM)L"Environment",
+                        SMTO_ABORTIFHUNG, 5000, NULL);
+    записано = 1;
+
+конец:
+    if (новый) free(новый);
+    if (старый) free(старый);
+    if (ключ) RegCloseKey(ключ);
+    return записано;
+}
+
 static void удалить_ярлыки(void)
 {
     wchar_t папка[MAX_PATH], путь[MAX_PATH * 2];
@@ -390,10 +487,14 @@ static int выполнить_установку(int argc, char **argv)
     wchar_t нативное[MAX_PATH * 4];
     wchar_t entry[MAX_PATH * 4];
     wchar_t cmd[MAX_PATH * 4];
+    wchar_t legacy_cmd[MAX_PATH * 4];
+    wchar_t terminal[MAX_PATH * 4];
+    wchar_t shell[MAX_PATH];
     wchar_t значок[MAX_PATH * 4];
     wchar_t desktop[MAX_PATH];
     wchar_t startmenu[MAX_PATH];
     wchar_t lnk[MAX_PATH * 2];
+    DWORD shell_length;
 
     SetEnvironmentVariableW(L"PYTHONUTF8", L"1");
     SetEnvironmentVariableW(L"PYTHONIOENCODING", L"utf-8");
@@ -426,6 +527,7 @@ static int выполнить_установку(int argc, char **argv)
     if (wargc > 1 && (!wcscmp(wargv[1], L"--удалить") || !wcscmp(wargv[1], L"/удалить")
                       || !wcscmp(wargv[1], L"--uninstall"))) {
         CoInitialize(NULL);
+        изменить_PATH_пользователя(0);
         remove_tree(g_dir);
         удалить_ярлыки();
         speak("\nЛексус снят. Пользовательские настройки сохранены.\n");
@@ -490,7 +592,15 @@ static int выполнить_установку(int argc, char **argv)
     wcscat(нативное, L"\\лексус-ядро.exe");
 
     wcscpy(cmd, g_dir);
-    wcscat(cmd, L"\\лексус.cmd");
+    wcscat(cmd, L"\\Leksika.cmd");
+    wcscpy(legacy_cmd, g_dir);
+    wcscat(legacy_cmd, L"\\лексус.cmd");
+    wcscpy(terminal, g_dir);
+    wcscat(terminal, L"\\Leksika-терминал.cmd");
+
+    shell_length = GetEnvironmentVariableW(L"COMSPEC", shell, MAX_PATH);
+    if (shell_length == 0 || shell_length >= MAX_PATH)
+        wcscpy(shell, L"C:\\Windows\\System32\\cmd.exe");
 
     /* Используем ресурс иконки только если он действительно встроен в EXE. */
     wcscpy(значок, нативное);
@@ -508,6 +618,19 @@ static int выполнить_установку(int argc, char **argv)
         wcscat(body, L"if not exist \"%~dp0питон\\python.exe\" (echo Встроенная среда не найдена.& exit /b 2)\r\n");
         wcscat(body, L"\"%~dp0питон\\python.exe\" \"%~dp0лексус.lek\" %*\r\n");
         write_cmd(cmd, body);
+        write_cmd(legacy_cmd, L"\"%~dp0Leksika.cmd\" %*\r\n");
+    }
+    {
+        wchar_t body[4096];
+        wcscpy(body, L"set PYTHONUTF8=1\r\n");
+        wcscat(body, L"set PYTHONIOENCODING=utf-8\r\n");
+        wcscat(body, L"if not exist \"%~dp0питон\\python.exe\" (echo Встроенная среда не найдена.& exit /b 2)\r\n");
+        wcscat(body, L"doskey Leksika=chcp 65001 ^>nul $T set PYTHONUTF8=1 $T set PYTHONIOENCODING=utf-8 $T \"%~dp0питон\\python.exe\" \"%~dp0лексус.lek\" $*\r\n");
+        wcscat(body, L"doskey лексус=Leksika $*\r\n");
+        wcscat(body, L"\"%~dp0питон\\python.exe\" \"%~dp0лексус.lek\" справка\r\n");
+        wcscat(body, L"echo.\r\n");
+        wcscat(body, L"echo Вводите команды Лексики. Например: Leksika запустить примеры\\привет.lek\r\n");
+        write_cmd(terminal, body);
     }
 
     {
@@ -516,27 +639,32 @@ static int выполнить_установку(int argc, char **argv)
             wcscpy(lnk, desktop);
             wcscat(lnk, L"\\Лексика.lnk");
 
-            if (make_shortcut(lnk, cmd, L"", g_dir, значок)) speak("  ярлык на рабочем столе\n");
+            if (make_shortcut(lnk, shell, L"/k Leksika-терминал.cmd", g_dir, значок))
+                speak("  ярлык на рабочем столе\n");
             CoUninitialize();
         }
         if (SHGetFolderPathW(NULL, CSIDL_PROGRAMS, NULL, 0, startmenu) == S_OK) {
             wcscpy(lnk, startmenu);
             wcscat(lnk, L"\\Лексика.lnk");
             CoInitialize(NULL);
-            if (make_shortcut(lnk, cmd, L"", g_dir, значок)) speak("  ярлык в меню «Пуск»\n");
+            if (make_shortcut(lnk, shell, L"/k Leksika-терминал.cmd", g_dir, значок))
+                speak("  ярлык в меню «Пуск»\n");
             CoUninitialize();
         }
     }
 
-    /* PATH и пользовательские настройки не меняются. */
+    /* PATH обновится только после успешной самопроверки. */
 
     speak("\n  самопроверка:\n");
-    if (file_exists(нативное)) {
-        if (run_and_wait(нативное, L"--self-test") == 0)
-            speak("  нативное ядро: проверка пройдена\n");
-        else
-            speak("  нативное ядро: проверка не прошла\n");
+    if (!file_exists(нативное)) {
+        error_box("В установочном пакете отсутствует нативное ядро Лексуса.");
+        fclose(g_exe); g_exe = NULL; return 7;
     }
+    if (run_and_wait(нативное, L"--self-test") != 0) {
+        error_box("Самопроверка нативного ядра не прошла. Установка не считается завершённой.");
+        fclose(g_exe); g_exe = NULL; return 7;
+    }
+    speak("  нативное ядро: проверка пройдена\n");
     if (!file_exists(python)) {
         error_box("Встроенная среда выполнения отсутствует. Установка остановлена.");
         fclose(g_exe); g_exe = NULL; return 5;
@@ -555,8 +683,13 @@ static int выполнить_установку(int argc, char **argv)
         speak("Самопроверка пройдена.\n");
     }
 
+    if (изменить_PATH_пользователя(1))
+        speak("Команда Leksika добавлена в пользовательский PATH. Откройте новое окно терминала.\n");
+    else
+        speak("Не удалось обновить PATH; команда доступна из каталога установки и окна Лексики.\n");
+
     speak("\nУстановка завершена. Лексика готова к локальной работе.\n");
-    speak("Запуск: лексус.cmd запустить примеры\\привет.lek\n");
+    speak("Запуск: Leksika запустить примеры\\привет.lek\n");
     fclose(g_exe); g_exe = NULL;
     return 0;
 }

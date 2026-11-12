@@ -12,7 +12,8 @@ import sys
 ПО_УМОЛЧАНИЮ_ПАПКА = os.path.join(ДОМ, ".лексус")
 ПО_УМОЛЧАНИЮ_КУДА = os.path.join(ДОМ, ".local", "bin")
 
-ЧТО_СТАВИМ = ["лексус.lek", "лексика", "примеры", "словари", "документы", "значки", "ядро", "читай.lek"]
+ЧТО_СТАВИМ = ["лексус.lek", "Leksika", "лексика", "примеры", "словари", "документы",
+              "значки", "ядро", "данные/словарь", "читай.lek"]
 
 ЯРЛЫК = """#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
@@ -84,6 +85,7 @@ def поставить(папка, куда, ярлык=True):
             if not os.path.exists(источник):
                 continue
             цель = os.path.join(папка, имя)
+            os.makedirs(os.path.dirname(цель), exist_ok=True)
             if os.path.isdir(цель):
                 shutil.rmtree(цель)
             elif os.path.isfile(цель):
@@ -118,12 +120,16 @@ def поставить(папка, куда, ярлык=True):
 
     if ярлык:
         os.makedirs(куда, exist_ok=True)
-        путь_ярлыка = os.path.join(куда, "лексус")
-        with open(путь_ярлыка, "w", encoding="utf-8") as файл:
-            файл.write(ЯРЛЫК.format(папка=папка))
-        режим = os.stat(путь_ярлыка).st_mode
-        os.chmod(путь_ярлыка, режим | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-        print(f"ярлык поставлен: {путь_ярлыка}")
+        путь_ярлыка = os.path.join(куда, "Leksika")
+        содержимое_ярлыка = ЯРЛЫК.format(папка=папка)
+        for имя_команды in ("Leksika", "лексус"):
+            путь = os.path.join(куда, имя_команды)
+            with open(путь, "w", encoding="utf-8") as файл:
+                файл.write(содержимое_ярлыка)
+            режим = os.stat(путь).st_mode
+            os.chmod(путь, режим | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+        print(f"команда Leksika установлена: {путь_ярлыка}")
+        print("старое имя «лексус» оставлено как совместимый псевдоним")
 
         поставить_значок(папка, путь_ярлыка)
 
@@ -150,15 +156,16 @@ def поставить(папка, куда, ярлык=True):
 
     print()
     print("готово. Начните так:")
-    print("  лексус запустить примеры/привет.lek")
-    print("  лексус справка")
+    print("  Leksika запустить примеры/привет.lek")
+    print("  Leksika справка")
 
 
 def снести(папка, куда):
-    ярлык = os.path.join(куда, "лексус")
-    if os.path.isfile(ярлык):
-        os.remove(ярлык)
-        print(f"ярлык снят: {ярлык}")
+    for имя_команды in ("Leksika", "лексус"):
+        ярлык = os.path.join(куда, имя_команды)
+        if os.path.isfile(ярлык):
+            os.remove(ярлык)
+            print(f"команда снята: {ярлык}")
     if os.path.isdir(папка):
         shutil.rmtree(папка)
         print(f"папка движка удалена: {папка}")
