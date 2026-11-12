@@ -23,8 +23,8 @@
 
 
 <p align="center">
-  <a href="https://zmlsaggg.github.io/Leksika/">Сайт проекта</a> ·
-  <a href="https://zmlsaggg.github.io/Leksika/playground.html">Попробовать код в браузере</a> ·
+  <a href="https://leksika.gleeze.com/">Сайт проекта</a> ·
+  <a href="https://leksika.gleeze.com/playground.html">Попробовать код в браузере</a> ·
   <a href="https://github.com/zmlsaggg/Leksika">Публичный репозиторий</a>
 </p>
 
