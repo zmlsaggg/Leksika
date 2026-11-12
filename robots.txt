@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://zmlsaggg.github.io/Leksika/sitemap.xml
+Sitemap: https://leksika.gleeze.com/sitemap.xml
