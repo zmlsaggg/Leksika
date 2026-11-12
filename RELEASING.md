@@ -68,3 +68,17 @@ Get-FileHash .\<artifact> -Algorithm SHA256
 6. Проверьте страницу опубликованного релиза и скачивание каждого файла.
 
 Пока отдельный пакетный реестр не реализован, GitHub Releases является рекомендуемым каналом распространения готовых сборок.
+
+
+## GitHub Releases и GitHub Packages
+
+Это два разных способа распространения:
+
+- **GitHub Releases** — версии программы, привязанные к Git-тегу. Сюда прикладываются готовые установщики и архивы: например, Windows `.exe`, архив Linux/macOS и файл `SHA256SUMS.txt`.
+- **GitHub Packages** — реестры для конкретных форматов пакетов. GitHub поддерживает npm, RubyGems, Maven/Gradle, NuGet и Container/OCI (Docker). Это не универсальное хранилище для произвольных `.exe` и `.zip`.
+
+У Лексики пока нет собственного пакетного менеджера и совместимого с GitHub Packages формата. Поэтому готовые сборки следует публиковать через **Releases**; раздел Packages пока можно оставить пустым. Публиковать контейнер в GHCR имеет смысл только при появлении отдельного официального Docker-сценария — он не заменит обычный установщик.
+
+Документация GitHub:
+- [О GitHub Releases](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases)
+- [О GitHub Packages и поддерживаемых реестрах](https://docs.github.com/en/packages/learn-github-packages/introduction-to-github-packages)
