@@ -117,3 +117,5 @@ textarea {
   .действия { width: 100%; }
   .действия .кнопка { flex: 1; }
 }
+
+.ии-настройки{display:grid;grid-template-columns:1fr 1fr;gap:12px}.ии-пояснение{grid-column:1/-1}#ии-модель-статус{display:block;min-width:220px}@media(max-width:680px){.ии-настройки{grid-template-columns:1fr}}

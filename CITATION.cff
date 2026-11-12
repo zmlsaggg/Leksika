@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+message: "If you use Leksika in research or a publication, please cite the project repository."
+title: "Лексика (Leksika) — Russian-language programming language"
+type: software
+authors:
+  - name: "Проект Лексика"
+repository-code: "https://github.com/zmlsaggg/Leksikadev"
+url: "https://zmlsaggg.github.io/Leksika/"
+license: MIT
+keywords:
+  - programming language
+  - Russian language
+  - compiler
+  - interpreter
+  - Cyrillic
+  - programming language design

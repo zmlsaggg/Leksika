@@ -1,0 +1,26 @@
+import os
+
+from . import безопасность
+
+
+def есть(имя):
+    if not безопасность.разрешить_секрет(имя):
+        return False
+    return bool(os.environ.get(имя, ""))
+
+
+def получить(имя):
+    if not безопасность.разрешить_секрет(имя):
+        raise PermissionError("секрет «" + имя + "» запрещён политикой")
+    значение = os.environ.get(имя)
+    if значение is None:
+        raise KeyError(имя)
+    # Значение намеренно не пишется в аудит и не выводится.
+    return значение
+
+
+def имена():
+    политика = безопасность.настройки()
+    if безопасность.защищённый():
+        return list(политика.get("разрешённые_секреты", []))
+    return sorted(имя for имя in os.environ if имя.startswith("ЛЕКСУС_СЕКРЕТ_"))

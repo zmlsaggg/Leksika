@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "language": "ru",
+  "layers": [
+    {
+      "id": "ru-forms-danakt",
+      "kind": "word_forms",
+      "upstream": "https://github.com/danakt/russian-words",
+      "file": "russian.txt",
+      "immutable_commit": "d68c007fe9260d2d40ce413f13f77335c5af1e62",
+      "raw_url": "https://raw.githubusercontent.com/danakt/russian-words/d68c007fe9260d2d40ce413f13f77335c5af1e62/russian.txt",
+      "encoding": "windows-1251",
+      "reported_records": 1531464,
+      "license": "MIT",
+      "license_file": "LICENSE-danakt-MIT.txt",
+      "attribution": "Copyright (c) 2020 Danakt Frost",
+      "imported": false,
+      "notes": "Inflected forms only; the pinned source must be validated and compiled into the distributable binary index before claiming coverage.",
+      "integration_status": "source_pinned_binary_index_not_yet_built",
+      "runtime_policy": "embedded_read_only_resource_no_runtime_download_or_text_parsing",
+      "build_method": "native_c11_bootstrap_to_LEKSLXD1",
+      "submodule_path": "источники/russian-words",
+      "runtime_index": "ядро/русские_формы.lxd",
+      "runtime_status": "builder_and_reader_added_full_dataset_build_unverified"
+    }
+  ],
+  "excluded": [
+    {
+      "file": "russian_surnames.txt",
+      "reason": "Surnames are not part of the general lexical base."
+    }
+  ]
+}

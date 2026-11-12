@@ -32,6 +32,7 @@ MAGIC_TRAILER = b"LEKSUSZZ"
     ("документы", "документы"),
     ("значки", "значки"),
     ("ядро", "ядро"),
+    ("данные/словарь", "данные/словарь"),
 ]
 
 
@@ -66,8 +67,9 @@ def скачать_питон():
         try:
             urllib.request.urlretrieve(ПИТОН_ССЫЛКА, ПИТОН_ФАЙЛ)
         except Exception as ошибка:
-            print(f"  не удалось скачать python: {ошибка}")
-            print("  установщик соберётся без него и возьмёт системный python")
+            print(f"  не удалось скачать встроенный Python: {ошибка}", file=sys.stderr)
+            print("  сборка автономного Windows-установщика остановлена: системный Python не используется",
+                  file=sys.stderr)
             return False
     os.makedirs(папка)
     with zipfile.ZipFile(ПИТОН_ФАЙЛ) as архив:
@@ -301,13 +303,17 @@ def собрать_нативное_ядро():
     """Собирает первый нативный модуль, не требующий Python при запуске."""
     компилятор = shutil.which("x86_64-w64-mingw32-gcc") or (shutil.which("gcc") if os.name == "nt" else None)
     исходник = os.path.join(КОРЕНЬ, "ядро", "лексус.c")
-    if not компилятор or not os.path.isfile(исходник):
+    индекс = os.path.join(КОРЕНЬ, "ядро", "словарь_индекс.c")
+    значения = os.path.join(КОРЕНЬ, "ядро", "значения.c")
+    байткод = os.path.join(КОРЕНЬ, "ядро", "байткод.c")
+    машина = os.path.join(КОРЕНЬ, "ядро", "машина.c")
+    if not компилятор or not all(os.path.isfile(p) for p in (исходник, индекс, значения, байткод, машина)):
         print("  нативное ядро: пропуск (нужен mingw-w64)")
         return False
     вывод = os.path.join(ГРУЗ_ПАПКА, "лексус-ядро.exe")
     ресурс = собрать_значок()
     команда = [компилятор, "-std=c11", "-O2", "-s", "-Wall", "-Wextra",
-               "-o", вывод, исходник]
+               "-I", os.path.join(КОРЕНЬ, "ядро"), "-o", вывод, исходник, значения, индекс, байткод, машина]
     if ресурс:
         команда.append(ресурс)
     итог = subprocess.run(команда, capture_output=True, text=True)
@@ -317,6 +323,32 @@ def собрать_нативное_ядро():
     print("  нативное ядро: лексус-ядро.exe")
     return True
 
+def собрать_словарь():
+    """Собирает встроенный индекс нативным C-bootstrap до упаковки установщика."""
+    источник = os.path.join(КОРЕНЬ, "источники", "russian-words", "russian.txt")
+    исходник = os.path.join(КОРЕНЬ, "ядро", "словарь_сборщик.c")
+    выход = os.path.join(КОРЕНЬ, "ядро", "русские_формы.lxd")
+    if not os.path.isfile(источник):
+        print("  нет закреплённого источника словаря.")
+        print("  выполните: git submodule update --init --recursive")
+        return False
+    компилятор = shutil.which("gcc") or shutil.which("cc")
+    if not компилятор:
+        print("  для сборки индекса нужен C11-компилятор (gcc/clang).", file=sys.stderr)
+        return False
+    инструмент = os.path.join(ЗДЕСЬ, "словарь-сборщик.exe" if os.name == "nt" else "словарь-сборщик")
+    команда = [компилятор, "-std=c11", "-O2", "-Wall", "-Wextra", "-Wpedantic", исходник, "-o", инструмент]
+    сборка = subprocess.run(команда, capture_output=True, text=True)
+    if сборка.returncode != 0:
+        print("  сборщик словаря не собрался: " + сборка.stderr.strip(), file=sys.stderr)
+        return False
+    итог = subprocess.run([инструмент, источник, выход], capture_output=True, text=True)
+    if итог.returncode != 0:
+        print("  индекс словаря не собран: " + итог.stderr.strip(), file=sys.stderr)
+        return False
+    print("  " + итог.stdout.strip())
+    return True
+
 def main():
     разборщик = argparse.ArgumentParser(prog="собрать_exe")
     разборщик.add_argument("--без-питона", action="store_true")
@@ -324,7 +356,14 @@ def main():
     аргументы = разборщик.parse_args()
 
     print("сборка установщика Лексус\n")
+    if not собрать_словарь():
+        return 4
     собрать_груз()
+    индекс_в_грузе = os.path.join(ГРУЗ_ПАПКА, "ядро", "русские_формы.lxd")
+    лицензия_в_грузе = os.path.join(ГРУЗ_ПАПКА, "данные", "словарь", "LICENSE-danakt-MIT.txt")
+    if not os.path.isfile(индекс_в_грузе) or not os.path.isfile(лицензия_в_грузе):
+        print("сборка остановлена: встроенный индекс или MIT-уведомление не попали в пакет", file=sys.stderr)
+        return 5
     собрать_нативное_ядро()
     if not аргументы.без_питона:
         if not скачать_питон():

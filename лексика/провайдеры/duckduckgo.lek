@@ -1,0 +1,59 @@
+import html
+import urllib.parse
+import urllib.request
+from html.parser import HTMLParser
+
+
+АДРЕС = "https://html.duckduckgo.com/html/?"
+
+
+class Результаты(HTMLParser):
+
+    def __init__(self):
+        super().__init__()
+        self.элементы = []
+        self.текущий = None
+        self.собирать = False
+
+    def handle_starttag(self, тег, атрибуты):
+        атрибуты = dict(атрибуты)
+        классы = атрибуты.get("class", "").split()
+        if тег == "a" and "result__a" in классы:
+            self.элементы.append({
+                "заголовок": "",
+                "ссылка": html.unescape(атрибуты.get("href", "")),
+                "описание": "",
+            })
+            self.текущий = self.элементы[-1]
+            self.собирать = True
+        elif "result__snippet" in классы:
+            if not self.элементы:
+                self.элементы.append({"заголовок": "", "ссылка": "", "описание": ""})
+            self.текущий = self.элементы[-1]
+            self.собирать = True
+
+    def handle_endtag(self, тег):
+        if тег in ("a", "div"):
+            self.собирать = False
+
+    def handle_data(self, данные):
+        if self.собирать and self.текущий is not None:
+            ключ = "заголовок" if self.текущий["ссылка"] and not self.текущий["описание"] else "описание"
+            self.текущий[ключ] += данные
+
+
+def искать(запрос):
+    адрес = АДРЕС + urllib.parse.urlencode({"q": запрос[:180]})
+    запрос_сети = urllib.request.Request(адрес, headers={"User-Agent": "Leksus/1.2"})
+    try:
+        with urllib.request.urlopen(запрос_сети, timeout=5) as ответ:
+            страница = ответ.read(700_000).decode("utf-8", "replace")
+        разбор = Результаты()
+        разбор.feed(страница)
+        найдено = [
+            элемент for элемент in разбор.элементы
+            if элемент["заголовок"] or элемент["описание"]
+        ][:5]
+        return адрес, найдено
+    except Exception:
+        return адрес, []

@@ -1,0 +1,30 @@
+#include "байткод.h"
+#include <stdio.h>
+_Static_assert(sizeof(ЛексусИнструкция) == 8, "Лексус bytecode instruction must be 8 bytes");
+static void fail(char *p,size_t n,const char *s){if(p&&n)snprintf(p,n,"%s",s);}
+static int reg_ok(const ЛексусПрограмма*p,uint8_t r){return r<p->регистры;}
+int лексус_байткод_проверить(const ЛексусПрограмма*p,char*err,size_t n){
+ if(!p||!p->код||!p->число_инструкций||!p->регистры||p->регистры>256){fail(err,n,"пустая программа или нет регистров");return 0;}
+ if(p->число_инструкций>UINT32_MAX||p->число_констант>UINT32_MAX){fail(err,n,"слишком много инструкций");return 0;}
+ if(p->число_констант&&!p->константы){fail(err,n,"нет таблицы констант");return 0;}
+ for(size_t i=0;i<p->число_инструкций;++i){const ЛексусИнструкция*x=&p->код[i];
+  switch(x->операция){
+   case ЛЕКСУС_ОП_КОНСТАНТА:
+    if(!reg_ok(p,x->назначение)||x->операнд>=p->число_констант){fail(err,n,"неверный регистр или индекс константы");return 0;}break;
+   case ЛЕКСУС_ОП_КОПИЯ: case ЛЕКСУС_ОП_НЕ:
+    if(!reg_ok(p,x->назначение)||!reg_ok(p,x->а)){fail(err,n,"операция использует неверный регистр");return 0;}break;
+   case ЛЕКСУС_ОП_СЛОЖИТЬ: case ЛЕКСУС_ОП_ВЫЧЕСТЬ:
+   case ЛЕКСУС_ОП_УМНОЖИТЬ: case ЛЕКСУС_ОП_РАЗДЕЛИТЬ: case ЛЕКСУС_ОП_РАВНО:
+    if(!reg_ok(p,x->назначение)||!reg_ok(p,x->а)||!reg_ok(p,x->б)){fail(err,n,"арифметика использует неверный регистр");return 0;}break;
+   case ЛЕКСУС_ОП_ПЕРЕХОД:
+    if(x->операнд>=p->число_инструкций){fail(err,n,"адрес перехода вне программы");return 0;}break;
+   case ЛЕКСУС_ОП_ПЕРЕХОД_ЕСЛИ_ЛОЖЬ:
+    if(!reg_ok(p,x->а)||x->операнд>=p->число_инструкций){fail(err,n,"условный переход использует неверный регистр или адрес");return 0;}break;
+   case ЛЕКСУС_ОП_ВОЗВРАТ:
+    if(!reg_ok(p,x->а)){fail(err,n,"возврат использует неверный регистр");return 0;}break;
+   case ЛЕКСУС_ОП_СТОП: break;
+   default: fail(err,n,"неизвестный код операции");return 0;
+  }
+ }
+ return 1;
+}

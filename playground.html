@@ -3,9 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Онлайн-песочница Лексики — запуск кода в браузере</title>
-  <meta name="description" content="Пишите и запускайте программы на русском языке Лексика прямо в браузере. Без скачивания, установки, Python и сторонних библиотек. Необязательный ИИ-помощник с вашим API-ключом.">
-  <meta name="keywords" content="Лексика онлайн, онлайн редактор русского языка программирования, песочница Лексика, запуск кода .lek, Лексус, русский язык программирования">
+  <title>Онлайн-песочница Лексики — русский язык программирования</title>
+  <meta name="description" content="Попробуйте учебное подмножество русского языка программирования Лексика прямо в браузере. Редактор, примеры, запуск программ и вывод ошибок — без установки.">
   <meta name="author" content="Проект Лексика">
   <meta name="robots" content="index, follow, max-image-preview:large">
   <meta name="theme-color" content="#0d0f13">
@@ -16,8 +15,8 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Лексика">
   <meta property="og:locale" content="ru_RU">
-  <meta property="og:title" content="Онлайн-песочница Лексики">
-  <meta property="og:description" content="Пробуйте русский язык программирования Лексика прямо в браузере. Без установки и скачивания.">
+  <meta property="og:title" content="Онлайн-песочница Лексики — запуск кода в браузере">
+  <meta property="og:description" content="Попробуйте учебное подмножество Лексики: редактор, примеры и локальный запуск кода без установки.">
   <meta property="og:url" content="https://zmlsaggg.github.io/Leksika/playground.html">
   <meta property="og:image" content="https://zmlsaggg.github.io/Leksika/значки/Лексика.png">
   <meta property="og:image:alt" content="Знак русского языка программирования Лексика">
@@ -55,7 +54,7 @@
       <h1>Попробуйте Лексику</h1>
       <p class="описание">
         Напишите программу на русском языке и запустите её прямо здесь.
-        Код обрабатывается локально в браузере — для обычного запуска интернет не нужен.
+        Обычный запуск кода остаётся локальным. Для загрузки модели ИИ браузер скачивает её веса с Hugging Face.
       </p>
     </header>
 
@@ -98,9 +97,9 @@
       <section class="безопасность">
         <strong>Локальный запуск</strong>
         <p>
-          Редактор и учебная машина работают в этой вкладке. Площадка не отправляет
-          исходный код на сервер проекта, не запускает команды операционной системы,
-          не читает файлы и не обращается к сети.
+          Редактор и учебная машина работают в этой вкладке. Сам запуск программы не отправляет
+          исходный код на сервер и не обращается к сети. Сеть используется только по вашему
+          действию для загрузки выбранной модели или обращения к внешнему API.
         </p>
       </section>
 
@@ -120,58 +119,25 @@
         </p>
       </details>
 
-      <section class="ии-блок" aria-label="Необязательный ИИ-помощник">
-        <div class="ии-шапка">
-          <div>
-            <strong>Помощник по коду</strong>
-            <p>Подключите выбранную модель по своему API-ключу. Функция выключена по умолчанию.</p>
-          </div>
-          <label class="ии-переключатель" for="ии-включить">
-            <input id="ии-включить" type="checkbox">
-            Включить ИИ
-          </label>
-        </div>
-
-        <div id="ии-панель" class="ии-панель" hidden>
+      <section class="ии-блок" aria-label="ИИ-помощник">
+        <div class="ии-шапка"><div><strong>ИИ-помощник Лексики</strong><p>По умолчанию включён. Локальная модель работает прямо в браузере.</p></div>
+          <label class="ии-переключатель" for="ии-включить"><input id="ии-включить" type="checkbox" checked> Включить ИИ</label></div>
+        <div id="ии-панель" class="ии-панель">
           <div class="ии-сетка">
-            <label class="поле" for="ии-режим">
-              <span>Формат API</span>
-              <select id="ии-режим">
-                <option value="openai">OpenAI-совместимый API</option>
-                <option value="anthropic">Anthropic Messages API</option>
-                <option value="gemini">Google Gemini API</option>
-              </select>
-            </label>
-            <label class="поле" for="ии-модель">
-              <span>Название модели</span>
-              <input id="ии-модель" type="text" placeholder="ID выбранной модели" autocomplete="off" spellcheck="false">
-            </label>
-            <label class="поле широкое" for="ии-адрес">
-              <span>Адрес API</span>
-              <input id="ии-адрес" type="text" value="https://api.openai.com/v1/chat/completions" autocomplete="off" spellcheck="false">
-              <p>Укажите полный адрес метода. OpenAI-совместимые шлюзы: OpenRouter, Groq, DeepSeek, Together, LM Studio и другие.</p>
-            </label>
-            <label class="поле широкое" for="ии-ключ">
-              <span>API-ключ</span>
-              <input id="ии-ключ" type="password" placeholder="Вставьте свой ключ" autocomplete="new-password" autocapitalize="off" spellcheck="false">
-            </label>
-            <label class="поле широкое" for="ии-запрос">
-              <span>Что сделать с кодом?</span>
-              <textarea id="ии-запрос" placeholder="Например: объясни программу, найди ошибку или предложи улучшение.">Проверь программу, объясни её работу и укажи возможные ошибки.</textarea>
-            </label>
+            <label class="поле широкое" for="ии-источник"><span>Где запускать модель</span><select id="ии-источник"><option value="huggingface" selected>Hugging Face · прямо в браузере</option><option value="api">Внешний API · по ключу</option></select></label>
+            <label class="поле широкое" for="ии-стиль"><span>Стиль помощника</span><select id="ии-стиль"><option value="strict">1. Строгий — только язык и морфология</option><option value="balanced" selected>2. Баланс — объяснения и неизвестные команды</option><option value="creative">3. Креатив — свободное общение вне кода</option></select></label>
+            <div id="ии-hf-настройки" class="ии-настройки широкое"><label class="поле" for="ии-модель-hf"><span>Модель Hugging Face</span><input id="ии-модель-hf" type="text" value="onnx-community/Qwen2.5-0.5B-Instruct" autocomplete="off" spellcheck="false"></label>
+              <div class="ии-действия"><button class="кнопка главная" id="ии-загрузить" type="button">Загрузить модель в браузер</button><span id="ии-модель-статус" class="подсказка" role="status">Модель ещё не загружена. Загрузка начнётся после нажатия.</span></div>
+              <p class="ии-пояснение">Можно указать ID репозитория HF. Работают модели с совместимыми ONNX-весами и архитектурами Transformers.js; не каждый репозиторий поддерживает браузерный запуск. Файлы скачиваются с Hugging Face и кэшируются браузером. WebGPU используется при наличии, иначе WebAssembly.</p></div>
+            <div id="ии-api-настройки" class="ии-настройки широкое" hidden><label class="поле" for="ии-режим"><span>Формат API</span><select id="ии-режим"><option value="openai">OpenAI-совместимый API</option><option value="anthropic">Anthropic Messages API</option><option value="gemini">Google Gemini API</option></select></label>
+              <label class="поле" for="ии-модель"><span>Название модели API</span><input id="ии-модель" type="text" placeholder="ID выбранной модели" autocomplete="off"></label>
+              <label class="поле широкое" for="ии-адрес"><span>Адрес API</span><input id="ии-адрес" type="text" value="https://api.openai.com/v1/chat/completions" autocomplete="off"><p>OpenAI-совместимые шлюзы: OpenRouter, Groq, DeepSeek, Together, LM Studio. Нужен доступ из браузера (CORS).</p></label>
+              <label class="поле широкое" for="ии-ключ"><span>API-ключ</span><input id="ии-ключ" type="password" placeholder="Вставьте свой ключ" autocomplete="new-password"></label></div>
+            <label class="поле широкое" for="ии-запрос"><span>Ваш вопрос</span><textarea id="ии-запрос">Объясни, что делает эта программа, и найди возможные ошибки.</textarea></label>
           </div>
-          <div class="ии-действия">
-            <button class="кнопка главная" id="ии-спросить" type="button">Отправить выбранной модели</button>
-            <span class="подсказка">Запрос отправляется только после нажатия этой кнопки.</span>
-          </div>
-          <pre id="ии-вывод" aria-live="polite">ИИ-помощник включён, но пока не отправляет запросы.</pre>
-          <p class="ии-предупреждение">
-            Ключ не сохраняется сайтом в хранилище и очищается при выключении помощника.
-            При отправке выбранный провайдер получит ваш код и вопрос. Не вставляйте секреты
-            и персональные данные. Часть API не разрешает прямые запросы из браузера (CORS).
-            Поддержаны OpenAI-совместимый формат, Anthropic и Gemini. Другие модели
-            подключаются через OpenAI-совместимый endpoint. Провайдер должен разрешать CORS-запросы из браузера.
-          </p>
+          <div class="ии-действия"><button class="кнопка главная" id="ии-спросить" type="button">Спросить помощника</button><span class="подсказка">Код передаётся модели только после вашего запроса.</span></div>
+          <pre id="ии-вывод" aria-live="polite">Помощник включён. Загрузите модель и задайте вопрос.</pre>
+          <p class="ии-предупреждение">Локальная модель не отправляет код на сервер. При выборе API провайдер получит код и вопрос. Не вставляйте секреты. Загрузка требует интернета, памяти и совместимого браузера. Выключение помощника очищает API-ключ.</p>
         </div>
       </section>
     </main>

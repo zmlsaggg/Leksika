@@ -1,7 +1,7 @@
 import os
 import subprocess
 
-from . import морфология, разум, упаковка, хранение
+from . import морфология, разум, упаковка, хранение, безопасность
 
 НАСТРОЙКИ_ПО_УМОЛЧАНИЮ = {
     "умная_модель": "встроенная",
@@ -10,6 +10,7 @@ from . import морфология, разум, упаковка, хранени
     "проверять_падежи": True,
     "разрешить_толкование": False,
     "разрешить_поиск_в_сети": False,
+    "сетевой_провайдер": "нет",
     "порог_уверенности": 0.34,
 }
 
@@ -148,21 +149,33 @@ class ВнешняяМодель:
         self.доступна = self._проверить()
 
     def _проверить(self):
+        if not безопасность.разрешить_внешнюю_модель(self.путь):
+            return False
         if not self.путь:
             return False
         if self.движок == "onnx":
-            return os.path.isdir(self.путь) and _есть("onnxruntime")
+            return (
+                os.path.isdir(self.путь)
+                and _есть("onnxruntime")
+                and _есть("numpy")
+                and _есть("tokenizers")
+                and безопасность.разрешить_модуль("onnxruntime")
+                and безопасность.разрешить_модуль("numpy")
+                and безопасность.разрешить_модуль("tokenizers")
+            )
         return os.path.isfile(self.путь) and (упаковка.где("llama-cli") or _есть("llama_cpp"))
 
     def _зов(self, подсказка, предел=64):
         if self.движок == "onnx":
             return self._оннкс_зов(подсказка)
-        if _есть("llama_cpp"):
+        if _есть("llama_cpp") and безопасность.разрешить_модуль("llama_cpp"):
             from llama_cpp import Llama
             машина = Llama(model_path=self.путь, n_ctx=512, verbose=False)
             ответ = машина(подсказка, max_tokens=предел, temperature=0.0)
             return ответ["choices"][0]["text"].strip()
         if упаковка.где("llama-cli"):
+            if not безопасность.разрешить_процесс("llama-cli"):
+                raise PermissionError("llama-cli запрещён политикой безопасности")
             итог = subprocess.run(
                 ["llama-cli", "-m", self.путь, "-p", подсказка, "-n", str(предел),
                  "--temp", "0", "--no-display-prompt"],
