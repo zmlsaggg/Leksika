@@ -4,12 +4,8 @@ $UpdaterBackup = Join-Path $env:TEMP "Leksika-update_public.ps1"
 
 Set-Location $PublicRoot
 
-# Этот скрипт удаляет файлы публичной ветки перед синхронизацией.
-# Сохраняем сам скрипт отдельно, чтобы он не исчез после git rm.
-Copy-Item -LiteralPath $PSCommandPath -Destination $UpdaterBackup -Force
-
 function Invoke-Git {
-    $GitArgs = @($args)
+    param([Parameter(Mandatory = $true)][string[]]$GitArgs)
     & git @GitArgs
     if ($LASTEXITCODE -ne 0) {
         throw ("Команда git {0} завершилась с кодом {1}" -f ($GitArgs -join " "), $LASTEXITCODE)
@@ -18,17 +14,20 @@ function Invoke-Git {
 
 try {
     Write-Host "1. Обновляем локальный публичный репозиторий..." -ForegroundColor Cyan
-    Invoke-Git pull --ff-only origin main
+    Invoke-Git -GitArgs @("pull", "--ff-only", "origin", "main")
+
+    # Сохраняем уже обновлённую версию скрипта: git rm ниже удалит её из рабочей копии.
+    Copy-Item -LiteralPath (Join-Path $PublicRoot "update_public.ps1") -Destination $UpdaterBackup -Force
 
     Write-Host "2. Очищаем файлы публичной ветки..." -ForegroundColor Cyan
-    Invoke-Git rm -rf -- .
+    Invoke-Git -GitArgs @("rm", "-rf", "--", ".")
 
     Write-Host "3. Скачиваем актуальный код из Leksikadev..." -ForegroundColor Cyan
     if (Test-Path "temp_dev") {
         Remove-Item -Recurse -Force "temp_dev"
     }
 
-    Invoke-Git clone --depth 1 --branch main --recurse-submodules https://github.com/zmlsaggg/Leksikadev temp_dev
+    Invoke-Git -GitArgs @("clone", "--depth", "1", "--branch", "main", "--recurse-submodules", "https://github.com/zmlsaggg/Leksikadev", "temp_dev")
 
     Write-Host "4. Переносим файлы, включая скрытые..." -ForegroundColor Cyan
     Remove-Item -Recurse -Force "temp_dev\.git"
@@ -44,13 +43,13 @@ try {
     )
 
     Write-Host "6. Отправляем обновления на GitHub..." -ForegroundColor Cyan
-    Invoke-Git add -A
+    Invoke-Git -GitArgs @("add", "-A")
 
     & git diff --cached --quiet
     $DiffExitCode = $LASTEXITCODE
     if ($DiffExitCode -eq 1) {
-        Invoke-Git commit -m "Обновление кодовой базы"
-        Invoke-Git push origin main
+        Invoke-Git -GitArgs @("commit", "-m", "Обновление кодовой базы")
+        Invoke-Git -GitArgs @("push", "origin", "main")
     }
     elseif ($DiffExitCode -eq 0) {
         Write-Host "Изменений для отправки нет." -ForegroundColor Yellow
