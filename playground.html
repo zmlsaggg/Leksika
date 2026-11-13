@@ -117,6 +117,15 @@
             </div>
           </div>
 
+          <details class="профили-языка">
+            <summary>Разговорные профили</summary>
+            <div class="профили-переключатели">
+              <label><input id="профиль-18" type="checkbox" disabled> 18+ Лексика</label>
+              <label><input id="профиль-зумер" type="checkbox" disabled> Зумер-лексика</label>
+            </div>
+            <p>Профили выключены по умолчанию. В браузере применяются только синонимы команд, которые поддерживает учебная песочница.</p>
+            <span id="профили-статус" role="status" aria-live="polite">Загружаем общую схему профилей…</span>
+          </details>
           <label class="поле" for="код">
             <span>Программа <code>.lek</code></span>
             <textarea id="код" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Исходный код на Лексике"></textarea>
