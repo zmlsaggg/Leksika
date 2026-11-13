@@ -49,6 +49,13 @@ static int ввод_по_умолчанию(void *context,char *buffer,size_t ca
 static void cleanup(ЛексусЗначение*r,size_t n){if(r){for(size_t i=0;i<n;++i)лексус_значение_освободить(&r[i]);free(r);}}
 typedef struct { ЛексусЗначение остаток; } ЛексусСчётчикЦикла;
 typedef struct { ЛексусЗначение перечень; size_t индекс; uint32_t выход; } ЛексусИтератор;
+#define ЛИМИТ_КАДРОВ_ВЫЗОВА 128u
+typedef struct {
+ uint64_t возврат;
+ ЛексусЗначение *регистры;
+ size_t циклы,итераторы;
+ uint8_t назначение;
+} ЛексусКадрВызова;
 static void cleanup_cycles(ЛексусСчётчикЦикла *cycles,size_t count)
 {
  if(!cycles) return;
@@ -76,6 +83,8 @@ int лексус_машина_исполнить_со_средой(const Лек�
  size_t cycles_count=0,cycles_capacity=0;
  ЛексусИтератор *iterators=NULL;
  size_t iterators_count=0,iterators_capacity=0;
+ ЛексусКадрВызова frames[ЛИМИТ_КАДРОВ_ВЫЗОВА];
+ size_t frame_count=0;
  while(ip<p->число_инструкций&&!done){
   if(++steps>limit){fail(err,errn,"превышен предел шагов виртуальной машины");ok=0;break;}
   const ЛексусИнструкция*x=&p->код[ip];ЛексусЗначение value=лексус_ничто();ЛексусОшибка e={ЛЕКСУС_ОК,NULL};
@@ -190,7 +199,43 @@ int лексус_машина_исполнить_со_средой(const Лек�
    case ЛЕКСУС_ОП_НЕ:value=лексус_логическое(!лексус_правда(r[x->а]));assign(&r[x->назначение],value);++ip;break;
    case ЛЕКСУС_ОП_ПЕРЕХОД:ip=x->операнд;break;
    case ЛЕКСУС_ОП_ПЕРЕХОД_ЕСЛИ_ЛОЖЬ:ip=лексус_правда(r[x->а])?ip+1:x->операнд;break;
-   case ЛЕКСУС_ОП_ВОЗВРАТ:*out=лексус_значение_копия(r[x->а]);done=1;break;
+   case ЛЕКСУС_ОП_ВЫЗОВ: {
+    if(frame_count>=ЛИМИТ_КАДРОВ_ВЫЗОВА) {
+     fail(err,errn,"превышена максимальная глубина вызовов правил (128)");
+     ok=0;done=1;break;
+    }
+    ЛексусЗначение *callee=(ЛексусЗначение*)calloc(p->регистры,sizeof(*callee));
+    if(!callee) {
+     fail(err,errn,"не хватает памяти для кадра вызова правила");
+     ok=0;done=1;break;
+    }
+    for(size_t i=0;i<p->регистры;++i) callee[i]=лексус_ничто();
+    frames[frame_count++]=(ЛексусКадрВызова){
+     ip+1,r,cycles_count,iterators_count,x->назначение
+    };
+    r=callee;
+    ip=x->операнд;
+    break;
+   }
+   case ЛЕКСУС_ОП_ВОЗВРАТ: {
+    value=x->а==UINT8_MAX?лексус_ничто():лексус_значение_копия(r[x->а]);
+    if(!frame_count) {
+     *out=value;
+     done=1;
+     break;
+    }
+    ЛексусКадрВызова frame=frames[--frame_count];
+    while(cycles_count>frame.циклы)
+     лексус_значение_освободить(&cycles[--cycles_count].остаток);
+    while(iterators_count>frame.итераторы)
+     лексус_значение_освободить(&iterators[--iterators_count].перечень);
+    cleanup(r,p->регистры);
+    r=frame.регистры;
+    if(frame.назначение<p->регистры) assign(&r[frame.назначение],value);
+    else лексус_значение_освободить(&value);
+    ip=frame.возврат;
+    break;
+   }
    case ЛЕКСУС_ОП_СТОП:done=1;break;
    case ЛЕКСУС_ОП_ПОКАЗАТЬ:
     if(!показать_значение(r[x->назначение],env,err,errn)){ok=0;done=1;}else ++ip;
@@ -277,7 +322,10 @@ int лексус_машина_исполнить_со_средой(const Лек�
  if(ok&&!done){fail(err,errn,"программа завершилась без возврата или остановки");ok=0;}
  cleanup_cycles(cycles,cycles_count);
  cleanup_iterators(iterators,iterators_count);
- cleanup(r,p->регистры);if(!ok)лексус_значение_освободить(out);return ok;
+ cleanup(r,p->регистры);
+ while(frame_count) cleanup(frames[--frame_count].регистры,p->регистры);
+ if(!ok)лексус_значение_освободить(out);
+ return ok;
 }
 int лексус_машина_исполнить(const ЛексусПрограмма*p,uint64_t limit,ЛексусЗначение*out,char*err,size_t errn)
 {
