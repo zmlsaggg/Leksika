@@ -319,7 +319,7 @@ int main(int argc,char **argv)
         for(int i=3;i<argc;++i) {
             if(strcmp(argv[i],"--профиль=18+")==0) профили|=ЛЕКСУС_ПРОФИЛЬ_18_ПЛЮС;
             else if(strcmp(argv[i],"--профиль=зумер")==0) профили|=ЛЕКСУС_ПРОФИЛЬ_ЗУМЕР;
-            else { fprintf(stderr,"Лексус: неизвестный параметр профиля: %s\\n",argv[i]); return 2; }
+            else { fprintf(stderr,"Лексус: неизвестный параметр профиля: %s\n",argv[i]); return 2; }
         }
         FILE *f=fopen(argv[2],"rb");
         if(!f){perror("Лексус: не удалось открыть исходник");return 2;}
