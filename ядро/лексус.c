@@ -311,8 +311,10 @@ static int самопроверка(void)
 }
 int main(int argc,char **argv)
 {
-    if (argc>=2 && strcmp(argv[1],"выполнить")==0) {
-        if (argc!=3) { fputs("Использование: лексус-ядро выполнить файл.lek\\n",stderr); return 2; }
+    /* Явный выбор нативного пути позволяет общему запускателю не вызывать Python. */
+    if (argc >= 2 && strcmp(argv[1], "--нативно") == 0) { --argc; ++argv; }
+    if (argc>=2 && (strcmp(argv[1],"выполнить")==0 || strcmp(argv[1],"запустить")==0)) {
+        if (argc!=3) { fputs("Использование: лексус-ядро выполнить файл.lek\n",stderr); return 2; }
         FILE *f=fopen(argv[2],"rb");
         if(!f){perror("Лексус: не удалось открыть исходник");return 2;}
         size_t length=0; unsigned char *source=прочитать(f,&length); fclose(f);

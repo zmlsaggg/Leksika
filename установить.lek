@@ -3,6 +3,7 @@
 import argparse
 import os
 import shutil
+import shlex
 import stat
 import subprocess
 import sys
@@ -15,26 +16,8 @@ import sys
 ЧТО_СТАВИМ = ["лексус.lek", "Leksika", "лексика", "примеры", "словари", "документы",
               "значки", "ядро", "данные/словарь", "читай.lek"]
 
-ЯРЛЫК = """#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-import os
-import sys
-
-ПАПКА = {папка!r}
-sys.path.insert(0, ПАПКА)
-
-# Свой загрузчик частей движка: importlib не нужен.
-if not getattr(sys, "_лексика_загрузка", False):
-    _загрузка = os.path.join(ПАПКА, "лексика", "загрузка.lek")
-    with open(_загрузка, encoding="utf-8") as _файл:
-        exec(compile(_файл.read(), _загрузка, "exec"),
-             {{"__name__": "лексика.загрузка", "__file__": _загрузка}})
-
-import лексус
-
-if __name__ == "__main__":
-    sys.exit(лексус.main())
-"""
+# Обёртка передаёт аргументы общему запускателю; нативный режим не требует Python.
+ЯРЛЫК = "#!/bin/sh\nexec {запускатель} \"$@\"\n"
 
 
 def проверить_питон():
@@ -123,7 +106,7 @@ def поставить(папка, куда, ярлык=True):
     if ярлык:
         os.makedirs(куда, exist_ok=True)
         путь_ярлыка = os.path.join(куда, "Leksika")
-        содержимое_ярлыка = ЯРЛЫК.format(папка=папка)
+        содержимое_ярлыка = ЯРЛЫК.format(запускатель=shlex.quote(os.path.join(папка, "Leksika")))
         имена = ("leksika", "лексика", "лексус", "лек", "лекс", "лексу", "leksus", "lek", "leks")
         for имя_команды in sorted({форма for имя in имена for форма in (имя, имя.capitalize(), имя.upper())}):
             путь = os.path.join(куда, имя_команды)

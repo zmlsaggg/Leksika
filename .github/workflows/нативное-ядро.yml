@@ -6,6 +6,12 @@ on:
       - main
     paths:
       - "ядро/**"
+      - "лексика/**"
+      - "лексус.lek"
+      - "Leksika"
+      - "Leksika.cmd"
+      - "установить.lek"
+      - "проверка/**"
       - "источники/russian-words/**"
       - ".gitmodules"
       - ".github/workflows/нативное-ядро.yml"
@@ -14,6 +20,12 @@ on:
       - main
     paths:
       - "ядро/**"
+      - "лексика/**"
+      - "лексус.lek"
+      - "Leksika"
+      - "Leksika.cmd"
+      - "установить.lek"
+      - "проверка/**"
       - "источники/russian-words/**"
       - ".gitmodules"
       - ".github/workflows/нативное-ядро.yml"
@@ -50,4 +62,12 @@ jobs:
 
       - name: Собрать нативное ядро и полный словарный индекс, затем выполнить тесты
         run: make -C ядро clean all test
+        shell: bash
+
+      - name: Сопоставить нативный и переходный движки на общем подмножестве
+        if: runner.os == 'Linux'
+        run: |
+          python3 проверка/тесты.lek
+          python3 проверка/удобство.py
+          python3 проверка/сопоставление_движков.py
         shell: bash

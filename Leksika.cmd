@@ -1,6 +1,7 @@
 @echo off
 setlocal
 set "LEK_ROOT=%~dp0"
+if "%~1"=="--нативно" goto native
 set "PYTHONUTF8=1"
 set "PYTHONIOENCODING=utf-8"
 
@@ -28,3 +29,17 @@ exit /b %ERRORLEVEL%
 :missing_python
 echo Лексика: Python 3.8+ не найден. Запустите установщик или установите Python 3.8+.
 exit /b 127
+
+:native
+if exist "%LEK_ROOT%лексус-ядро.exe" goto native_installed
+if exist "%LEK_ROOT%ядро\лексус-ядро.exe" goto native_source
+echo Лексика: нативное ядро не найдено. 1>&2
+exit /b 127
+
+:native_installed
+"%LEK_ROOT%лексус-ядро.exe" %*
+exit /b %ERRORLEVEL%
+
+:native_source
+"%LEK_ROOT%ядро\лексус-ядро.exe" %*
+exit /b %ERRORLEVEL%
