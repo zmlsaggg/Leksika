@@ -20,6 +20,8 @@
 <meta property="og:description" content="Оригинальный язык программирования с русским синтаксисом и падежным управлением. Изучайте язык и запускайте учебные примеры в браузере.">
 <meta property="og:image" content="https://leksika.gleeze.com/значки/Лексика.png">
 <meta property="og:image:alt" content="Логотип проекта Лексика">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta property="og:url" content="https://leksika.gleeze.com/">
 
 <meta name="twitter:card" content="summary_large_image">
@@ -63,123 +65,22 @@
 }
 </script>
 
-<style>
-  :root {
-    --фон: #0d0f13;
-    --панель: #14171d;
-    --рамка: #23272f;
-    --свет: #e8ecf2;
-    --серый: #9aa4b2;
-    --серебро: #cdd6e2;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    background: var(--фон);
-    color: var(--свет);
-    font: 17px/1.65 -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  }
-  a { color: #8bb4ff; text-decoration: none; }
-  a:hover { text-decoration: underline; }
-  .полотно { max-width: 900px; margin: 0 auto; padding: 32px 20px 80px; }
-  header { text-align: center; padding: 24px 0 8px; }
-  header img { width: min(100%, 620px); height: auto; filter: drop-shadow(0 12px 40px rgba(150,170,200,.18)); }
-  h1 { font-size: clamp(26px, 5vw, 40px); line-height: 1.2; margin: 18px 0 10px; letter-spacing: -.5px; }
-  h2 { font-size: clamp(21px, 3.4vw, 27px); margin: 46px 0 12px; }
-  h3 { font-size: 19px; margin: 26px 0 8px; color: var(--серебро); }
-  p.подзаголовок { color: var(--серый); font-size: 18px; margin: 0 auto 8px; max-width: 700px; }
-  .кнопки { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 22px 0 6px; }
-  .кнопка {
-    display: inline-block; padding: 11px 18px; border-radius: 10px;
-    border: 1px solid var(--рамка); background: var(--панель); color: var(--свет);
-    font-weight: 600; font-size: 15px;
-  }
-  .кнопка.главная { background: linear-gradient(180deg, #2b3f63, #1d2b45); border-color: #3a5a8f; }
-  pre {
-    background: var(--панель); border: 1px solid var(--рамка); border-radius: 12px;
-    padding: 16px 18px; overflow-x: auto; font-size: 15px; line-height: 1.55;
-    font-family: "JetBrains Mono", Consolas, "Courier New", monospace;
-  }
-  code { font-family: "JetBrains Mono", Consolas, "Courier New", monospace; }
-  p code, li code, td code { background: #1b1f27; padding: 1px 6px; border-radius: 6px; font-size: .92em; }
-  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 16px; }
-  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--рамка); vertical-align: top; }
-  th { color: var(--серый); font-weight: 600; }
-  .плашки { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
-  .плашка { border: 1px solid var(--рамка); background: var(--панель); border-radius: 999px; padding: 5px 12px; font-size: 14px; color: var(--серебро); }
-  details { border: 1px solid var(--рамка); background: var(--панель); border-radius: 12px; padding: 12px 16px; margin: 10px 0; }
-  summary { cursor: pointer; font-weight: 600; }
-  footer { border-top: 1px solid var(--рамка); margin-top: 54px; padding-top: 20px; color: var(--серый); font-size: 14px; }
-  .ключи { color: #6f7a89; font-size: 13px; line-height: 1.8; }
+<link rel="stylesheet" href="styles.css">
+<script src="script.js" defer></script>
 
-  .оглавление { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 24px 0 30px; padding: 14px 16px; border: 1px solid var(--рамка); border-radius: 12px; background: var(--панель); }
-  .оглавление b { width: 100%; color: var(--серебро); }
-  .оглавление a { font-size: 14px; }
-  @media (max-width: 768px) {
-    body { font-size: 16px; }
-    .полотно { padding: 16px 14px 48px; }
-    header { padding-top: 12px; }
-    header img { width: min(100%, 460px); }
-    h1 { font-size: clamp(25px, 7vw, 34px); }
-    h2 { margin-top: 34px; }
-    p.подзаголовок { font-size: 16px; }
-    .кнопки { align-items: stretch; }
-    .кнопка { flex: 1 1 100%; text-align: center; }
-    .оглавление { gap: 10px 12px; padding: 12px; }
-    .оглавление a { flex: 1 1 42%; }
-    pre { max-width: 100%; padding: 12px; font-size: 13px; }
-    table { display: block; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    th, td { min-width: 110px; padding: 8px; font-size: 14px; }
-    .плашки { gap: 6px; }
-    .плашка { font-size: 12px; }
-  }
-
-</style>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  window.dataLayer.push({'gtm.start': new Date().getTime(), event: 'gtm.js'});
-  (function(w,d,s,l,i){
-    w[l]=w[l]||[];
-    var f=d.getElementsByTagName(s)[0], j=d.createElement(s), dl=l!=='dataLayer'?'&l='+l:'';
-    j.async=true;
-    j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
-    f.parentNode.insertBefore(j,f);
-  })(window,document,'script','dataLayer','GTM-K3CSQK5W');
-</script>
-<!-- Yandex.Metrika counter -->
-<script type="text/javascript">
-  (function(m,e,t,r,i,k,a){
-    m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-    m[i].l=1*new Date();
-    for (var j=0; j<document.scripts.length; j++) {
-      if (document.scripts[j].src === r) { return; }
-    }
-    k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a);
-  })(window, document, 'script', 'https://mc.yandex.ru/metrika/tag.js?id=114225735', 'ym');
-  ym(114225735, 'init', {
-    ssr:true,
-    webvisor:true,
-    clickmap:true,
-    ecommerce:"dataLayer",
-    referrer: document.referrer,
-    url: location.href,
-    accurateTrackBounce:true,
-    trackLinks:true
-  });
-</script>
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <link rel="preconnect" href="https://mc.yandex.ru">
 </head>
 <body>
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-K3CSQK5W"
-  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  height="0" width="0" title="Google Tag Manager (служебный фрейм)" loading="lazy" class="gtm-noscript-frame"></iframe></noscript>
 <noscript><div><img src="https://mc.yandex.ru/watch/114225735"
-  style="position:absolute; left:-9999px;" alt=""></div></noscript>
+  alt="" title="" width="1" height="1" loading="lazy" class="yandex-noscript-image"></div></noscript>
 
 <div class="полотно">
 
 <header>
-  <img src="значки/Лексика.png" alt="Лексика — русский язык программирования, движок Лексус">
+  <img src="значки/Лексика.png" alt="Лексика — русский язык программирования, движок Лексус" title="Логотип языка программирования Лексика" width="620" height="620" loading="eager" fetchpriority="high">
   <h1>Лексика — язык программирования на русском языке</h1>
   <p class="подзаголовок">
     Русские ключевые слова и имена, падежная грамматика и привычные скобки.
@@ -388,6 +289,25 @@ python3 проверка/тесты.lek</code></pre>
     <li><a href="https://github.com/zmlsaggg">Профиль владельца репозитория</a></li>
   </ul>
 </section>
+
+
+<h2 id="экосистема-и-разработка">Экосистема и развитие языка</h2>
+<p>
+  Лексику можно изучать постепенно: начать с короткой программы в браузерной
+  песочнице, затем перейти к файлам <code>.lek</code> и настольному движку Лексус.
+  Примеры показывают объявления переменных, работу с перечнями и словарями,
+  условия, циклы и собственные правила. Такой маршрут помогает проверить
+  синтаксис на небольших задачах до установки среды разработки.
+</p>
+<p>
+  Проект развивается открыто: исходный код, руководство, словарь и описание
+  архитектуры доступны в репозитории. Важно учитывать текущую стадию реализации:
+  настольный runtime пока сохраняет переходную зависимость от Python, а нативное
+  ядро C11 расширяется поэтапно. Перед переносом существующей программы стоит
+  свериться с документацией и проверить используемые конструкции в актуальной
+  версии движка. Сообщения об ошибках и предложения по улучшению можно отправлять
+  через GitHub.
+</p>
 
 <footer>
   <p><b>Лексика</b> — язык, который говорит по-русски. Движок — <b>Лексус</b>. Лицензия MIT.</p>
