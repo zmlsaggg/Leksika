@@ -2,8 +2,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <time.h>
 
-#define МИНИМУМ_ФОРМ 1400000u
+#define МИНИМУМ_ФОРМ 1500000u
 #define ЗАГОЛОВОК 36u
 typedef struct { char **слова; size_t число, ёмкость; } Список;
 static const uint16_t CP1251[128]={
@@ -43,13 +44,15 @@ static int add(Список*v,char*w){
 static uint32_t crc_step(uint32_t c,unsigned char b){c^=b;for(unsigned i=0;i<8;++i)c=(c>>1)^(0xEDB88320u&(uint32_t)-(int32_t)(c&1u));return c;}
 static void put32(unsigned char*p,uint32_t v){p[0]=(unsigned char)v;p[1]=(unsigned char)(v>>8);p[2]=(unsigned char)(v>>16);p[3]=(unsigned char)(v>>24);}
 static void put64(unsigned char*p,uint64_t v){put32(p,(uint32_t)v);put32(p+4,(uint32_t)(v>>32));}
-static int write_index(const char*path,Список*v){
+static int write_index(const char*path,Список*v,uint32_t*checksum,uint64_t*file_size){
  uint64_t bytes=0;for(size_t i=0;i<v->число;++i)bytes+=(uint64_t)strlen(v->слова[i])+1;
  if(bytes>UINT32_MAX){fprintf(stderr,"Словарь превышает 4 ГБ.\n");return 0;}
  uint32_t*off=(uint32_t*)malloc((v->число+1)*sizeof(uint32_t));if(!off)return 0;
  uint32_t pos=0;for(size_t i=0;i<v->число;++i){off[i]=pos;pos+=(uint32_t)strlen(v->слова[i])+1;}off[v->число]=pos;
  uint32_t crc=0xFFFFFFFFu;for(size_t i=0;i<=v->число;++i){unsigned char b[4];put32(b,off[i]);for(int j=0;j<4;++j)crc=crc_step(crc,b[j]);}
  for(size_t i=0;i<v->число;++i){const unsigned char*p=(const unsigned char*)v->слова[i];size_t n=strlen(v->слова[i])+1;for(size_t j=0;j<n;++j)crc=crc_step(crc,p[j]);}crc=~crc;
+ if(checksum)*checksum=crc;
+ if(file_size)*file_size=(uint64_t)ЗАГОЛОВОК+(uint64_t)(v->число+1)*4+bytes;
  FILE*f=fopen(path,"wb");if(!f){free(off);perror(path);return 0;}
  unsigned char h[ЗАГОЛОВОК]={0};memcpy(h,"LEKSLXD1",8);put32(h+8,1);put32(h+12,ЗАГОЛОВОК);put64(h+16,v->число);put64(h+24,bytes);put32(h+32,crc);
  int ok=fwrite(h,1,sizeof(h),f)==sizeof(h);
@@ -57,7 +60,13 @@ static int write_index(const char*path,Список*v){
  for(size_t i=0;ok&&i<v->число;++i){size_t n=strlen(v->слова[i])+1;ok=fwrite(v->слова[i],1,n,f)==n;}
  if(fclose(f)!=0)ok=0;free(off);return ok;
 }
+static double now_seconds(void){
+ struct timespec ts;
+ if(timespec_get(&ts,TIME_UTC)!=TIME_UTC)return 0.0;
+ return (double)ts.tv_sec+(double)ts.tv_nsec/1000000000.0;
+}
 int main(int argc,char**argv){
+ double started=now_seconds();
  if(argc!=3){fprintf(stderr,"Использование: словарь-сборщик <russian.txt CP1251> <русские_формы.lxd>\n");return 2;}
  FILE*in=fopen(argv[1],"rb");if(!in){perror(argv[1]);return 2;}
  Список v={0};char line[4096];size_t raw=0,bad=0;
@@ -66,7 +75,9 @@ int main(int argc,char**argv){
  if(ferror(in)){fclose(in);return 2;}fclose(in);qsort(v.слова,v.число,sizeof(char*),cmp);
  size_t unique=0;for(size_t i=0;i<v.число;++i){if(unique&&strcmp(v.слова[unique-1],v.слова[i])==0){free(v.слова[i]);continue;}v.слова[unique++]=v.слова[i];}v.число=unique;
  if(v.число<МИНИМУМ_ФОРМ){fprintf(stderr,"Проверка источника не пройдена: уникальных форм %zu, минимум %u; отброшено %zu из %zu.\n",v.число,МИНИМУМ_ФОРМ,bad,raw);return 3;}
- if(!write_index(argv[2],&v)){fprintf(stderr,"Не удалось записать индекс.\n");return 4;}
- printf("Словарь собран: %zu уникальных форм; строк %zu; отброшено %zu.\n",v.число,raw,bad);
+ uint32_t checksum=0;uint64_t file_size=0;
+ if(!write_index(argv[2],&v,&checksum,&file_size)){fprintf(stderr,"Не удалось записать индекс.\n");return 4;}
+ double seconds=now_seconds()-started;
+ printf("Словарь собран: %zu уникальных форм; строк %zu; отброшено %zu; размер %llu байт; CRC32 %08X; время %.3f с.\n",v.число,raw,bad,(unsigned long long)file_size,(unsigned)checksum,seconds);
  for(size_t i=0;i<v.число;++i)free(v.слова[i]);free(v.слова);return 0;
 }
