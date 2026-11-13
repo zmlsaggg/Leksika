@@ -618,7 +618,20 @@ static int выполнить_установку(int argc, char **argv)
         wcscat(body, L"if not exist \"%~dp0питон\\python.exe\" (echo Встроенная среда не найдена.& exit /b 2)\r\n");
         wcscat(body, L"\"%~dp0питон\\python.exe\" \"%~dp0лексус.lek\" %*\r\n");
         write_cmd(cmd, body);
-        write_cmd(legacy_cmd, L"\"%~dp0Leksika.cmd\" %*\r\n");
+        {
+            const wchar_t *имена[] = {L"лексус", L"лексика", L"лек", L"лекс", L"лексу", L"leksus", L"lek", L"leks"};
+            size_t i;
+            for (i = 0; i < sizeof(имена) / sizeof(имена[0]); ++i) {
+                wchar_t путь[MAX_PATH * 4];
+                if (wcslen(g_dir) + wcslen(имена[i]) + 6 >= sizeof(путь) / sizeof(путь[0])) {
+                    error_box("Слишком длинный путь для команд Лексики.");
+                    fclose(g_exe); g_exe = NULL; return 7;
+                }
+                wcscpy(путь, g_dir); wcscat(путь, L"\\");
+                wcscat(путь, имена[i]); wcscat(путь, L".cmd");
+                write_cmd(путь, L"\"%~dp0Leksika.cmd\" %*\r\n");
+            }
+        }
     }
     {
         wchar_t body[4096];
