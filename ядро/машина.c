@@ -192,8 +192,11 @@ int лексус_машина_исполнить_со_средой(const Лек�
      e=лексус_речь_текст(r[x->б],&reason,&reason_length);
      if(e.код!=ЛЕКСУС_ОК||!reason) fail(err,errn,e.сообщение?e.сообщение:"условие не выполнено");
      else if(err&&errn) {
-      size_t copy=reason_length<errn-1?reason_length:errn-1;
-      memcpy(err,reason,copy); err[copy]='\\0';
+      size_t limit=reason_length<errn-1?reason_length:errn-1;
+      size_t copy=0;
+      while(copy<limit&&reason[copy]!='\0') ++copy;
+      while(copy>0&&copy<reason_length&&(((unsigned char)reason[copy]&0xC0u)==0x80u)) --copy;
+      memcpy(err,reason,copy); err[copy]='\0';
      }
      ok=0;done=1;
     } else ++ip;
