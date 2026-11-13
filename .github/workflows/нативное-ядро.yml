@@ -45,7 +45,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Получить исходный код и словарь
@@ -86,6 +86,12 @@ jobs:
         working-directory: ядро
         shell: msys2 {0}
 
+      - name: Собрать ядро и словарь на macOS
+        if: runner.os == 'macOS'
+        run: make clean all test 2>&1 | tee словарь-сборки.txt
+        working-directory: ядро
+        shell: bash
+
       - name: Сохранить индекс и отчёт словаря
         uses: actions/upload-artifact@v4
         with:
@@ -93,6 +99,15 @@ jobs:
           path: |
             ядро/русские_формы.lxd
             ядро/словарь-сборки.txt
+
+      - name: Проверить macOS-установщик и наличие бинарного словаря
+        if: runner.os == 'macOS'
+        run: |
+          tmp_dir=$(mktemp -d)
+          python3 установить.lek --папка "$tmp_dir/лексика" --куда "$tmp_dir/bin" --без-ярлыка
+          test -s "$tmp_dir/лексика/ядро/русские_формы.lxd"
+          rm -rf "$tmp_dir"
+        shell: bash
 
       - name: Сопоставить нативный и переходный движки на общем подмножестве
         if: runner.os == 'Linux'
@@ -128,6 +143,53 @@ jobs:
         run: make sanitize-test
         working-directory: ядро
         shell: bash
+
+  windows-sanitizer-tests:
+    name: Windows — AddressSanitizer
+    runs-on: windows-latest
+    steps:
+      - name: Получить исходный код и словарь
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Подготовить MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Полная сборка и тесты с AddressSanitizer
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $flags = @("/nologo", "/utf-8", "/std:c11", "/O1", "/Zi", "/fsanitize=address", "/D_CRT_SECURE_NO_WARNINGS")
+          & cl @flags /Fe:dictionary-builder.exe словарь_сборщик.c
+          if ($LASTEXITCODE -ne 0) { throw "Не собрался сборщик словаря" }
+          & .\dictionary-builder.exe ..\источники\russian-words\russian.txt .\русские_формы.lxd
+          if ($LASTEXITCODE -ne 0) { throw "Не собрался бинарный словарь" }
+          & cl @flags /Fe:dictionary-test.exe словарь_индекс.c словарь_индекс_проверка.c
+          if ($LASTEXITCODE -ne 0) { throw "Не собрался тест индекса" }
+          & .\dictionary-test.exe
+          if ($LASTEXITCODE -ne 0) { throw "Тест индекса завершился с ошибкой" }
+          & cl @flags /Fe:values-test.exe значения.c значения_проверка.c
+          if ($LASTEXITCODE -ne 0) { throw "Не собрался тест значений" }
+          & .\values-test.exe
+          if ($LASTEXITCODE -ne 0) { throw "Тест значений завершился с ошибкой" }
+          & cl @flags /Fe:vm-test.exe значения.c байткод.c машина.c машина_проверка.c
+          if ($LASTEXITCODE -ne 0) { throw "Не собрался тест VM" }
+          & .\vm-test.exe
+          if ($LASTEXITCODE -ne 0) { throw "Тест VM завершился с ошибкой" }
+          & cl @flags /Fe:compiler-test.exe значения.c байткод.c машина.c компилятор.c компилятор_проверка.c
+          if ($LASTEXITCODE -ne 0) { throw "Не собрался тест компилятора" }
+          & .\compiler-test.exe
+          if ($LASTEXITCODE -ne 0) { throw "Тест компилятора завершился с ошибкой" }
+          & cl @flags /Fe:contract-test.exe значения.c байткод.c машина.c компилятор.c контракт_проверка.c
+          if ($LASTEXITCODE -ne 0) { throw "Не собрался тест контракта" }
+          & .\contract-test.exe
+          if ($LASTEXITCODE -ne 0) { throw "Тест контракта завершился с ошибкой" }
+          & cl @flags /Fe:leksus-core.exe лексус.c значения.c словарь_индекс.c байткод.c машина.c компилятор.c
+          if ($LASTEXITCODE -ne 0) { throw "Не собралось ядро" }
+          & .\leksus-core.exe --self-test
+          if ($LASTEXITCODE -ne 0) { throw "Самопроверка ядра завершилась с ошибкой" }
+        working-directory: ядро
 
   publish-dictionary:
     name: Publish compressed dictionary for GitHub Pages
