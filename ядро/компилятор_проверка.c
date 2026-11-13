@@ -8,6 +8,30 @@ static int проверить(const char *name,int ok)
     printf("%s: %s\n",ok?"OK":"FAIL",name);
     return ok?0:1;
 }
+
+typedef struct {
+    const char *input;
+    size_t position;
+    char output[128];
+    size_t output_length;
+} ТестоваяСреда;
+
+static int тестовый_ввод(void *context,char *buffer,size_t capacity,size_t *length)
+{
+    ТестоваяСреда *state=(ТестоваяСреда*)context;
+    if(state->position) return 0;
+    size_t n=strlen(state->input);
+    if(n>=capacity) return -1;
+    memcpy(buffer,state->input,n); *length=n; state->position=1; return 1;
+}
+static int тестовый_вывод(void *context,const char *bytes,size_t length)
+{
+    ТестоваяСреда *state=(ТестоваяСреда*)context;
+    if(length>sizeof(state->output)-state->output_length) return 0;
+    memcpy(state->output+state->output_length,bytes,length);
+    state->output_length+=length; return 1;
+}
+
 static int выполнить(const char *source,ЛексусЗначение *result,char *error,size_t error_size)
 {
     ЛексусСкомпилированнаяПрограмма compiled;
@@ -454,6 +478,31 @@ int main(void)
             лексус_скомпиляцию_освободить(&query);
         }
         failed+=проверить("что компилируется как выражение-ответ",ok&&show);
+    }
+
+    {
+        ТестоваяСреда test={"Привет",0,{0},0};
+        const char *source=
+            "пусть ответ равно ничто.\\n"
+            "спросить ответ.\\n"
+            "что ответ.\\n"
+            "вернуть ответ.";
+        ЛексусСкомпилированнаяПрограмма compiled;
+        error[0]=0; actual=лексус_ничто(); expected=лексус_ничто(); equal=0;
+        ok=лексус_скомпилировать(source,strlen(source),&compiled,error,sizeof(error));
+        if(ok) {
+            ЛексусПрограмма vm={compiled.код,compiled.число_инструкций,
+                                 compiled.константы,compiled.число_констант,compiled.регистры};
+            ЛексусСредаИсполнения environment={&test,тестовый_ввод,тестовый_вывод};
+            ok=лексус_машина_исполнить_со_средой(&vm,1000,&environment,&actual,error,sizeof(error));
+            лексус_скомпиляцию_освободить(&compiled);
+        }
+        (void)лексус_речь_создать("Привет",strlen("Привет"),&expected);
+        if(ok) (void)лексус_равно(actual,expected,&equal);
+        failed+=проверить("спросить и что используют интерфейс ввода/вывода среды",ok&&equal&&
+                         test.output_length==strlen("Привет\\n")&&
+                         memcmp(test.output,"Привет\\n",test.output_length)==0);
+        лексус_значение_освободить(&actual); лексус_значение_освободить(&expected);
     }
 
     printf("Итого: %s\n",failed?"есть ошибки":"все проверки пройдены");
