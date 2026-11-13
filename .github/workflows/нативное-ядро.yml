@@ -45,7 +45,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Получить исходный код и словарь
@@ -86,6 +86,12 @@ jobs:
         working-directory: ядро
         shell: msys2 {0}
 
+      - name: Собрать ядро и словарь на macOS
+        if: runner.os == 'macOS'
+        run: make clean all test 2>&1 | tee словарь-сборки.txt
+        working-directory: ядро
+        shell: bash
+
       - name: Сохранить индекс и отчёт словаря
         uses: actions/upload-artifact@v4
         with:
@@ -93,6 +99,15 @@ jobs:
           path: |
             ядро/русские_формы.lxd
             ядро/словарь-сборки.txt
+
+      - name: Проверить macOS-установщик и наличие бинарного словаря
+        if: runner.os == 'macOS'
+        run: |
+          tmp_dir=$(mktemp -d)
+          python3 установить.lek --папка "$tmp_dir/лексика" --куда "$tmp_dir/bin" --без-ярлыка
+          test -s "$tmp_dir/лексика/ядро/русские_формы.lxd"
+          rm -rf "$tmp_dir"
+        shell: bash
 
       - name: Сопоставить нативный и переходный движки на общем подмножестве
         if: runner.os == 'Linux'
