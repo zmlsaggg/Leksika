@@ -28,6 +28,34 @@ int main(void){
  const ЛексусИнструкция badcode[]={{ЛЕКСУС_ОП_КОПИЯ,9,0,0,0}};
  ЛексусПрограмма bad={badcode,1,NULL,0,2};err[0]=0;
  failed+=check("верификатор отклоняет неверный регистр",!лексус_байткод_проверить(&bad,err,sizeof(err)));
+ const uint8_t parameter_register[]={0};
+ const ЛексусФункция functions[]={{3,parameter_register,1},{6,parameter_register,1}};
+ const ЛексусВызов calls[]={{0,1,parameter_register,1},{1,1,parameter_register,1}};
+ const ЛексусИнструкция callcode[]={
+  {ЛЕКСУС_ОП_КОНСТАНТА,0,0,0,0},{ЛЕКСУС_ОП_ВЫЗОВ,0,0,0,0},
+  {ЛЕКСУС_ОП_ВОЗВРАТ,0,1,0,0},{ЛЕКСУС_ОП_КОПИЯ,2,0,0,0},
+  {ЛЕКСУС_ОП_ВЫЗОВ,0,0,0,1},{ЛЕКСУС_ОП_ВОЗВРАТ,0,1,0,0},
+  {ЛЕКСУС_ОП_СЛОЖИТЬ,2,0,0,0},{ЛЕКСУС_ОП_ВОЗВРАТ,0,2,0,0}
+ };
+ ЛексусПрограмма call_program={callcode,8,constants,1,3,functions,2,calls,2};
+ err[0]=0;result=лексус_ничто();
+ ok=лексус_машина_исполнить(&call_program,100,&result,err,sizeof(err));
+ ЛексусЗначение four=лексус_ничто();(void)лексус_число_создать("4",&four);equal=0;
+ if(ok)(void)лексус_равно(result,four,&equal);
+ failed+=check("вложенные кадры вызовов изолируют регистры и возвращают значение",ok&&equal);
+ лексус_значение_освободить(&result);лексус_значение_освободить(&four);
+ const ЛексусФункция recursive_function[]={{3,parameter_register,1}};
+ const ЛексусВызов recursive_call[]={{0,1,parameter_register,1}};
+ const ЛексусИнструкция recursive_code[]={
+  {ЛЕКСУС_ОП_КОНСТАНТА,0,0,0,0},{ЛЕКСУС_ОП_ВЫЗОВ,0,0,0,0},
+  {ЛЕКСУС_ОП_ВОЗВРАТ,0,1,0,0},{ЛЕКСУС_ОП_ВЫЗОВ,0,0,0,0},
+  {ЛЕКСУС_ОП_ВОЗВРАТ,0,1,0,0}
+ };
+ ЛексусПрограмма recursive_program={recursive_code,5,constants,1,3,recursive_function,1,recursive_call,1};
+ err[0]=0;result=лексус_ничто();
+ ok=лексус_машина_исполнить(&recursive_program,5000,&result,err,sizeof(err));
+ failed+=check("рекурсивные вызовы ограничены безопасной глубиной",!ok&&strstr(err,"глубина кадров")!=NULL);
+ лексус_значение_освободить(&result);
  for(int i=0;i<3;++i)лексус_значение_освободить(&constants[i]);
  for(int i=0;i<3;++i)лексус_значение_освободить(&branch_constants[i]);
  printf("Итого: %s\n",failed?"есть ошибки":"все проверки пройдены");return failed?1:0;
