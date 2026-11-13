@@ -123,7 +123,9 @@ int main(void)
         int compact=ok&&compiled.регистры<=2&&compiled.число_констант==1;
         if (ok) {
             ЛексусПрограмма vm={compiled.код,compiled.число_инструкций,
-                                 compiled.константы,compiled.число_констант,compiled.регистры};
+                                 compiled.константы,compiled.число_констант,compiled.регистры,
+                                  compiled.функции,compiled.число_функций,
+                                  compiled.вызовы,compiled.число_вызовов};
             ok=лексус_машина_исполнить(&vm,100000,&actual,error,sizeof(error));
             лексус_скомпиляцию_освободить(&compiled);
         }
@@ -525,7 +527,9 @@ int main(void)
         ok=лексус_скомпилировать(source,strlen(source),&compiled,error,sizeof(error));
         if(ok) {
             ЛексусПрограмма vm={compiled.код,compiled.число_инструкций,
-                                 compiled.константы,compiled.число_констант,compiled.регистры};
+                                 compiled.константы,compiled.число_констант,compiled.регистры,
+                                  compiled.функции,compiled.число_функций,
+                                  compiled.вызовы,compiled.число_вызовов};
             ЛексусСредаИсполнения environment={&test,тестовый_ввод,тестовый_вывод};
             ok=лексус_машина_исполнить_со_средой(&vm,1000,&environment,&actual,error,sizeof(error));
             лексус_скомпиляцию_освободить(&compiled);
