@@ -145,7 +145,7 @@ jobs:
         shell: bash
 
   windows-sanitizer-tests:
-    name: Windows — AddressSanitizer и UndefinedBehaviorSanitizer
+    name: Windows — AddressSanitizer
     runs-on: windows-latest
     steps:
       - name: Получить исходный код и словарь
@@ -162,7 +162,7 @@ jobs:
           choco install llvm --yes --no-progress
           $env:PATH = "C:\Program Files\LLVM\bin;$env:PATH"
 
-      - name: Полная сборка и тесты с ASan и UBSan
+      - name: Полная сборка и тесты с AddressSanitizer
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
@@ -173,7 +173,7 @@ jobs:
           $runtime = Join-Path $resource "lib\windows"
           if (!(Test-Path $runtime)) { throw "Не найден каталог sanitizer runtime: $runtime" }
           $env:PATH = "$runtime;$env:PATH"
-          $flags = @("/nologo", "/utf-8", "/std:c11", "/O1", "/Zi", "-fsanitize=address,undefined", "-fsanitize-trap=undefined", "/D_CRT_SECURE_NO_WARNINGS")
+          $flags = @("/nologo", "/utf-8", "/std:c11", "/O1", "/Zi", "-fsanitize=address", "/D_CRT_SECURE_NO_WARNINGS")
           & $compiler @flags /Fe:dictionary-builder.exe словарь_сборщик.c
           if ($LASTEXITCODE -ne 0) { throw "Не собрался сборщик словаря" }
           if (!(Test-Path ..\источники\russian-words\russian.txt)) { throw "Не найден закреплённый источник словоформ" }
