@@ -442,6 +442,20 @@ int main(void)
     failed+=проверить("когда и тогда совместимы с если и то",ok&&equal);
     лексус_значение_освободить(&actual); лексус_значение_освободить(&expected);
 
+    {
+        const char *question="что 42.";
+        ЛексусСкомпилированнаяПрограмма query;
+        error[0]=0;
+        ok=лексус_скомпилировать(question,strlen(question),&query,error,sizeof(error));
+        int show=0;
+        if(ok) {
+            for(size_t i=0;i<query.число_инструкций;++i)
+                if(query.код[i].операция==ЛЕКСУС_ОП_ПОКАЗАТЬ) show=1;
+            лексус_скомпиляцию_освободить(&query);
+        }
+        failed+=проверить("что компилируется как выражение-ответ",ok&&show);
+    }
+
     printf("Итого: %s\n",failed?"есть ошибки":"все проверки пройдены");
     return failed?1:0;
 }
