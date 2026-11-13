@@ -20,7 +20,7 @@ static int fixture(const char*path){
 int main(void){
  const char*path="leksus_dictionary_test.lxd";if(!fixture(path)){puts("fixture creation failed");return 1;}
  ЛексусИндекс x;char err[256];if(!лексус_индекс_открыть(&x,path,err,sizeof(err))){printf("open failed: %s\n",err);remove(path);return 2;}
- if(!лексус_индекс_найти(&x,"абажур")||!лексус_индекс_найти(&x,"автор")||лексус_индекс_найти(&x,"несуществующее")){puts("exact lookup failed");лексус_индекс_закрыть(&x);remove(path);return 3;}
+ if(!лексус_индекс_найти(&x,"абажур")||!лексус_индекс_найти(&x,"автор")||лексус_индекс_найти(&x,"несуществующее")||лексус_индекс_найти(&x,"АБАЖУР")){puts("exact lookup failed");лексус_индекс_закрыть(&x);remove(path);return 3;}
  const char*items[4];size_t n=лексус_индекс_подсказать(&x,"аба",items,4);
  if(n!=2||strcmp(items[0],"абажур")||strcmp(items[1],"абак")){puts("prefix lookup failed");лексус_индекс_закрыть(&x);remove(path);return 4;}
  лексус_индекс_закрыть(&x);
