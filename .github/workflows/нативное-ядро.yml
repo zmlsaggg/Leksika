@@ -64,6 +64,20 @@ jobs:
         run: make -C ядро clean all test
         shell: bash
 
+      - name: Зафиксировать статистику словаря
+        run: |
+          rm -f ядро/русские_формы.lxd
+          make -C ядро dictionary 2>&1 | tee ядро/словарь-сборки.txt
+        shell: bash
+
+      - name: Сохранить индекс и отчёт словаря
+        uses: actions/upload-artifact@v4
+        with:
+          name: русский-словарь-${{ matrix.os }}
+          path: |
+            ядро/русские_формы.lxd
+            ядро/словарь-сборки.txt
+
       - name: Сопоставить нативный и переходный движки на общем подмножестве
         if: runner.os == 'Linux'
         run: |
@@ -72,13 +86,26 @@ jobs:
           python3 проверка/сопоставление_движков.py
         shell: bash
   sanitizer-tests:
-    name: Linux — AddressSanitizer и UndefinedBehaviorSanitizer
-    runs-on: ubuntu-latest
+    name: ${{ matrix.os }} — AddressSanitizer и UndefinedBehaviorSanitizer
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Получить исходный код и словарь
         uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - name: Установить MinGW-w64 и Make
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: mingw-w64-x86_64-gcc make
+
       - name: Полная сборка и тесты с санитайзерами
         run: make -C ядро sanitize-test
         shell: bash
