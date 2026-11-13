@@ -6,12 +6,16 @@ on:
       - main
     paths:
       - "ядро/**"
+      - "источники/russian-words/**"
+      - ".gitmodules"
       - ".github/workflows/нативное-ядро.yml"
   pull_request:
     branches:
       - main
     paths:
       - "ядро/**"
+      - "источники/russian-words/**"
+      - ".gitmodules"
       - ".github/workflows/нативное-ядро.yml"
   workflow_dispatch:
 
@@ -20,11 +24,30 @@ permissions:
 
 jobs:
   сборка-и-тесты:
-    runs-on: ubuntu-latest
+    name: ${{ matrix.os }} — полная сборка и тесты
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
-      - name: Получить исходный код
+      - name: Получить исходный код и словарь
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Установить MinGW-w64 и Make
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: mingw-w64-x86_64-gcc make
+
       - name: Проверить версию компилятора
         run: cc --version
-      - name: Собрать и проверить ядро
+        shell: bash
+
+      - name: Собрать нативное ядро и полный словарный индекс, затем выполнить тесты
         run: make -C ядро clean all test
+        shell: bash
