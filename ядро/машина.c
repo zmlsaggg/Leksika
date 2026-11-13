@@ -5,27 +5,46 @@
 static void fail(char*p,size_t n,const char*s){if(p&&n)snprintf(p,n,"%s",s);}
 static void assign(ЛексусЗначение*dst,ЛексусЗначение src){лексус_значение_освободить(dst);*dst=src;}
 static int store_result(ЛексусЗначение*r,uint8_t dst,ЛексусОшибка e,ЛексусЗначение value,char*err,size_t errn){if(e.код!=ЛЕКСУС_ОК){fail(err,errn,e.сообщение?e.сообщение:"ошибка операции значения");лексус_значение_освободить(&value);return 0;}assign(&r[dst],value);return 1;}
-static void показать_значение(ЛексусЗначение v){
+static int вывести_байты(const ЛексусСредаИсполнения *env,const char *bytes,size_t length)
+{
+ if(env&&env->вывод) return env->вывод(env->контекст,bytes,length)==1;
+ return fwrite(bytes,1,length,stdout)==length;
+}
+static int показать_значение(ЛексусЗначение v,const ЛексусСредаИсполнения *env,char *err,size_t errn)
+{
+ const char *text=NULL; size_t length=0; char *owned=NULL;
  switch(v.вид){
-  case ЛЕКСУС_НИЧТО: fputs("ничто",stdout); break;
-  case ЛЕКСУС_ЛОГИКА: fputs(v.данные.логика?"да":"нет",stdout); break;
+  case ЛЕКСУС_НИЧТО: text="ничто"; length=strlen(text); break;
+  case ЛЕКСУС_ЛОГИКА: text=v.данные.логика?"да":"нет"; length=strlen(text); break;
   case ЛЕКСУС_ЧИСЛО: {
-   char *text=NULL;
-   ЛексусОшибка e=лексус_число_запись(v,&text);
-   if(e.код==ЛЕКСУС_ОК&&text){fputs(text,stdout);free(text);}
-   else fputs("ошибка вывода числа",stdout);
-   break;
+   ЛексусОшибка e=лексус_число_запись(v,&owned);
+   if(e.код!=ЛЕКСУС_ОК||!owned){fail(err,errn,e.сообщение?e.сообщение:"не удалось преобразовать число для вывода");return 0;}
+   text=owned; length=strlen(owned); break;
   }
   case ЛЕКСУС_РЕЧЬ: {
-   const char *text=NULL; size_t bytes=0;
-   ЛексусОшибка e=лексус_речь_текст(v,&text,&bytes);
-   if(e.код==ЛЕКСУС_ОК&&text) fwrite(text,1,bytes,stdout);
-   else fputs("ошибка вывода речи",stdout);
+   ЛексусОшибка e=лексус_речь_текст(v,&text,&length);
+   if(e.код!=ЛЕКСУС_ОК||!text){fail(err,errn,e.сообщение?e.сообщение:"не удалось получить текст речи");return 0;}
    break;
   }
-  default: fputs(лексус_имя_вида(v.вид),stdout); break;
+  default: fail(err,errn,"этот вид значения пока нельзя вывести как речь"); return 0;
  }
- putchar('\n');
+ int ok=вывести_байты(env,text,length)&&вывести_байты(env,"\n",1);
+ free(owned);
+ if(!ok) fail(err,errn,"среда отклонила вывод значения");
+ return ok;
+}
+static int ввод_по_умолчанию(void *context,char *buffer,size_t capacity,size_t *length)
+{
+ (void)context;
+ if(!buffer||!capacity||!length) return -1;
+ size_t used=0; int ch;
+ while((ch=getchar())!=EOF&&ch!='\n'){
+  if(used+1>=capacity){while(ch!='\n'&&(ch=getchar())!=EOF){}return -1;}
+  buffer[used++]=(char)ch;
+ }
+ if(ch==EOF&&used==0) return 0;
+ if(used&&buffer[used-1]=='\r') --used;
+ *length=used; return 1;
 }
 static void cleanup(ЛексусЗначение*r,size_t n){if(r){for(size_t i=0;i<n;++i)лексус_значение_освободить(&r[i]);free(r);}}
 typedef struct { ЛексусЗначение остаток; } ЛексусСчётчикЦикла;
@@ -36,7 +55,9 @@ static void cleanup_cycles(ЛексусСчётчикЦикла *cycles,size_t c
  free(cycles);
 }
 
-int лексус_машина_исполнить(const ЛексусПрограмма*p,uint64_t limit,ЛексусЗначение*out,char*err,size_t errn){
+int лексус_машина_исполнить_со_средой(const ЛексусПрограмма*p,uint64_t limit,
+                                      const ЛексусСредаИсполнения *env,
+                                      ЛексусЗначение*out,char*err,size_t errn){
  if(!out){fail(err,errn,"не задано место для результата");return 0;}*out=лексус_ничто();
  if(!лексус_байткод_проверить(p,err,errn))return 0;
  if(!limit)limit=10000000u;
@@ -162,11 +183,35 @@ int лексус_машина_исполнить(const ЛексусПрогра�
    case ЛЕКСУС_ОП_ПЕРЕХОД_ЕСЛИ_ЛОЖЬ:ip=лексус_правда(r[x->а])?ip+1:x->операнд;break;
    case ЛЕКСУС_ОП_ВОЗВРАТ:*out=лексус_значение_копия(r[x->а]);done=1;break;
    case ЛЕКСУС_ОП_СТОП:done=1;break;
-   case ЛЕКСУС_ОП_ПОКАЗАТЬ:показать_значение(r[x->назначение]);++ip;break;
+   case ЛЕКСУС_ОП_ПОКАЗАТЬ:
+    if(!показать_значение(r[x->назначение],env,err,errn)){ok=0;done=1;}else ++ip;
+    break;
+   case ЛЕКСУС_ОП_ВВОД: {
+    const size_t capacity=65536u;
+    char *buffer=(char*)malloc(capacity);
+    if(!buffer){fail(err,errn,"не хватает памяти для ввода");ok=0;done=1;break;}
+    size_t length=0;
+    ЛексусВводСреды read_line=env&&env->ввод?env->ввод:ввод_по_умолчанию;
+    int read_status=read_line(env?env->контекст:NULL,buffer,capacity,&length);
+    if(read_status!=1||length>=capacity){
+     free(buffer);
+     fail(err,errn,read_status==0?"достигнут конец ввода":"среда не смогла предоставить строку ввода");
+     ok=0;done=1;break;
+    }
+    ЛексусЗначение input=лексус_ничто();
+    e=лексус_речь_создать(buffer,length,&input);
+    free(buffer);
+    if(!store_result(r,x->назначение,e,input,err,errn)){ok=0;done=1;}else ++ip;
+    break;
+   }
    default:fail(err,errn,"неизвестная инструкция после проверки");ok=0;done=1;break;
   }
  }
  if(ok&&!done){fail(err,errn,"программа завершилась без возврата или остановки");ok=0;}
  cleanup_cycles(cycles,cycles_count);
  cleanup(r,p->регистры);if(!ok)лексус_значение_освободить(out);return ok;
+}
+int лексус_машина_исполнить(const ЛексусПрограмма*p,uint64_t limit,ЛексусЗначение*out,char*err,size_t errn)
+{
+ return лексус_машина_исполнить_со_средой(p,limit,NULL,out,err,errn);
 }
