@@ -1,6 +1,7 @@
 #include "компилятор.h"
 #include "машина.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static int проверить(const char *name,int ok)
@@ -583,6 +584,14 @@ int main(void)
         "вернуть локальное плюс итог().",
         &actual,error,sizeof(error));
     equal=ok&&лексус_равно(actual,expected,&same).код==ЛЕКСУС_ОК&&same;
+    if(!ok) fprintf(stderr,"native nested call error: %s\\n",error);
+    else if(!equal) {
+        char *число=NULL;
+        if(actual.вид==ЛЕКСУС_ЧИСЛО&&лексус_число_запись(actual,&число).код==ЛЕКСУС_ОК) {
+            fprintf(stderr,"native nested call result: %s (expected 49)\\n",число);
+            free(число);
+        }
+    }
     failed+=проверить("нативные кадры вызовов сохраняют регистры и вложенные возвраты",equal);
 
     error[0]=0;
@@ -595,7 +604,9 @@ int main(void)
     ok=лексус_скомпилировать(procedure_source,strlen(procedure_source),&bad,error,sizeof(error));
     if(ok) {
         ЛексусЗначение procedure_result=лексус_ничто();
-        ok=лексус_машина_исполнить(&bad,100000,&procedure_result,error,sizeof(error));
+        ЛексусПрограмма procedure_vm={bad.код,bad.число_инструкций,
+                                      bad.константы,bad.число_констант,bad.регистры};
+        ok=лексус_машина_исполнить(&procedure_vm,100000,&procedure_result,error,sizeof(error));
         лексус_значение_освободить(&procedure_result);
         лексус_скомпиляцию_освободить(&bad);
     }
