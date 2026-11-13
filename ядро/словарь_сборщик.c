@@ -6,7 +6,7 @@
 
 #define МИНИМУМ_ФОРМ 1500000u
 #define ЗАГОЛОВОК 36u
-typedef struct { char **слова; size_t число, ёмкость; } Список;
+typedef struct { char **слова; size_t число, capacity; } Список;
 static const uint16_t CP1251[128]={
 0x0402,0x0403,0x201A,0x0453,0x201E,0x2026,0x2020,0x2021,0x20AC,0x2030,0x0409,0x2039,0x040A,0x040C,0x040B,0x040F,
 0x0452,0x2018,0x2019,0x201C,0x201D,0x2022,0x2013,0x2014,0xFFFF,0x2122,0x0459,0x203A,0x045A,0x045C,0x045B,0x045F,
@@ -40,7 +40,7 @@ static char *преобразовать(const unsigned char *s,size_t n){
 }
 static int cmp(const void*a,const void*b){return strcmp(*(char*const*)a,*(char*const*)b);}
 static int add(Список*v,char*w){
- if(v->число==v->ёмкость){size_t cap=v->ёмкость?v->ёмкость*2:65536;char**p=(char**)realloc(v->слова,cap*sizeof(char*));if(!p)return 0;v->слова=p;v->ёмкость=cap;}
+ if(v->число==v->capacity){size_t cap=v->capacity?v->capacity*2:65536;char**p=(char**)realloc(v->слова,cap*sizeof(char*));if(!p)return 0;v->слова=p;v->capacity=cap;}
  v->слова[v->число++]=w;return 1;
 }
 static uint32_t crc_step(uint32_t c,unsigned char b){c^=b;for(unsigned i=0;i<8;++i)c=(c>>1)^(0xEDB88320u&(uint32_t)-(int32_t)(c&1u));return c;}
