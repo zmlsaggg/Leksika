@@ -119,3 +119,8 @@ textarea {
 }
 
 .ии-настройки{display:grid;grid-template-columns:1fr 1fr;gap:12px}.ии-пояснение{grid-column:1/-1}#ии-модель-статус{display:block;min-width:220px}@media(max-width:680px){.ии-настройки{grid-template-columns:1fr}}
+
+.лексические-подсказки{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0;padding:8px;border:1px solid var(--рамка);border-radius:10px;background:#10151d}
+.лексические-подсказки[hidden]{display:none}
+.лексические-подсказки button{padding:5px 9px;border:1px solid #354253;border-radius:7px;background:#192331;color:#dce8f7;font:12px/1.4 "Cascadia Code","JetBrains Mono",Consolas,monospace;cursor:pointer}
+.лексические-подсказки button[aria-selected="true"],.лексические-подсказки button:hover{border-color:#7398ce;background:#243752}

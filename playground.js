@@ -11,6 +11,170 @@
   const ииКлюч = по("ии-ключ");
   const ииКнопка = по("ии-спросить");
   const ииВывод = по("ии-вывод");
+  const панельПодсказок = по("редактор-подсказки");
+
+  let словарьПромис = null;
+  let индексСловоформ = null;
+  let текущиеПодсказки = [];
+  let выбраннаяПодсказка = 0;
+  let началоСловаПодсказки = 0;
+  let конецСловаПодсказки = 0;
+  let таблицаCRC32 = null;
+
+  function crc32(bytes) {
+    if (!таблицаCRC32) {
+      таблицаCRC32 = new Uint32Array(256);
+      for (let n = 0; n < 256; n += 1) {
+        let c = n;
+        for (let k = 0; k < 8; k += 1) {
+          c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+        }
+        таблицаCRC32[n] = c >>> 0;
+      }
+    }
+    let crc = 0xFFFFFFFF;
+    for (let i = 0; i < bytes.length; i += 1) {
+      crc = таблицаCRC32[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+    }
+    return (crc ^ 0xFFFFFFFF) >>> 0;
+  }
+
+  async function загрузитьИндексСловоформ() {
+    if (индексСловоформ) return индексСловоформ;
+    if (!словарьПромис) {
+      словарьПромис = (async () => {
+        const адрес = new URL("ядро/русские_формы.lxd", document.baseURI);
+        const ответ = await fetch(адрес.href, { cache: "force-cache" });
+        if (!ответ.ok) throw new Error("Бинарный словарь ещё не опубликован рядом с песочницей.");
+        const буфер = await ответ.arrayBuffer();
+        const байты = new Uint8Array(буфер);
+        if (байты.length < 36 ||
+            String.fromCharCode(...байты.subarray(0, 8)) !== "LEKSLXD1") {
+          throw new Error("Неизвестный формат словаря.");
+        }
+        const вид = new DataView(буфер);
+        const версия = вид.getUint32(8, true);
+        const размерЗаголовка = вид.getUint32(12, true);
+        const количествоBig = вид.getBigUint64(16, true);
+        const размерДанныхBig = вид.getBigUint64(24, true);
+        const контрольнаяСумма = вид.getUint32(32, true);
+        if (версия !== 1 || размерЗаголовка !== 36 ||
+            количествоBig <= 0n || количествоBig > 5000000n ||
+            размерДанныхBig > 134217728n) {
+          throw new Error("Заголовок словаря повреждён или не поддерживается.");
+        }
+        const количество = Number(количествоBig);
+        const размерДанных = Number(размерДанныхBig);
+        const таблицаСмещения = 36;
+        const данныеНачало = 36 + (количество + 1) * 4;
+        if (данныеНачало + размерДанных !== байты.length ||
+            crc32(байты.subarray(36)) !== контрольнаяСумма) {
+          throw new Error("Размер или контрольная сумма словаря не совпадает.");
+        }
+        индексСловоформ = {
+          байты, вид, количество, таблицаСмещения, данныеНачало, размерДанных
+        };
+        return индексСловоформ;
+      })();
+    }
+    return словарьПромис;
+  }
+
+  function байтыСлова(индекс, номер) {
+    const a = индекс.вид.getUint32(индекс.таблицаСмещения + номер * 4, true);
+    const b = индекс.вид.getUint32(индекс.таблицаСмещения + (номер + 1) * 4, true);
+    return индекс.байты.subarray(индекс.данныеНачало + a, индекс.данныеНачало + b - 1);
+  }
+
+  function сравнитьБайты(а, б) {
+    const длина = Math.min(а.length, б.length);
+    for (let i = 0; i < длина; i += 1) {
+      if (а[i] !== б[i]) return а[i] < б[i] ? -1 : 1;
+    }
+    return а.length === б.length ? 0 : (а.length < б.length ? -1 : 1);
+  }
+
+  function найтиПодсказки(индекс, префикс, предел = 8) {
+    const кодировка = new TextEncoder();
+    const искомое = кодировка.encode(префикс.toLowerCase());
+    let низ = 0;
+    let верх = индекс.количество;
+    while (низ < верх) {
+      const середина = низ + Math.floor((верх - низ) / 2);
+      if (сравнитьБайты(байтыСлова(индекс, середина), искомое) < 0) низ = середина + 1;
+      else верх = середина;
+    }
+    const декодер = new TextDecoder("utf-8", { fatal: true });
+    const найдено = [];
+    while (низ < индекс.количество && найдено.length < предел) {
+      const слово = байтыСлова(индекс, низ++);
+      if (сравнитьБайты(слово.subarray(0, искомое.length), искомое) !== 0) break;
+      найдено.push(декодер.decode(слово));
+    }
+    return найдено;
+  }
+
+  function скрытьПодсказки() {
+    текущиеПодсказки = [];
+    выбраннаяПодсказка = 0;
+    панельПодсказок.replaceChildren();
+    панельПодсказок.hidden = true;
+  }
+
+  function выбратьПодсказку(номер) {
+    const слово = текущиеПодсказки[номер];
+    if (!слово) return;
+    редактор.setRangeText(слово, началоСловаПодсказки, конецСловаПодсказки, "end");
+    скрытьПодсказки();
+    редактор.focus();
+  }
+
+  function отрисоватьПодсказки(слова, начало, конец) {
+    текущиеПодсказки = слова;
+    выбраннаяПодсказка = 0;
+    началоСловаПодсказки = начало;
+    конецСловаПодсказки = конец;
+    панельПодсказок.replaceChildren();
+    if (!слова.length) {
+      панельПодсказок.hidden = true;
+      return;
+    }
+    слова.forEach((слово, номер) => {
+      const кнопка = document.createElement("button");
+      кнопка.type = "button";
+      кнопка.textContent = слово;
+      кнопка.setAttribute("role", "option");
+      кнопка.setAttribute("aria-selected", номер === 0 ? "true" : "false");
+      кнопка.addEventListener("mousedown", (событие) => событие.preventDefault());
+      кнопка.addEventListener("click", () => выбратьПодсказку(номер));
+      панельПодсказок.appendChild(кнопка);
+    });
+    панельПодсказок.hidden = false;
+  }
+
+  async function обновитьПодсказкиРедактора() {
+    const позиция = редактор.selectionStart;
+    const передКареткой = редактор.value.slice(0, позиция);
+    const совпадение = передКареткой.match(/[А-Яа-яЁё]+$/u);
+    if (!совпадение || совпадение[0].length < 2 ||
+        редактор.selectionStart !== редактор.selectionEnd) {
+      скрытьПодсказки();
+      return;
+    }
+    const префикс = совпадение[0].toLowerCase();
+    const начало = позиция - совпадение[0].length;
+    try {
+      const индекс = await загрузитьИндексСловоформ();
+      if (редактор.selectionStart !== позиция ||
+          редактор.value.slice(начало, позиция).toLowerCase() !== префикс) return;
+      отрисоватьПодсказки(найтиПодсказки(индекс, префикс), начало, позиция);
+    } catch (_ошибка) {
+      скрытьПодсказки();
+    }
+  }
+
+  редактор.addEventListener("input", обновитьПодсказкиРедактора);
+  редактор.addEventListener("click", обновитьПодсказкиРедактора);
 
   const ПРИМЕРЫ = {
     начало: [
@@ -960,6 +1124,31 @@
   });
 
   редактор.addEventListener("keydown", (событие) => {
+    if (!панельПодсказок.hidden && событие.key === "ArrowDown") {
+      событие.preventDefault();
+      выбраннаяПодсказка = (выбраннаяПодсказка + 1) % текущиеПодсказки.length;
+      [...панельПодсказок.children].forEach((элемент, номер) =>
+        элемент.setAttribute("aria-selected", номер === выбраннаяПодсказка ? "true" : "false"));
+      return;
+    }
+    if (!панельПодсказок.hidden && событие.key === "ArrowUp") {
+      событие.preventDefault();
+      выбраннаяПодсказка = (выбраннаяПодсказка - 1 + текущиеПодсказки.length) % текущиеПодсказки.length;
+      [...панельПодсказок.children].forEach((элемент, номер) =>
+        элемент.setAttribute("aria-selected", номер === выбраннаяПодсказка ? "true" : "false"));
+      return;
+    }
+    if (!панельПодсказок.hidden && событие.key === "Enter" &&
+        !событие.ctrlKey && !событие.metaKey && !событие.shiftKey) {
+      событие.preventDefault();
+      выбратьПодсказку(выбраннаяПодсказка);
+      return;
+    }
+    if (событие.key === "Escape" && !панельПодсказок.hidden) {
+      событие.preventDefault();
+      скрытьПодсказки();
+      return;
+    }
     if ((событие.ctrlKey || событие.metaKey) && событие.key === "Enter") {
       событие.preventDefault();
       по("запустить").click();
