@@ -7,6 +7,7 @@ import shlex
 import stat
 import subprocess
 import sys
+import tempfile
 
 ЗДЕСЬ = os.path.dirname(os.path.abspath(__file__))
 ДОМ = os.path.expanduser("~")
@@ -24,6 +25,51 @@ def проверить_питон():
     if sys.version_info < (3, 8):
         print("нужен python3 версии 3.8 или новее", file=sys.stderr)
         raise SystemExit(2)
+
+
+def собрать_словарь():
+    """Собирает LEKSLXD1 до копирования ядра в Linux/macOS-установку."""
+    каталог = os.path.join(ЗДЕСЬ, "ядро")
+    индекс = os.path.join(каталог, "русские_формы.lxd")
+    if os.path.isfile(индекс):
+        return True
+
+    источник = os.path.join(ЗДЕСЬ, "источники", "russian-words", "russian.txt")
+    сборщик = os.path.join(каталог, "словарь_сборщик.c")
+    if not os.path.isfile(источник):
+        print("словарь: нет источника russian-words; для Git-клона выполните git submodule update --init --recursive")
+        return False
+    if not os.path.isfile(сборщик):
+        print("словарь: не найден нативный сборщик", file=sys.stderr)
+        return False
+
+    компилятор = shutil.which("cc") or shutil.which("clang") or shutil.which("gcc")
+    if not компилятор:
+        print("словарь: C11-компилятор не найден; индекс не собран")
+        return False
+
+    расширение = ".exe" if os.name == "nt" else ""
+    with tempfile.TemporaryDirectory(prefix="leksika-dictionary-") as временная:
+        инструмент = os.path.join(временная, "словарь-сборщик" + расширение)
+        команда = [
+            компилятор, "-std=c11", "-O2", "-Wall", "-Wextra", "-Wpedantic",
+            сборщик, "-o", инструмент,
+        ]
+        сборка = subprocess.run(команда, capture_output=True, text=True,
+                                encoding="utf-8", errors="replace")
+        if сборка.returncode != 0:
+            print("словарь: не удалось собрать инструмент: " + сборка.stderr.strip(), file=sys.stderr)
+            return False
+
+        результат = subprocess.run(
+            [инструмент, источник, индекс], capture_output=True, text=True,
+            encoding="utf-8", errors="replace",
+        )
+        if результат.returncode != 0:
+            print("словарь: не удалось собрать индекс: " + результат.stderr.strip(), file=sys.stderr)
+            return False
+        print("словарь: " + результат.stdout.strip())
+    return os.path.isfile(индекс)
 
 
 ЗНАЧОК = """[Desktop Entry]
@@ -61,6 +107,8 @@ def поставить(папка, куда, ярлык=True):
     куда = os.path.abspath(os.path.expanduser(куда))
 
     уже_на_месте = os.path.abspath(ЗДЕСЬ) == папка
+    if not собрать_словарь():
+        print("предупреждение: установка продолжится без бинарного индекса словоформ")
     if not уже_на_месте:
         os.makedirs(папка, exist_ok=True)
         for имя in ЧТО_СТАВИМ:
