@@ -43,11 +43,22 @@ static int выполнить(const char *source,ЛексусЗначение *r
     return ok;
 }
 
+typedef struct {
+    ТестоваяСреда среда;
+    int вызовы_политики;
+} КонтекстРазрешений;
+
+static int вывод_контекста_разрешений(void *context,const char *bytes,size_t length)
+{
+    КонтекстРазрешений *state=(КонтекстРазрешений*)context;
+    return тестовый_вывод(&state->среда,bytes,length);
+}
+
 static int запретить_ресурс(void *context,uint32_t action,const char *resource)
 {
-    int *calls=(int*)context;
+    КонтекстРазрешений *state=(КонтекстРазрешений*)context;
     (void)action;(void)resource;
-    ++*calls;
+    ++state->вызовы_политики;
     return 0;
 }
 static int выполнить_с_профилем(const char *source,unsigned profile,ТестоваяСреда *state,
@@ -89,17 +100,17 @@ int main(void)
         ЛексусСкомпилированнаяПрограмма compiled;
         const char *source="сказать речь Запрет allowlist. конец речи.";
         int ok=лексус_скомпилировать(source,strlen(source),&compiled,error,sizeof(error));
-        ТестоваяСреда state={0};ЛексусЗначение result=лексус_ничто();int calls=0;
+        КонтекстРазрешений state={0};ЛексусЗначение result=лексус_ничто();
         if(ok){
             ЛексусПрограмма vm={compiled.код,compiled.число_инструкций,
                 compiled.константы,compiled.число_констант,compiled.регистры};
-            ЛексусСредаИсполнения env={&calls,NULL,тестовый_вывод,
+            ЛексусСредаИсполнения env={&state,NULL,вывод_контекста_разрешений,
                 ЛЕКСУС_РАЗРЕШИТЬ_ВЫВОД,запретить_ресурс};
             ok=лексус_машина_исполнить_со_средой(&vm,1000,&env,&result,error,sizeof(error));
             лексус_скомпиляцию_освободить(&compiled);
         }
         failed+=проверить("VM применяет allowlist callback до вызова вывода",
-                          !ok&&calls==1&&state.output_length==0&&strstr(error,"ресурс")!=NULL);
+                          !ok&&state.вызовы_политики==1&&state.среда.output_length==0&&strstr(error,"ресурс")!=NULL);
         лексус_значение_освободить(&result);
     }
     {
