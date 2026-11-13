@@ -160,25 +160,55 @@
         </p>
       </details>
 
-      <section class="ии-блок" aria-label="ИИ-помощник">
-        <div class="ии-шапка"><div><strong>ИИ-помощник Лексики</strong><p>По умолчанию включён. Локальная модель работает прямо в браузере.</p></div>
-          <label class="ии-переключатель" for="ии-включить"><input id="ии-включить" type="checkbox" checked> Включить ИИ</label></div>
+      <section class="ии-блок ai-workspace" aria-label="ИИ-помощник Лексики">
+        <div class="ии-шапка ai-heading">
+          <div><strong>ИИ-помощник Лексики</strong><p>Два режима: интеллектуальный редактор и свободный чат.</p></div>
+          <label class="ии-переключатель" for="ии-включить"><input id="ии-включить" type="checkbox" checked> ИИ включён</label>
+        </div>
         <div id="ии-панель" class="ии-панель">
-          <div class="ии-сетка">
-            <label class="поле широкое" for="ии-источник"><span>Где запускать модель</span><select id="ии-источник"><option value="huggingface" selected>Hugging Face · прямо в браузере</option><option value="api">Внешний API · по ключу</option></select></label>
-            <label class="поле широкое" for="ии-стиль"><span>Стиль помощника</span><select id="ии-стиль"><option value="strict">1. Строгий — только язык и морфология</option><option value="balanced" selected>2. Баланс — объяснения и неизвестные команды</option><option value="creative">3. Креатив — свободное общение вне кода</option></select></label>
-            <div id="ии-hf-настройки" class="ии-настройки широкое"><label class="поле" for="ии-модель-hf"><span>Модель Hugging Face</span><input id="ии-модель-hf" type="text" value="onnx-community/Qwen2.5-0.5B-Instruct" autocomplete="off" spellcheck="false"></label>
-              <div class="ии-действия"><button class="кнопка главная" id="ии-загрузить" type="button">Загрузить модель в браузер</button><span id="ии-модель-статус" class="подсказка" role="status">Модель ещё не загружена. Загрузка начнётся после нажатия.</span></div>
-              <p class="ии-пояснение">Можно указать ID репозитория HF. Работают модели с совместимыми ONNX-весами и архитектурами Transformers.js; не каждый репозиторий поддерживает браузерный запуск. Файлы скачиваются с Hugging Face и кэшируются браузером. WebGPU используется при наличии, иначе WebAssembly.</p></div>
-            <div id="ии-api-настройки" class="ии-настройки широкое" hidden><label class="поле" for="ии-режим"><span>Формат API</span><select id="ии-режим"><option value="openai">OpenAI-совместимый API</option><option value="anthropic">Anthropic Messages API</option><option value="gemini">Google Gemini API</option></select></label>
-              <label class="поле" for="ии-модель"><span>Название модели API</span><input id="ии-модель" type="text" placeholder="ID выбранной модели" autocomplete="off"></label>
-              <label class="поле широкое" for="ии-адрес"><span>Адрес API</span><input id="ии-адрес" type="text" value="https://api.openai.com/v1/chat/completions" autocomplete="off"><p>OpenAI-совместимые шлюзы: OpenRouter, Groq, DeepSeek, Together, LM Studio. Нужен доступ из браузера (CORS).</p></label>
-              <label class="поле широкое" for="ии-ключ"><span>API-ключ</span><input id="ии-ключ" type="password" placeholder="Вставьте свой ключ" autocomplete="new-password"></label></div>
-            <label class="поле широкое" for="ии-запрос"><span>Ваш вопрос</span><textarea id="ии-запрос">Объясни, что делает эта программа, и найди возможные ошибки.</textarea></label>
+          <div class="ai-mode-tabs" role="tablist" aria-label="Режим помощника">
+            <button class="ai-mode-tab is-active" type="button" role="tab" aria-selected="true" data-ai-mode="code">⌘ Режим кода</button>
+            <button class="ai-mode-tab" type="button" role="tab" aria-selected="false" data-ai-mode="chat">◉ Режим чата</button>
           </div>
-          <div class="ии-действия"><button class="кнопка главная" id="ии-спросить" type="button">Спросить помощника</button><span class="подсказка">Код передаётся модели только после вашего запроса.</span></div>
-          <pre id="ии-вывод" aria-live="polite">Помощник включён. Загрузите модель и задайте вопрос.</pre>
-          <p class="ии-предупреждение">Локальная модель не отправляет код на сервер. При выборе API провайдер получит код и вопрос. Не вставляйте секреты. Загрузка требует интернета, памяти и совместимого браузера. Выключение помощника очищает API-ключ.</p>
+          <details class="ai-settings">
+            <summary>Настройки модели и подключения</summary>
+            <div class="ии-сетка ai-settings-grid">
+              <label class="поле широкое" for="ии-источник"><span>Провайдер</span><select id="ии-источник"><option value="huggingface" selected>Hugging Face · прямо в браузере</option><option value="api">Внешний API · по ключу</option></select></label>
+              <label class="поле широкое" for="ии-стиль"><span>Стиль редактора</span><select id="ии-стиль"><option value="strict">Строгая проверка морфологии</option><option value="balanced" selected>Помощь с синтаксисом и исправлениями</option><option value="creative">Свободные пояснения</option></select></label>
+              <div id="ии-hf-настройки" class="ии-настройки широкое">
+                <label class="поле" for="ии-модель-hf"><span>Модель Hugging Face</span><input id="ии-модель-hf" type="text" value="onnx-community/Qwen2.5-0.5B-Instruct" autocomplete="off" spellcheck="false"></label>
+                <div class="ии-действия"><button class="кнопка главная" id="ии-загрузить" type="button">Загрузить модель</button><span id="ии-модель-статус" class="подсказка" role="status">Модель ещё не загружена.</span></div>
+                <p class="ии-пояснение">Модель загружается в браузер по нажатию и кэшируется. WebGPU используется при наличии, иначе WebAssembly.</p>
+              </div>
+              <div id="ии-api-настройки" class="ии-настройки широкое" hidden>
+                <label class="поле" for="ии-режим"><span>Формат API</span><select id="ии-режим"><option value="openai">OpenAI-совместимый API</option><option value="anthropic">Anthropic Messages API</option><option value="gemini">Google Gemini API</option></select></label>
+                <label class="поле" for="ии-модель"><span>Модель API</span><input id="ии-модель" type="text" placeholder="ID выбранной модели" autocomplete="off"></label>
+                <label class="поле широкое" for="ии-адрес"><span>Адрес API</span><input id="ии-адрес" type="text" value="https://api.openai.com/v1/chat/completions" autocomplete="off"></label>
+                <label class="поле широкое" for="ии-ключ"><span>API-ключ</span><input id="ии-ключ" type="password" placeholder="Вставьте свой ключ" autocomplete="new-password"></label>
+              </div>
+            </div>
+          </details>
+
+          <section class="ai-mode-panel is-active" data-ai-panel="code">
+            <div class="ai-code-intro"><div class="ai-avatar">Л</div><div><strong>Редактор Лексики</strong><p>Разберёт ошибки, подскажет правильные формы и предложит исправленный код. Исходник меняется только после твоего подтверждения.</p></div></div>
+            <label class="поле" for="ии-запрос"><span>Что проверить?</span><textarea id="ии-запрос" rows="3">Проверь программу на ошибки и предложи исправления.</textarea></label>
+            <div class="ии-действия"><button class="кнопка главная" id="ии-спросить" type="button">Проверить код</button><button class="кнопка" id="ии-применить" type="button" hidden>Применить исправление</button><span class="подсказка">Текущий код редактора будет передан модели.</span></div>
+            <pre id="ии-вывод" aria-live="polite">Загрузи модель или подключи API, затем попроси проверить программу.</pre>
+          </section>
+
+          <section class="ai-mode-panel" data-ai-panel="chat" hidden>
+            <div class="ai-chat-shell">
+              <div class="ai-chat-topbar"><div><span class="ai-status-dot"></span><strong>Лексика AI</strong><span class="ai-model-label">Свободный диалог · русский по умолчанию</span></div><button class="ai-clear-chat" id="ии-очистить-чат" type="button">Новый чат</button></div>
+              <div id="ии-история" class="ai-chat-history" role="log" aria-live="polite" aria-relevant="additions"></div>
+              <form id="ии-форма-чата" class="ai-chat-composer">
+                <label class="visually-hidden" for="ии-сообщение">Сообщение</label>
+                <textarea id="ии-сообщение" rows="1" placeholder="Спроси что угодно…" autocomplete="off"></textarea>
+                <button id="ии-отправить" type="submit" aria-label="Отправить сообщение">↑</button>
+              </form>
+              <p class="ai-chat-disclaimer">ИИ может ошибаться. Не отправляй пароли, ключи и личные секреты.</p>
+            </div>
+          </section>
+          <p class="ии-предупреждение">При локальном запуске запросы обрабатываются на устройстве. При выборе внешнего API провайдер получает отправленный текст и код (в режиме редактора). API-ключ хранится только в памяти вкладки.</p>
         </div>
       </section>
     </main>
@@ -191,6 +221,8 @@
       <a href="https://github.com/zmlsaggg/Leksika/blob/main/LICENSE" rel="noopener noreferrer">Лицензия MIT</a>
     </footer>
   </div>
+  <script src="playground-knowledge.js" defer></script>
   <script src="playground.js" defer></script>
+  <script src="playground-chat.js" defer></script>
 </body>
 </html>
