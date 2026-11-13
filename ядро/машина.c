@@ -186,6 +186,19 @@ int лексус_машина_исполнить_со_средой(const Лек�
    case ЛЕКСУС_ОП_ПОКАЗАТЬ:
     if(!показать_значение(r[x->назначение],env,err,errn)){ok=0;done=1;}else ++ip;
     break;
+   case ЛЕКСУС_ОП_ПРОВЕРИТЬ: {
+    if(!лексус_правда(r[x->а])) {
+     const char *reason=NULL; size_t reason_length=0;
+     e=лексус_речь_текст(r[x->б],&reason,&reason_length);
+     if(e.код!=ЛЕКСУС_ОК||!reason) fail(err,errn,e.сообщение?e.сообщение:"условие не выполнено");
+     else if(err&&errn) {
+      size_t copy=reason_length<errn-1?reason_length:errn-1;
+      memcpy(err,reason,copy); err[copy]='\\0';
+     }
+     ok=0;done=1;
+    } else ++ip;
+    break;
+   }
    case ЛЕКСУС_ОП_ВВОД: {
     const size_t capacity=65536u;
     char *buffer=(char*)malloc(capacity);
