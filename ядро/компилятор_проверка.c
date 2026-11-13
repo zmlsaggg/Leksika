@@ -559,6 +559,7 @@ int main(void)
         if(ok) (void)лексус_равно(actual,expected,&equal);
         else fprintf(stderr,"диагностика «для каждого»: %s\\n",error);
         if(ok&&!equal) fprintf(stderr,"неверный результат «для каждого»\\n");
+        if (!ok && error[0]) fprintf(stderr,"Диагностика «для каждого»: %s\\n",error);
         failed+=проверить("форма «для каждого» сохраняет область переменной цикла",ok&&equal);
         лексус_значение_освободить(&actual); лексус_значение_освободить(&expected);
     }
