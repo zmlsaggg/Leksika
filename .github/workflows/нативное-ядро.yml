@@ -177,13 +177,15 @@ jobs:
           & $compiler @flags /Fe:dictionary-builder.exe словарь_сборщик.c
           if ($LASTEXITCODE -ne 0) { throw "Не собрался сборщик словаря" }
           if (!(Test-Path ..\источники\russian-words\russian.txt)) { throw "Не найден закреплённый источник словоформ" }
-          & .\dictionary-builder.exe ..\источники\russian-words\russian.txt .\русские_формы.lxd
+          Copy-Item ..\источники\russian-words\russian.txt .\russian-words-source.txt
+          & .\dictionary-builder.exe .\russian-words-source.txt .\russian-forms.lxd
           $code = $LASTEXITCODE
           if ($code -ne 0) { throw "Сборщик словаря завершился с кодом $code" }
           & $compiler @flags /Fe:dictionary-test.exe словарь_индекс.c словарь_индекс_проверка.c
           if ($LASTEXITCODE -ne 0) { throw "Не собрался тест индекса" }
           & .\dictionary-test.exe
           if ($LASTEXITCODE -ne 0) { throw "Тест индекса завершился с ошибкой" }
+          Remove-Item .\russian-words-source.txt, .\russian-forms.lxd -ErrorAction SilentlyContinue
           & $compiler @flags /Fe:values-test.exe значения.c значения_проверка.c
           if ($LASTEXITCODE -ne 0) { throw "Не собрался тест значений" }
           & .\values-test.exe
