@@ -61,7 +61,8 @@ jobs:
         shell: bash
 
       - name: Собрать нативное ядро и полный словарный индекс, затем выполнить тесты
-        run: make -C ядро clean all test
+        run: make clean all test
+        working-directory: ядро
         shell: bash
 
       - name: Зафиксировать статистику словаря
@@ -107,5 +108,6 @@ jobs:
           install: mingw-w64-x86_64-gcc make
 
       - name: Полная сборка и тесты с санитайзерами
-        run: make -C ядро sanitize-test
+        run: make sanitize-test
+        working-directory: ядро
         shell: bash
