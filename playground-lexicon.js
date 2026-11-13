@@ -38,7 +38,7 @@
     if (!загрузка) {
       загрузка = (async () => {
         const адрес = new URL("ядро/русские_формы.lxd.gz", document.baseURI);
-        const ответ = await fetch(адрес.href, { cache: "force-cache" });
+        const ответ = await fetch(адрес.href, { cache: "no-cache" });
         if (!ответ.ok) throw new Error("Бинарный словарь ещё не опубликован.");
         const полученныеБайты = new Uint8Array(await ответ.arrayBuffer());
         let буфер;
@@ -198,6 +198,10 @@
 
   редактор.addEventListener("input", обновить);
   редактор.addEventListener("click", обновить);
+  редактор.addEventListener("focus", обновить);
+  редактор.addEventListener("keyup", (событие) => {
+    if (["ArrowLeft", "ArrowRight", "Home", "End"].includes(событие.key)) обновить();
+  });
   редактор.addEventListener("keydown", (событие) => {
     if (!подсказки.length) return;
     if (событие.key === "ArrowDown") {
