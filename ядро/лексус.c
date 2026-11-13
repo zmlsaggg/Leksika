@@ -330,7 +330,9 @@ int main(int argc,char **argv)
         }
         free(source);
         ЛексусПрограмма vm={compiled.код,compiled.число_инструкций,
-                             compiled.константы,compiled.число_констант,compiled.регистры};
+                             compiled.константы,compiled.число_констант,compiled.регистры,
+                             compiled.функции,compiled.число_функций,
+                             compiled.вызовы,compiled.число_вызовов};
         ЛексусЗначение result=лексус_ничто(); error[0]=0;
         int ok=лексус_машина_исполнить(&vm,10000000u,&result,error,sizeof(error));
         if(!ok) fprintf(stderr,"Лексус: ошибка исполнения: %s.\n",error[0]?error:"неизвестная ошибка");
