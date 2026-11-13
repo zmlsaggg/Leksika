@@ -169,11 +169,17 @@ jobs:
           $env:PATH = "C:\Program Files\LLVM\bin;$env:PATH"
           $compiler = "C:\Program Files\LLVM\bin\clang-cl.exe"
           if (!(Test-Path $compiler)) { throw "clang-cl не установлен" }
-          $flags = @("/nologo", "/utf-8", "/std:c11", "/O1", "/Zi", "-fsanitize=address,undefined", "/D_CRT_SECURE_NO_WARNINGS")
+          $resource = (& $compiler -print-resource-dir).Trim()
+          $runtime = Join-Path $resource "lib\windows"
+          if (!(Test-Path $runtime)) { throw "Не найден каталог sanitizer runtime: $runtime" }
+          $env:PATH = "$runtime;$env:PATH"
+          $flags = @("/nologo", "/utf-8", "/std:c11", "/O1", "/Zi", "-fsanitize=address,undefined", "-fsanitize-trap=undefined", "/D_CRT_SECURE_NO_WARNINGS")
           & $compiler @flags /Fe:dictionary-builder.exe словарь_сборщик.c
           if ($LASTEXITCODE -ne 0) { throw "Не собрался сборщик словаря" }
+          if (!(Test-Path ..\источники\russian-words\russian.txt)) { throw "Не найден закреплённый источник словоформ" }
           & .\dictionary-builder.exe ..\источники\russian-words\russian.txt .\русские_формы.lxd
-          if ($LASTEXITCODE -ne 0) { throw "Не собрался бинарный словарь" }
+          $code = $LASTEXITCODE
+          if ($code -ne 0) { throw "Сборщик словаря завершился с кодом $code" }
           & $compiler @flags /Fe:dictionary-test.exe словарь_индекс.c словарь_индекс_проверка.c
           if ($LASTEXITCODE -ne 0) { throw "Не собрался тест индекса" }
           & .\dictionary-test.exe
