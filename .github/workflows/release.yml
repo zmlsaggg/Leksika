@@ -1,0 +1,51 @@
+name: Автосборка установщика Лексус
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: leksus-installer-release
+  cancel-in-progress: false
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Получить исходники и подмодули
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Установить MinGW-w64
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mingw-w64
+
+      - name: Настроить Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Собрать установщик Windows
+        run: |
+          python3 сборка/собрать_exe.lek
+          test -s сборка/Лексус-установщик.exe
+          python3 -c "from pathlib import Path; p=Path('сборка/Лексус-установщик.exe'); assert p.read_bytes()[:2] == b'MZ', 'Файл не является PE/EXE'"
+
+      - name: Обновить постоянный релиз latest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest --yes --cleanup-tag || true
+          git tag -f latest "$GITHUB_SHA"
+          git push origin refs/tags/latest --force
+          gh release create latest сборка/Лексус-установщик.exe \
+            --title "Последняя сборка Лексуса" \
+            --notes "Автоматическая сборка установщика из коммита $GITHUB_SHA."
