@@ -2,6 +2,17 @@
 set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+# Только явный выбор: не перезапускаем программу в Python после ошибки VM.
+if [ "${1-}" = "--нативно" ]; then
+    if [ -x "$ROOT/лексус-ядро" ]; then
+        exec "$ROOT/лексус-ядро" "$@"
+    elif [ -x "$ROOT/ядро/лексус-ядро" ]; then
+        exec "$ROOT/ядро/лексус-ядро" "$@"
+    fi
+    printf '%s\n' 'Лексика: нативное ядро не найдено; соберите его: make -C ядро native' >&2
+    exit 127
+fi
+
 export PYTHONUTF8=1
 export PYTHONIOENCODING=utf-8
 

@@ -613,10 +613,13 @@ static int выполнить_установку(int argc, char **argv)
     }
     {
         wchar_t body[4096];
-        wcscpy(body, L"set PYTHONUTF8=1\r\n");
+        wcscpy(body, L"if \"%~1\"==\"--нативно\" goto native\r\n");
+        wcscat(body, L"set PYTHONUTF8=1\r\n");
         wcscat(body, L"set PYTHONIOENCODING=utf-8\r\n");
         wcscat(body, L"if not exist \"%~dp0питон\\python.exe\" (echo Встроенная среда не найдена.& exit /b 2)\r\n");
         wcscat(body, L"\"%~dp0питон\\python.exe\" \"%~dp0лексус.lek\" %*\r\n");
+        wcscat(body, L"exit /b %errorlevel%\r\n:native\r\n");
+        wcscat(body, L"\"%~dp0лексус-ядро.exe\" %*\r\nexit /b %errorlevel%\r\n");
         write_cmd(cmd, body);
         {
             const wchar_t *имена[] = {L"лексус", L"лексика", L"лек", L"лекс", L"лексу", L"leksus", L"lek", L"leks"};

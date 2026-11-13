@@ -23,6 +23,24 @@ class Удобство(unittest.TestCase):
                 result = cli('запустить', str(p), *режим)
                 self.assertEqual((result.returncode, result.stdout.strip()), (0, '20'), result.stderr)
 
+    def test_разговорные_формы(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / 'разговор.lek'
+            for форма in ('что', 'скажи', 'выведи', 'говори', 'напечатать', 'печатай', 'покажи'):
+                p.write_text(f'пускай счёт это 42. {форма} счёт', encoding='utf-8')
+                for режим in ([], ['--дерево']):
+                    r = cli('запустить', str(p), *режим)
+                    self.assertEqual((r.returncode, r.stdout.strip()), (0, '42'), r.stderr)
+            p.write_text('пусть счёт это 2 тогда скажи счёт', encoding='utf-8')
+            for режим in ([], ['--дерево']):
+                r = cli('запустить', str(p), *режим)
+                self.assertEqual((r.returncode, r.stdout.strip()), (0, '2'), r.stderr)
+            p.write_text('что неизвестное', encoding='utf-8')
+            for режим in ([], ['--дерево']):
+                r = cli('запустить', str(p), *режим)
+                self.assertNotEqual(r.returncode, 0)
+                self.assertIn('неизвестное имя', r.stderr)
+
     def test_алиасы_и_разбор(self):
         r = cli('РАЗБЕРИ', 'слово', 'арбуз')
         self.assertEqual(r.returncode, 0, r.stderr)
