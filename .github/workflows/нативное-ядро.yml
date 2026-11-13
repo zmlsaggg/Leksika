@@ -110,9 +110,9 @@ jobs:
       - name: Проверить Linux-установщик и наличие бинарного словаря
         if: runner.os == 'Linux'
         run: |
-          временная=$(mktemp -d)
-          python3 установить.lek --папка "$временная/лексика" --куда "$временная/bin" --без-ярлыка
-          test -s "$временная/лексика/ядро/русские_формы.lxd"
+          tmp_dir=$(mktemp -d)
+          python3 установить.lek --папка "$tmp_dir/лексика" --куда "$tmp_dir/bin" --без-ярлыка
+          test -s "$tmp_dir/лексика/ядро/русские_формы.lxd"
           rm -rf "$временная"
         shell: bash
   sanitizer-tests:
