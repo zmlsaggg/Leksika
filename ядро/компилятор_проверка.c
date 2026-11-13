@@ -37,7 +37,9 @@ static int выполнить(const char *source,ЛексусЗначение *r
     ЛексусСкомпилированнаяПрограмма compiled;
     if (!лексус_скомпилировать(source,strlen(source),&compiled,error,error_size)) return 0;
     ЛексусПрограмма vm={compiled.код,compiled.число_инструкций,
-                         compiled.константы,compiled.число_констант,compiled.регистры};
+                         compiled.константы,compiled.число_констант,compiled.регистры,
+                         compiled.функции,compiled.число_функций,
+                         compiled.вызовы,compiled.число_вызовов};
     int ok=лексус_машина_исполнить(&vm,100000,result,error,error_size);
     лексус_скомпиляцию_освободить(&compiled);
     return ok;
