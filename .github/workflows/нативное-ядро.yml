@@ -15,6 +15,9 @@ on:
       - "источники/russian-words/**"
       - ".gitmodules"
       - ".github/workflows/нативное-ядро.yml"
+      - "playground.html"
+      - "playground-lexicon.js"
+      - "!ядро/русские_формы.lxd.gz"
   pull_request:
     branches:
       - main
@@ -29,6 +32,8 @@ on:
       - "источники/russian-words/**"
       - ".gitmodules"
       - ".github/workflows/нативное-ядро.yml"
+      - "playground.html"
+      - "playground-lexicon.js"
   workflow_dispatch:
 
 permissions:
@@ -68,7 +73,16 @@ jobs:
 
       - name: Собрать ядро и словарь на Windows
         if: runner.os == 'Windows'
-        run: make clean all test 2>&1 | tee словарь-сборки.txt
+        run: |
+          cp ../источники/russian-words/russian.txt russian-words-source.txt
+          make clean all test \
+            TARGET=leksus-core.exe VALUE_TEST=values-test.exe VM_TEST=vm-test.exe \
+            COMPILER_TEST=compiler-test.exe CONTRACT_TEST=contract-test.exe \
+            DICT_BUILDER=dictionary-builder.exe DICT_TEST=dictionary-test.exe \
+            DICT_SOURCE=russian-words-source.txt DICT_INDEX=russian-forms.lxd \
+            2>&1 | tee словарь-сборки.txt
+          cp russian-forms.lxd русские_формы.lxd
+          rm -f russian-words-source.txt russian-forms.lxd
         working-directory: ядро
         shell: msys2 {0}
 
@@ -87,6 +101,20 @@ jobs:
           python3 проверка/удобство.py
           python3 проверка/сопоставление_движков.py
         shell: bash
+
+      - name: Проверить браузерный индекс словоформ
+        if: runner.os == 'Linux'
+        run: node --check playground-lexicon.js
+        shell: bash
+
+      - name: Проверить Linux-установщик и наличие бинарного словаря
+        if: runner.os == 'Linux'
+        run: |
+          tmp_dir=$(mktemp -d)
+          python3 установить.lek --папка "$tmp_dir/лексика" --куда "$tmp_dir/bin" --без-ярлыка
+          test -s "$tmp_dir/лексика/ядро/русские_формы.lxd"
+          rm -rf "$tmp_dir"
+        shell: bash
   sanitizer-tests:
     name: Linux — AddressSanitizer и UndefinedBehaviorSanitizer
     runs-on: ubuntu-latest
@@ -99,4 +127,39 @@ jobs:
       - name: Полная сборка и тесты с санитайзерами
         run: make sanitize-test
         working-directory: ядро
+        shell: bash
+
+  publish-dictionary:
+    name: Publish compressed dictionary for GitHub Pages
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Получить исходный код и закреплённый словарь
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Собрать и сжать бинарный индекс
+        run: |
+          make dictionary
+          gzip -n -9 -c русские_формы.lxd > русские_формы.lxd.gz
+          ls -lh русские_формы.lxd.gz
+          sha256sum русские_формы.lxd.gz
+        working-directory: ядро
+        shell: bash
+
+      - name: Опубликовать индекс в GitHub Pages
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ядро/русские_формы.lxd.gz
+          if git diff --cached --quiet; then
+            echo "Опубликованный индекс не изменился."
+            exit 0
+          fi
+          git commit -m "Publish compressed Russian word index"
+          git push
         shell: bash
