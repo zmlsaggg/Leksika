@@ -48,11 +48,18 @@ static int ввод_по_умолчанию(void *context,char *buffer,size_t ca
 }
 static void cleanup(ЛексусЗначение*r,size_t n){if(r){for(size_t i=0;i<n;++i)лексус_значение_освободить(&r[i]);free(r);}}
 typedef struct { ЛексусЗначение остаток; } ЛексусСчётчикЦикла;
+typedef struct { ЛексусЗначение перечень; size_t индекс; uint32_t выход; } ЛексусИтератор;
 static void cleanup_cycles(ЛексусСчётчикЦикла *cycles,size_t count)
 {
  if(!cycles) return;
  for(size_t i=0;i<count;++i) лексус_значение_освободить(&cycles[i].остаток);
  free(cycles);
+}
+static void cleanup_iterators(ЛексусИтератор *items,size_t count)
+{
+ if(!items) return;
+ for(size_t i=0;i<count;++i) лексус_значение_освободить(&items[i].перечень);
+ free(items);
 }
 
 int лексус_машина_исполнить_со_средой(const ЛексусПрограмма*p,uint64_t limit,
@@ -67,6 +74,8 @@ int лексус_машина_исполнить_со_средой(const Лек�
  uint64_t ip=0,steps=0;int done=0,ok=1;
  ЛексусСчётчикЦикла *cycles=NULL;
  size_t cycles_count=0,cycles_capacity=0;
+ ЛексусИтератор *iterators=NULL;
+ size_t iterators_count=0,iterators_capacity=0;
  while(ip<p->число_инструкций&&!done){
   if(++steps>limit){fail(err,errn,"превышен предел шагов виртуальной машины");ok=0;break;}
   const ЛексусИнструкция*x=&p->код[ip];ЛексусЗначение value=лексус_ничто();ЛексусОшибка e={ЛЕКСУС_ОК,NULL};
@@ -186,6 +195,48 @@ int лексус_машина_исполнить_со_средой(const Лек�
    case ЛЕКСУС_ОП_ПОКАЗАТЬ:
     if(!показать_значение(r[x->назначение],env,err,errn)){ok=0;done=1;}else ++ip;
     break;
+   case ЛЕКСУС_ОП_ПЕРЕЧЕНЬ_СОЗДАТЬ: {
+    value=лексус_ничто(); e=лексус_перечень_создать(&value);
+    if(!store_result(r,x->назначение,e,value,err,errn)){ok=0;done=1;}else ++ip;
+    break;
+   }
+   case ЛЕКСУС_ОП_ПЕРЕЧЕНЬ_ДОБАВИТЬ:
+    e=лексус_перечень_добавить(r[x->а],r[x->б]);
+    if(e.код!=ЛЕКСУС_ОК){fail(err,errn,e.сообщение?e.сообщение:"не удалось добавить элемент в перечень");ok=0;done=1;}else ++ip;
+    break;
+   case ЛЕКСУС_ОП_ИТЕРАЦИЯ_НАЧАТЬ: {
+    size_t count=0;
+    e=лексус_перечень_длина(r[x->а],&count);
+    if(e.код!=ЛЕКСУС_ОК){fail(err,errn,e.сообщение?e.сообщение:"обход требует перечень");ok=0;done=1;break;}
+    if(!count){ip=x->операнд;break;}
+    if(iterators_count==iterators_capacity){
+     size_t next=iterators_capacity?iterators_capacity*2:8;
+     if(next<iterators_capacity||next>SIZE_MAX/sizeof(*iterators)){fail(err,errn,"слишком много вложенных обходов перечней");ok=0;done=1;break;}
+     ЛексусИтератор *grown=(ЛексусИтератор*)realloc(iterators,next*sizeof(*iterators));
+     if(!grown){fail(err,errn,"не хватает памяти для стека итераторов");ok=0;done=1;break;}
+     iterators=grown;iterators_capacity=next;
+    }
+    iterators[iterators_count].перечень=лексус_значение_копия(r[x->а]);
+    iterators[iterators_count].индекс=0;
+    iterators[iterators_count].выход=x->операнд;
+    ++iterators_count; ++ip; break;
+   }
+   case ЛЕКСУС_ОП_ИТЕРАЦИЯ_ШАГ: {
+    if(!iterators_count){fail(err,errn,"шаг обхода без соответствующего начала");ok=0;done=1;break;}
+    ЛексусИтератор *iterator=&iterators[iterators_count-1];
+    size_t count=0;
+    e=лексус_перечень_длина(iterator->перечень,&count);
+    if(e.код!=ЛЕКСУС_ОК){fail(err,errn,e.сообщение?e.сообщение:"не удалось прочитать длину перечня");ok=0;done=1;break;}
+    if(iterator->индекс>=count){uint32_t target=iterator->выход;лексус_значение_освободить(&iterator->перечень);--iterators_count;ip=target;break;}
+    value=лексус_ничто();
+    e=лексус_перечень_получить(iterator->перечень,iterator->индекс++,&value);
+    if(!store_result(r,x->назначение,e,value,err,errn)){ok=0;done=1;}else ip=x->операнд;
+    break;
+   }
+   case ЛЕКСУС_ОП_ИТЕРАЦИЯ_ПРЕРВАТЬ:
+    if(!iterators_count){fail(err,errn,"выход из обхода без соответствующего начала");ok=0;done=1;break;}
+    лексус_значение_освободить(&iterators[--iterators_count].перечень);
+    ip=x->операнд; break;
    case ЛЕКСУС_ОП_ПРОВЕРИТЬ: {
     if(!лексус_правда(r[x->а])) {
      const char *reason=NULL; size_t reason_length=0;
@@ -225,6 +276,7 @@ int лексус_машина_исполнить_со_средой(const Лек�
  }
  if(ok&&!done){fail(err,errn,"программа завершилась без возврата или остановки");ok=0;}
  cleanup_cycles(cycles,cycles_count);
+ cleanup_iterators(iterators,iterators_count);
  cleanup(r,p->регистры);if(!ok)лексус_значение_освободить(out);return ok;
 }
 int лексус_машина_исполнить(const ЛексусПрограмма*p,uint64_t limit,ЛексусЗначение*out,char*err,size_t errn)
