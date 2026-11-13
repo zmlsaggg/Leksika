@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "language": "ru",
+  "built_at": "2026-11-13",
+  "source": {
+    "repository": "https://github.com/danakt/russian-words",
+    "commit": "d68c007fe9260d2d40ce413f13f77335c5af1e62",
+    "license": "MIT",
+    "encoding": "windows-1251",
+    "lines": 1532628,
+    "unique_forms": 1528715,
+    "discarded_records": 194
+  },
+  "binary_index": {
+    "path": "ядро/русские_формы.lxd",
+    "format": "LEKSLXD1",
+    "bytes": 41051188,
+    "crc32": "78EE39A5"
+  },
+  "pages_artifact": {
+    "path": "ядро/русские_формы.lxd.gz",
+    "size_mib": 6.7,
+    "sha256": "9a12d0960dc58653fe27721e9213e971a9002016b20d8b51be1458434615c12a"
+  },
+  "validation": {
+    "linux": "passed full make clean all test",
+    "windows": "passed full MinGW make clean all test",
+    "linux_sanitizers": "passed AddressSanitizer and UndefinedBehaviorSanitizer",
+    "linux_installer": "passed package contains binary index",
+    "macos": "CI verification pending"
+  },
+  "annotations": {
+    "pos": "not present in source",
+    "frequency": "not present in source",
+    "style": "not present in source",
+    "status": "pending compatible corpus or editorial annotation"
+  }
+}

@@ -15,13 +15,24 @@
       "license_file": "LICENSE-danakt-MIT.txt",
       "attribution": "Copyright (c) 2020 Danakt Frost",
       "imported": false,
-      "notes": "Inflected forms only; the pinned source must be validated and compiled into the distributable binary index before claiming coverage.",
-      "integration_status": "source_pinned_binary_index_not_yet_built",
+      "notes": "Inflected forms only; no lemma, POS, frequency, or reliable style metadata is present in the upstream file. These annotations require a separately licensed compatible corpus or editorial review.",
+      "integration_status": "binary_index_built_verified_linux_windows_and_published",
       "runtime_policy": "embedded_read_only_resource_no_runtime_download_or_text_parsing",
       "build_method": "native_c11_bootstrap_to_LEKSLXD1",
       "submodule_path": "источники/russian-words",
       "runtime_index": "ядро/русские_формы.lxd",
-      "runtime_status": "builder_and_reader_added_full_dataset_build_unverified"
+      "runtime_status": "native_reader_verified; linux_installer_verified; macos_installer_ci_pending",
+      "actual_source_lines": 1532628,
+      "validated_unique_forms": 1528715,
+      "discarded_records": 194,
+      "binary_index_size_bytes": 41051188,
+      "binary_index_crc32": "78EE39A5",
+      "compressed_pages_artifact": {
+        "path": "ядро/русские_формы.lxd.gz",
+        "size_mib": 6.7,
+        "sha256": "9a12d0960dc58653fe27721e9213e971a9002016b20d8b51be1458434615c12a"
+      },
+      "metadata_status": "pos_frequency_style_not_yet_annotated"
     }
   ],
   "excluded": [
