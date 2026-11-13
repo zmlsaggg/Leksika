@@ -153,6 +153,9 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Подготовить MSVC SDK и linker
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Подготовить Clang с поддержкой санитайзеров
         shell: pwsh
         run: |
