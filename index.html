@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <title>Лексика — русский язык программирования | официальный сайт</title>
-<meta name="description" content="Лексика — оригинальный язык программирования с русским синтаксисом и падежным управлением. Изучите примеры, попробуйте учебную версию в браузере и узнайте о движке Лексус.">
+<meta name="description" content="Лексика — язык программирования с русским синтаксисом и падежами. Попробуйте онлайн-песочницу в браузере и скачайте движок Лексус для компьютера.">
 <meta name="author" content="Проект Лексика">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="theme-color" content="#0d0f13">
-<link rel="canonical" href="https://zmlsaggg.github.io/Leksika/">
+<link rel="canonical" href="https://leksika.gleeze.com/">
 <link rel="icon" href="значки/Лексика.ico" sizes="any">
 <link rel="apple-touch-icon" href="значки/знак.png">
 
@@ -18,14 +18,14 @@
 <meta property="og:locale" content="ru_RU">
 <meta property="og:title" content="Лексика — русский язык программирования">
 <meta property="og:description" content="Оригинальный язык программирования с русским синтаксисом и падежным управлением. Изучайте язык и запускайте учебные примеры в браузере.">
-<meta property="og:image" content="https://zmlsaggg.github.io/Leksika/значки/Лексика.png">
+<meta property="og:image" content="https://leksika.gleeze.com/значки/Лексика.png">
 <meta property="og:image:alt" content="Логотип проекта Лексика">
-<meta property="og:url" content="https://zmlsaggg.github.io/Leksika/">
+<meta property="og:url" content="https://leksika.gleeze.com/">
 
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Лексика — русский язык программирования">
 <meta name="twitter:description" content="Оригинальный язык программирования с русским синтаксисом, падежным управлением и браузерной песочницей.">
-<meta name="twitter:image" content="https://zmlsaggg.github.io/Leksika/значки/Лексика.png">
+<meta name="twitter:image" content="https://leksika.gleeze.com/значки/Лексика.png">
 
 <script type="application/ld+json">
 {
@@ -35,7 +35,7 @@
       "@type": "WebSite",
       "name": "Лексика",
       "alternateName": "Leksika",
-      "url": "https://zmlsaggg.github.io/Leksika/",
+      "url": "https://leksika.gleeze.com/",
       "inLanguage": "ru",
       "publisher": {
         "@type": "Organization",
@@ -55,8 +55,8 @@
       "fileFormat": ".lek",
       "license": "https://opensource.org/license/mit",
       "isAccessibleForFree": true,
-      "image": "https://zmlsaggg.github.io/Leksika/значки/Лексика.png",
-      "url": "https://zmlsaggg.github.io/Leksika/",
+      "image": "https://leksika.gleeze.com/значки/Лексика.png",
+      "url": "https://leksika.gleeze.com/",
       "sameAs": "https://github.com/zmlsaggg/Leksika"
     }
   ]
@@ -111,6 +111,29 @@
   summary { cursor: pointer; font-weight: 600; }
   footer { border-top: 1px solid var(--рамка); margin-top: 54px; padding-top: 20px; color: var(--серый); font-size: 14px; }
   .ключи { color: #6f7a89; font-size: 13px; line-height: 1.8; }
+
+  .оглавление { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 24px 0 30px; padding: 14px 16px; border: 1px solid var(--рамка); border-radius: 12px; background: var(--панель); }
+  .оглавление b { width: 100%; color: var(--серебро); }
+  .оглавление a { font-size: 14px; }
+  @media (max-width: 768px) {
+    body { font-size: 16px; }
+    .полотно { padding: 16px 14px 48px; }
+    header { padding-top: 12px; }
+    header img { width: min(100%, 460px); }
+    h1 { font-size: clamp(25px, 7vw, 34px); }
+    h2 { margin-top: 34px; }
+    p.подзаголовок { font-size: 16px; }
+    .кнопки { align-items: stretch; }
+    .кнопка { flex: 1 1 100%; text-align: center; }
+    .оглавление { gap: 10px 12px; padding: 12px; }
+    .оглавление a { flex: 1 1 42%; }
+    pre { max-width: 100%; padding: 12px; font-size: 13px; }
+    table { display: block; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    th, td { min-width: 110px; padding: 8px; font-size: 14px; }
+    .плашки { gap: 6px; }
+    .плашка { font-size: 12px; }
+  }
+
 </style>
 </head>
 <body>
@@ -133,7 +156,20 @@
   </div>
 </header>
 
-<h2>Что такое Лексика</h2>
+
+<nav class="оглавление" aria-label="Оглавление">
+  <b>Разделы сайта</b>
+  <a href="#что-такое-лексика">О языке</a>
+  <a href="#возможности">Возможности</a>
+  <a href="#установка">Установка</a>
+  <a href="#архитектура">Архитектура C11 и Python</a>
+  <a href="#русские-расширения-файлов">Форматы файлов</a>
+  <a href="#язык-за-пять-минут">Примеры кода</a>
+  <a href="#частые-вопросы">FAQ</a>
+  <a href="#документация">Документация</a>
+</nav>
+
+<h2 id="что-такое-лексика">Что такое Лексика</h2>
 <p>
   <b>Лексика</b> (её же зовут лекс, лексик, «язык программирования Л») — русский
   язык программирования: свой лексер, своя морфология, своя грамматика, свой
@@ -154,13 +190,14 @@
   <span class="плашка">Windows</span>
   <span class="плашка">Linux</span>
   <span class="плашка">macOS</span>
-  <span class="плашка">python 3.8+</span>
-  <span class="плашка">без зависимостей</span>
+  <span class="плашка">Python 3.8+ · текущий runtime</span>
+  <span class="плашка">без внешних библиотек</span>
+  <span class="плашка">нативное ядро C11</span>
   <span class="плашка">100 проверок</span>
   <span class="плашка">лицензия MIT</span>
 </div>
 
-<h2>Возможности</h2>
+<h2 id="возможности">Возможности</h2>
 <table>
   <tr><th>Что</th><th>Как это выглядит</th></tr>
   <tr><td>Письмо</td><td>русские слова, цифры и знаки <code>. , ! ? ( )</code></td></tr>
@@ -175,7 +212,7 @@
   <tr><td>Исполнение</td><td>свой байткод и своя стековая машина</td></tr>
 </table>
 
-<h2>Установка</h2>
+<h2 id="установка">Установка</h2>
 <h3>Windows</h3>
 <p>
   <a href="сборка/Лексус-установщик.exe">Лексус-установщик.exe</a> — настоящий
@@ -192,7 +229,7 @@
 <pre><code>python3 лексус.lek запустить примеры/привет.lek
 python3 проверка/тесты.lek</code></pre>
 
-<h2>Русские расширения файлов</h2>
+<h2 id="русские-расширения-файлов">Русские расширения файлов</h2>
 <p>
   Форматы называются по-русски: <code>.зип</code> вместо zip, <code>.7з</code>
   вместо 7z, <code>.трек3</code> вместо mp3, <code>.вид4</code> вместо mp4,
@@ -204,7 +241,7 @@ python3 проверка/тесты.lek</code></pre>
 лексус формат склад.png            склад.пнг
 лексус формат склад.пнг --обратно  склад.png</code></pre>
 
-<h2>Язык за пять минут</h2>
+<h2 id="язык-за-пять-минут">Язык за пять минут</h2>
 <h3>Перечни, словари и падежи</h3>
 <pre><code>пусть товары равно перечень(хлеб, молоко, сыр).
 для каждого товар из товары повторять
@@ -228,7 +265,7 @@ python3 проверка/тесты.lek</code></pre>
     сказать речь Шаг (счёт) конец речи.
 конец пока.</code></pre>
 
-<h2>Частые вопросы</h2>
+<h2 id="частые-вопросы">Частые вопросы</h2>
 <details open>
   <summary>Что такое язык программирования Лексика?</summary>
   <p>
@@ -268,7 +305,25 @@ python3 проверка/тесты.lek</code></pre>
   </p>
 </details>
 
-<h2>Документация</h2>
+
+<h2 id="архитектура">Архитектура движка: Python и нативное ядро C11</h2>
+<p>
+  Сейчас настольная версия Лексики использует переходный runtime на Python 3.8+
+  и стандартную библиотеку Python. Параллельно развивается нативное загрузочное
+  ядро на C11: в нём уже есть обработка UTF-8, начальная морфология, собственные
+  значения, компилятор подмножества языка и виртуальная машина. Это реальная
+  работающая основа для переноса, но пока не полная замена Python-runtime:
+  часть программ продолжает исполняться переходным движком. Цель разработки —
+  довести нативный компилятор и VM до полного исполнения .lek без Python и
+  внешних библиотек, сохранив совместимость языка.
+</p>
+<p>
+  <a href="https://github.com/zmlsaggg/Leksika/tree/main/ядро">Исходники ядра C11</a> ·
+  <a href="https://github.com/zmlsaggg/Leksika/blob/main/ПЛАН_ПЕРЕНОСА_РАНТАЙМА.md">План переноса runtime</a> ·
+  <a href="https://github.com/zmlsaggg/Leksika/blob/main/документы/АРХИТЕКТУРА.md">Документация архитектуры</a>
+</p>
+
+<h2 id="документация">Документация</h2>
 <table>
   <tr><th>Файл</th><th>О чём</th></tr>
   <tr><td><a href="документы/РУКОВОДСТВО.md">документы/РУКОВОДСТВО.md</a></td><td>язык целиком, от письма до заплаток</td></tr>
