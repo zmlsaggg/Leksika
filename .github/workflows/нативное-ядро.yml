@@ -73,7 +73,15 @@ jobs:
 
       - name: Собрать ядро и словарь на Windows
         if: runner.os == 'Windows'
-        run: make clean all test 2>&1 | tee словарь-сборки.txt
+        run: |
+          cp ../источники/russian-words/russian.txt russian-words-source.txt
+          make clean all test 2>&1 | tee словарь-сборки.txt \
+            TARGET=leksus-core.exe VALUE_TEST=values-test.exe VM_TEST=vm-test.exe \
+            COMPILER_TEST=compiler-test.exe CONTRACT_TEST=contract-test.exe \
+            DICT_BUILDER=dictionary-builder.exe DICT_TEST=dictionary-test.exe \
+            DICT_SOURCE=russian-words-source.txt DICT_INDEX=russian-forms.lxd
+          cp russian-forms.lxd русские_формы.lxd
+          rm -f russian-words-source.txt russian-forms.lxd
         working-directory: ядро
         shell: msys2 {0}
 
