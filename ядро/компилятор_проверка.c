@@ -42,10 +42,45 @@ static int выполнить(const char *source,ЛексусЗначение *r
     лексус_скомпиляцию_освободить(&compiled);
     return ok;
 }
+
+static int выполнить_с_профилем(const char *source,unsigned profile,ТестоваяСреда *state,
+                               char *error,size_t error_size)
+{
+    ЛексусСкомпилированнаяПрограмма compiled;
+    if(!лексус_скомпилировать_с_профилями(source,strlen(source),profile,
+                                          &compiled,error,error_size)) return 0;
+    ЛексусПрограмма vm={compiled.код,compiled.число_инструкций,
+                        compiled.константы,compiled.число_констант,compiled.регистры};
+    ЛексусСредаИсполнения env={state,NULL,тестовый_вывод};
+    ЛексусЗначение result=лексус_ничто();
+    int ok=лексус_машина_исполнить_со_средой(&vm,10000,&env,&result,error,error_size);
+    лексус_значение_освободить(&result);
+    лексус_скомпиляцию_освободить(&compiled);
+    return ok;
+}
 int main(void)
 {
     int failed=0,equal=0; char error[512]={0};
     ЛексусЗначение actual=лексус_ничто(),expected=лексус_ничто();
+    {
+        ТестоваяСреда state={0};
+        int ok=выполнить_с_профилем("пиздануть речь Взрослый режим. конец речи.",
+            ЛЕКСУС_ПРОФИЛЬ_18_ПЛЮС,&state,error,sizeof(error));
+        failed+=проверить("18+ профиль включает нативный синоним команды «сказать»",
+                          ok&&strcmp(state.output,"Взрослый режим.\\n")==0);
+        error[0]=0;state=(ТестоваяСреда){0};
+        ok=выполнить_с_профилем(
+            "пусть счёт равно один. апнуть счёт на два. вернуть счёт.",
+            ЛЕКСУС_ПРОФИЛЬ_ЗУМЕР,&state,error,sizeof(error));
+        failed+=проверить("зумерский профиль включает «апнуть» в нативной VM",
+                          ok&&strcmp(state.output,"3\\n")==0);
+        error[0]=0;
+        ЛексусСкомпилированнаяПрограмма disabled;
+        const char *disabled_source="пиздануть речь Профиль выключен. конец речи.";
+        ok=лексус_скомпилировать(disabled_source,strlen(disabled_source),
+                                 &disabled,error,sizeof(error));
+        failed+=проверить("разговорные профили выключены по умолчанию",!ok);
+    }
     const char *program=
         "пусть сумма равно 2 плюс 3 умножить на 2.\n"
         "увеличить сумма на 4.\n"
