@@ -129,6 +129,28 @@ jobs:
         working-directory: ядро
         shell: bash
 
+
+  windows-sanitizer-tests:
+    name: Windows — AddressSanitizer и UndefinedBehaviorSanitizer
+    runs-on: windows-latest
+    steps:
+      - name: Получить исходный код и словарь
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Установить MinGW-w64 и Make
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: mingw-w64-x86_64-gcc make
+
+      - name: Полная сборка и тесты с санитайзерами
+        run: make sanitize-test
+        working-directory: ядро
+        shell: msys2 {0}
+
   publish-dictionary:
     name: Publish compressed dictionary for GitHub Pages
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
