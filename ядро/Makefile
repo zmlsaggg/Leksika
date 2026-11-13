@@ -19,7 +19,7 @@ DICT_TEST = словарь-тест$(EXEEXT)
 DICT_SOURCE = ../источники/russian-words/russian.txt
 DICT_INDEX = русские_формы.lxd
 
-.PHONY: all native test dictionary dictionary-test compiler-test contract-test tls-tools tls-test clean
+.PHONY: all native test sanitize-test dictionary dictionary-test compiler-test contract-test tls-tools tls-test clean
 all: $(TARGET) $(DICT_INDEX)
 
 native: $(TARGET)
@@ -66,6 +66,11 @@ test: $(TARGET) $(VALUE_TEST) $(DICT_TEST) $(VM_TEST) $(COMPILER_TEST) $(CONTRAC
 	./$(COMPILER_TEST)
 	./$(CONTRACT_TEST)
 
+# Полная проверка с AddressSanitizer и UndefinedBehaviorSanitizer (GCC/Clang).
+sanitize-test:
+	$(MAKE) clean
+	$(MAKE) CFLAGS='-std=c11 -O1 -g -Wall -Wextra -Wpedantic -finput-charset=UTF-8 -fexec-charset=UTF-8 -fsanitize=address,undefined -fno-omit-frame-pointer' all test
+
 # Необязательный инструмент организаций. OpenSSL не входит в зависимости ядра.
 tls-tools: $(TLS_TOOL)
 
@@ -76,4 +81,4 @@ tls-test: $(TLS_TOOL)
 	sh ./сертификаты_проверка.sh ./$(TLS_TOOL)
 
 clean:
-	rm -f "$(TARGET)" "$(TARGET).exe" "$(VALUE_TEST)" "$(VALUE_TEST).exe" "$(TLS_TOOL)" "$(TLS_TOOL).exe" "$(DICT_BUILDER)" "$(DICT_TEST)" "$(DICT_TEST).exe" "$(DICT_BUILDER)" "$(DICT_BUILDER).exe" "$(VM_TEST)" "$(VM_TEST).exe" "$(COMPILER_TEST)" "$(COMPILER_TEST).exe" "$(CONTRACT_TEST)" "$(CONTRACT_TEST).exe"
+	rm -f "$(DICT_INDEX)" "$(TARGET)" "$(TARGET).exe" "$(VALUE_TEST)" "$(VALUE_TEST).exe" "$(TLS_TOOL)" "$(TLS_TOOL).exe" "$(DICT_BUILDER)" "$(DICT_TEST)" "$(DICT_TEST).exe" "$(DICT_BUILDER)" "$(DICT_BUILDER).exe" "$(VM_TEST)" "$(VM_TEST).exe" "$(COMPILER_TEST)" "$(COMPILER_TEST).exe" "$(CONTRACT_TEST)" "$(CONTRACT_TEST).exe"
