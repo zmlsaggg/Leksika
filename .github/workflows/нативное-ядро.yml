@@ -71,3 +71,14 @@ jobs:
           python3 проверка/удобство.py
           python3 проверка/сопоставление_движков.py
         shell: bash
+  sanitizer-tests:
+    name: Linux — AddressSanitizer и UndefinedBehaviorSanitizer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Получить исходный код и словарь
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Полная сборка и тесты с санитайзерами
+        run: make -C ядро sanitize-test
+        shell: bash
