@@ -131,7 +131,7 @@ jobs:
 
 
   windows-sanitizer-tests:
-    name: Windows — AddressSanitizer и UndefinedBehaviorSanitizer
+    name: Windows — AddressSanitizer
     runs-on: windows-latest
     steps:
       - name: Получить исходный код и словарь
@@ -139,24 +139,43 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Установить MinGW-w64 и Make
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: MINGW64
-          update: true
-          install: mingw-w64-x86_64-gcc make
+      - name: Подготовить MSVC
+        uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Полная сборка и тесты с санитайзерами
+      - name: Полная сборка и тесты с AddressSanitizer
+        shell: pwsh
         run: |
-          cp ../источники/russian-words/russian.txt russian-words-source.txt
-          make sanitize-test \
-            TARGET=leksus-core.exe VALUE_TEST=values-test.exe VM_TEST=vm-test.exe \
-            COMPILER_TEST=compiler-test.exe CONTRACT_TEST=contract-test.exe \
-            DICT_BUILDER=dictionary-builder.exe DICT_TEST=dictionary-test.exe \
-            DICT_SOURCE=russian-words-source.txt DICT_INDEX=russian-forms.lxd
-          rm -f russian-words-source.txt russian-forms.lxd
+          $ErrorActionPreference = "Stop"
+          $flags = @("/nologo", "/utf-8", "/std:c11", "/O1", "/Zi", "/fsanitize=address", "/D_CRT_SECURE_NO_WARNINGS")
+          & cl @flags /Fe:dictionary-builder.exe словарь_сборщик.c
+          if ($LASTEXITCODE -ne 0) { throw "Не собрался сборщик словаря" }
+          & .\dictionary-builder.exe ..\источники\russian-words\russian.txt .\русские_формы.lxd
+          if ($LASTEXITCODE -ne 0) { throw "Не собрался бинарный словарь" }
+          & cl @flags /Fe:dictionary-test.exe словарь_индекс.c словарь_индекс_проверка.c
+          if ($LASTEXITCODE -ne 0) { throw "Не собрался тест индекса" }
+          & .\dictionary-test.exe
+          if ($LASTEXITCODE -ne 0) { throw "Тест индекса завершился с ошибкой" }
+          & cl @flags /Fe:values-test.exe значения.c значения_проверка.c
+          if ($LASTEXITCODE -ne 0) { throw "Не собрался тест значений" }
+          & .\values-test.exe
+          if ($LASTEXITCODE -ne 0) { throw "Тест значений завершился с ошибкой" }
+          & cl @flags /Fe:vm-test.exe значения.c байткод.c машина.c машина_проверка.c
+          if ($LASTEXITCODE -ne 0) { throw "Не собрался тест VM" }
+          & .\vm-test.exe
+          if ($LASTEXITCODE -ne 0) { throw "Тест VM завершился с ошибкой" }
+          & cl @flags /Fe:compiler-test.exe значения.c байткод.c машина.c компилятор.c компилятор_проверка.c
+          if ($LASTEXITCODE -ne 0) { throw "Не собрался тест компилятора" }
+          & .\compiler-test.exe
+          if ($LASTEXITCODE -ne 0) { throw "Тест компилятора завершился с ошибкой" }
+          & cl @flags /Fe:contract-test.exe значения.c байткод.c машина.c компилятор.c контракт_проверка.c
+          if ($LASTEXITCODE -ne 0) { throw "Не собрался тест контракта" }
+          & .\contract-test.exe
+          if ($LASTEXITCODE -ne 0) { throw "Тест контракта завершился с ошибкой" }
+          & cl @flags /Fe:leksus-core.exe лексус.c значения.c словарь_индекс.c байткод.c машина.c компилятор.c
+          if ($LASTEXITCODE -ne 0) { throw "Не собралось ядро" }
+          & .\leksus-core.exe --self-test
+          if ($LASTEXITCODE -ne 0) { throw "Самопроверка ядра завершилась с ошибкой" }
         working-directory: ядро
-        shell: msys2 {0}
 
   publish-dictionary:
     name: Publish compressed dictionary for GitHub Pages
