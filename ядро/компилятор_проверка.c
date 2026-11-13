@@ -557,6 +557,8 @@ int main(void)
             &actual,error,sizeof(error));
         (void)лексус_число_создать("12",&expected);
         if(ok) (void)лексус_равно(actual,expected,&equal);
+        else fprintf(stderr,"диагностика «для каждого»: %s\\n",error);
+        if(ok&&!equal) fprintf(stderr,"неверный результат «для каждого»\\n");
         failed+=проверить("форма «для каждого» сохраняет область переменной цикла",ok&&equal);
         лексус_значение_освободить(&actual); лексус_значение_освободить(&expected);
     }
