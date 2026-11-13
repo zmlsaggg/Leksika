@@ -121,7 +121,9 @@
             <span>Программа <code>.lek</code></span>
             <textarea id="код" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Исходный код на Лексике"></textarea>
           </label>
-          <p class="подсказка">Подсказка: Ctrl + Enter запускает программу. Отступ для нового блока — Tab.</p>
+          <div id="редактор-подсказки" class="лексические-подсказки" role="listbox"
+               aria-label="Подсказки русских словоформ" aria-live="polite" hidden></div>
+          <p class="подсказка">Подсказка: Ctrl + Enter запускает программу. Отступ для нового блока — Tab. Автодополнение использует ядро/русские_формы.lxd, если бинарный словарь опубликован рядом с сайтом.</p>
         </div>
 
         <div class="вывод-панель">
