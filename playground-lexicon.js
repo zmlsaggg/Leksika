@@ -3,7 +3,7 @@
 
   const редактор = document.getElementById("код");
   const панель = document.getElementById("редактор-подсказки");
-  if (!редактор || !панель || typeof DecompressionStream !== "function") return;
+  if (!редактор || !панель) return;
 
   let загрузка = null;
   let индекс = null;
@@ -40,9 +40,22 @@
         const адрес = new URL("ядро/русские_формы.lxd.gz", document.baseURI);
         const ответ = await fetch(адрес.href, { cache: "force-cache" });
         if (!ответ.ok) throw new Error("Бинарный словарь ещё не опубликован.");
-        const сжатое = await ответ.arrayBuffer();
-        const поток = new Blob([сжатое]).stream().pipeThrough(new DecompressionStream("gzip"));
-        const буфер = await new Response(поток).arrayBuffer();
+        const полученныеБайты = new Uint8Array(await ответ.arrayBuffer());
+        let буфер;
+        if (полученныеБайты[0] === 0x1F && полученныеБайты[1] === 0x8B) {
+          if (typeof DecompressionStream !== "function") {
+            throw new Error("Браузер не поддерживает распаковку словаря.");
+          }
+          const поток = new Blob([полученныеБайты]).stream()
+            .pipeThrough(new DecompressionStream("gzip"));
+          буфер = await new Response(поток).arrayBuffer();
+        } else {
+          // Некоторые статические хостинги автоматически распаковывают .gz.
+          буфер = полученныеБайты.buffer.slice(
+            полученныеБайты.byteOffset,
+            полученныеБайты.byteOffset + полученныеБайты.byteLength
+          );
+        }
         const байты = new Uint8Array(буфер);
         if (байты.length < 36 ||
             String.fromCharCode(...байты.subarray(0, 8)) !== "LEKSLXD1") {
@@ -185,9 +198,6 @@
 
   редактор.addEventListener("input", обновить);
   редактор.addEventListener("click", обновить);
-  редактор.addEventListener("keyup", (событие) => {
-    if (!["ArrowDown", "ArrowUp", "Enter", "Escape", "Tab"].includes(событие.key)) обновить();
-  });
   редактор.addEventListener("keydown", (событие) => {
     if (!подсказки.length) return;
     if (событие.key === "ArrowDown") {
@@ -196,7 +206,7 @@
     } else if (событие.key === "ArrowUp") {
       событие.preventDefault();
       переместить(-1);
-    } else if (событие.key === "Enter" || событие.key === "Tab") {
+    } else if (событие.key === "Enter") {
       событие.preventDefault();
       выбрать(выбранная);
     } else if (событие.key === "Escape") {
