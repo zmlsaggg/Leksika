@@ -27,7 +27,9 @@ static char *преобразовать(const unsigned char *s,size_t n){
  while(n&&(s[n-1]=='\r'||s[n-1]=='\n'||s[n-1]==' '||s[n-1]=='\t'))--n;
  size_t i=0;while(i<n&&(s[i]==' '||s[i]=='\t'))++i;
  for(;i<n;++i){uint32_t c=s[i];if(c>=128){c=CP1251[c-128];if(c==0xFFFF){free(out);return NULL;}}
-  if(c>='A'&&c<='Z')c+=32;if(c>=0x0410&&c<=0x042F)c+=32;if(c==0x0401)c=0x0451;
+  if(c>='A'&&c<='Z') c+=32;
+  if(c>=0x0410&&c<=0x042F) c+=32;
+  if(c==0x0401) c=0x0451;
   int letter=(c>='a'&&c<='z')||кир(c);
   if(letter){if(кир(c))has_ru=1;prev=1;}
   else if((c==45||c==39)&&prev&&i+1<n){prev=0;}
@@ -58,12 +60,19 @@ static int write_index(const char*path,Список*v,uint32_t*checksum,uint64_t
  int ok=fwrite(h,1,sizeof(h),f)==sizeof(h);
  for(size_t i=0;ok&&i<=v->число;++i){unsigned char b[4];put32(b,off[i]);ok=fwrite(b,1,4,f)==4;}
  for(size_t i=0;ok&&i<v->число;++i){size_t n=strlen(v->слова[i])+1;ok=fwrite(v->слова[i],1,n,f)==n;}
- if(fclose(f)!=0)ok=0;free(off);return ok;
+ if(fclose(f)!=0) ok=0;
+ free(off);
+ return ok;
 }
 static double now_seconds(void){
+#ifdef _WIN32
+ /* MinGW runtimes may omit C11 timespec_get; clock() keeps the builder portable. */
+ return (double)clock()/(double)CLOCKS_PER_SEC;
+#else
  struct timespec ts;
  if(timespec_get(&ts,TIME_UTC)!=TIME_UTC)return 0.0;
  return (double)ts.tv_sec+(double)ts.tv_nsec/1000000000.0;
+#endif
 }
 int main(int argc,char**argv){
  double started=now_seconds();
@@ -79,5 +88,7 @@ int main(int argc,char**argv){
  if(!write_index(argv[2],&v,&checksum,&file_size)){fprintf(stderr,"Не удалось записать индекс.\n");return 4;}
  double seconds=now_seconds()-started;
  printf("Словарь собран: %zu уникальных форм; строк %zu; отброшено %zu; размер %llu байт; CRC32 %08X; время %.3f с.\n",v.число,raw,bad,(unsigned long long)file_size,(unsigned)checksum,seconds);
- for(size_t i=0;i<v.число;++i)free(v.слова[i]);free(v.слова);return 0;
+ for(size_t i=0;i<v.число;++i) free(v.слова[i]);
+ free(v.слова);
+ return 0;
 }
