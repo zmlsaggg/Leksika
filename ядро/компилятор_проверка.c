@@ -483,9 +483,9 @@ int main(void)
     {
         ТестоваяСреда test={"Привет",0,{0},0};
         const char *source=
-            "пусть ответ равно ничто.\\n"
-            "спросить ответ.\\n"
-            "что ответ.\\n"
+            "пусть ответ равно ничто.\n"
+            "спросить ответ.\n"
+            "что ответ.\n"
             "вернуть ответ.";
         ЛексусСкомпилированнаяПрограмма compiled;
         error[0]=0; actual=лексус_ничто(); expected=лексус_ничто(); equal=0;
@@ -500,8 +500,8 @@ int main(void)
         (void)лексус_речь_создать("Привет",strlen("Привет"),&expected);
         if(ok) (void)лексус_равно(actual,expected,&equal);
         failed+=проверить("спросить и что используют интерфейс ввода/вывода среды",ok&&equal&&
-                         test.output_length==strlen("Привет\\n")&&
-                         memcmp(test.output,"Привет\\n",test.output_length)==0);
+                         test.output_length==strlen("Привет\n")&&
+                         memcmp(test.output,"Привет\n",test.output_length)==0);
         лексус_значение_освободить(&actual); лексус_значение_освободить(&expected);
     }
 
