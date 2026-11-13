@@ -48,6 +48,13 @@ static int ввод_по_умолчанию(void *context,char *buffer,size_t ca
 }
 static void cleanup(ЛексусЗначение*r,size_t n){if(r){for(size_t i=0;i<n;++i)лексус_значение_освободить(&r[i]);free(r);}}
 typedef struct { ЛексусЗначение остаток; } ЛексусСчётчикЦикла;
+typedef struct {
+ ЛексусЗначение *регистры;
+ uint64_t адрес_возврата;
+ uint8_t назначение;
+ size_t циклы_база;
+ size_t итераторы_база;
+} ЛексусКадрВызова;
 typedef struct { ЛексусЗначение перечень; size_t индекс; uint32_t выход; } ЛексусИтератор;
 static void cleanup_cycles(ЛексусСчётчикЦикла *cycles,size_t count)
 {
