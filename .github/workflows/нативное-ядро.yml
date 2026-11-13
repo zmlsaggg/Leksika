@@ -32,6 +32,8 @@ on:
       - "источники/russian-words/**"
       - ".gitmodules"
       - ".github/workflows/нативное-ядро.yml"
+      - "playground.html"
+      - "playground-lexicon.js"
   workflow_dispatch:
 
 permissions:
