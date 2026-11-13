@@ -29,7 +29,7 @@ for profile_name, profile in profiles["profiles"].items():
             expected.update((form, command, flag) for form in forms)
 
 actual = set(re.findall(
-    r'\{"([^"]+)","([^"]+)",(ЛЕКСУС_ПРОФИЛЬ_[A-Z0-9_]+)\}', native
+    r'\{"([^"]+)","([^"]+)",([^}]+)\}', native
 ))
 if actual != expected:
     missing = sorted(expected - actual)
