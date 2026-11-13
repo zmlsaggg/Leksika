@@ -61,7 +61,8 @@ jobs:
         shell: bash
 
       - name: Собрать нативное ядро и полный словарный индекс, затем выполнить тесты
-        run: make -C ядро clean all test
+        run: make clean all test
+        working-directory: ядро
         shell: bash
 
       - name: Сопоставить нативный и переходный движки на общем подмножестве
@@ -80,5 +81,6 @@ jobs:
         with:
           submodules: recursive
       - name: Полная сборка и тесты с санитайзерами
-        run: make -C ядро sanitize-test
+        run: make sanitize-test
+        working-directory: ядро
         shell: bash
