@@ -43,6 +43,13 @@ static int выполнить(const char *source,ЛексусЗначение *r
     return ok;
 }
 
+static int запретить_ресурс(void *context,uint32_t action,const char *resource)
+{
+    int *calls=(int*)context;
+    (void)action;(void)resource;
+    ++*calls;
+    return 0;
+}
 static int выполнить_с_профилем(const char *source,unsigned profile,ТестоваяСреда *state,
                                char *error,size_t error_size)
 {
@@ -51,7 +58,7 @@ static int выполнить_с_профилем(const char *source,unsigned pr
                                           &compiled,error,error_size)) return 0;
     ЛексусПрограмма vm={compiled.код,compiled.число_инструкций,
                         compiled.константы,compiled.число_констант,compiled.регистры};
-    ЛексусСредаИсполнения env={state,NULL,тестовый_вывод};
+    ЛексусСредаИсполнения env={state,NULL,тестовый_вывод,ЛЕКСУС_РАЗРЕШИТЬ_ВЫВОД,NULL};
     ЛексусЗначение result=лексус_ничто();
     int ok=лексус_машина_исполнить_со_средой(&vm,10000,&env,&result,error,error_size);
     лексус_значение_освободить(&result);
@@ -62,6 +69,54 @@ int main(void)
 {
     int failed=0,equal=0; char error[512]={0};
     ЛексусЗначение actual=лексус_ничто(),expected=лексус_ничто();
+    {
+        ЛексусСкомпилированнаяПрограмма compiled;
+        const char *source="сказать речь Закрытый вывод. конец речи.";
+        int ok=лексус_скомпилировать(source,strlen(source),&compiled,error,sizeof(error));
+        ТестоваяСреда state={0};ЛексусЗначение result=лексус_ничто();
+        if(ok){
+            ЛексусПрограмма vm={compiled.код,compiled.число_инструкций,
+                compiled.константы,compiled.число_констант,compiled.регистры};
+            ЛексусСредаИсполнения env={&state,NULL,тестовый_вывод,0,NULL};
+            ok=лексус_машина_исполнить_со_средой(&vm,1000,&env,&result,error,sizeof(error));
+            лексус_скомпиляцию_освободить(&compiled);
+        }
+        failed+=проверить("VM запрещает вывод, если среда не выдала capability",
+                          !ok&&state.output_length==0&&strstr(error,"политика VM")!=NULL);
+        лексус_значение_освободить(&result);
+    }
+    {
+        ЛексусСкомпилированнаяПрограмма compiled;
+        const char *source="сказать речь Запрет allowlist. конец речи.";
+        int ok=лексус_скомпилировать(source,strlen(source),&compiled,error,sizeof(error));
+        ТестоваяСреда state={0};ЛексусЗначение result=лексус_ничто();int calls=0;
+        if(ok){
+            ЛексусПрограмма vm={compiled.код,compiled.число_инструкций,
+                compiled.константы,compiled.число_констант,compiled.регистры};
+            ЛексусСредаИсполнения env={&calls,NULL,тестовый_вывод,
+                ЛЕКСУС_РАЗРЕШИТЬ_ВЫВОД,запретить_ресурс};
+            ok=лексус_машина_исполнить_со_средой(&vm,1000,&env,&result,error,sizeof(error));
+            лексус_скомпиляцию_освободить(&compiled);
+        }
+        failed+=проверить("VM применяет allowlist callback до вызова вывода",
+                          !ok&&calls==1&&state.output_length==0&&strstr(error,"ресурс")!=NULL);
+        лексус_значение_освободить(&result);
+    }
+    {
+        ЛексусСкомпилированнаяПрограмма compiled;
+        const char *source="спросить имя.";
+        int ok=лексус_скомпилировать(source,strlen(source),&compiled,error,sizeof(error));
+        ТестоваяСреда state={"не должен читаться",0,{0},0};ЛексусЗначение result=лексус_ничто();
+        if(ok){
+            ЛексусПрограмма vm={compiled.код,compiled.число_инструкций,
+                compiled.константы,compiled.число_констант,compiled.регистры};
+            ЛексусСредаИсполнения env={&state,тестовый_ввод,NULL,0,NULL};
+            ok=лексус_машина_исполнить_со_средой(&vm,1000,&env,&result,error,sizeof(error));
+            лексус_скомпиляцию_освободить(&compiled);
+        }
+        failed+=проверить("VM запрещает ввод до обращения к источнику",!ok&&state.position==0);
+        лексус_значение_освободить(&result);
+    }
     {
         ТестоваяСреда state={0};
         int ok=выполнить_с_профилем("пиздануть речь Взрослый режим. конец речи.",
