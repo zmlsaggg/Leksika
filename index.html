@@ -65,13 +65,19 @@
 }
 </script>
 
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=2">
 <script src="script.js" defer></script>
 
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <link rel="preconnect" href="https://mc.yandex.ru">
 </head>
 <body>
+<div class="фон-сайта" aria-hidden="true">
+  <picture>
+    <source media="(prefers-reduced-motion: reduce)" srcset="фон-сайта-статичный.webp">
+    <img src="фон-анимация.gif" alt="" width="360" height="360" decoding="async">
+  </picture>
+</div>
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-K3CSQK5W"
   height="0" width="0" title="Google Tag Manager (служебный фрейм)" loading="lazy" class="gtm-noscript-frame"></iframe></noscript>
 <noscript><div><img src="https://mc.yandex.ru/watch/114225735"

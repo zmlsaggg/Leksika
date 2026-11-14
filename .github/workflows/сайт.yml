@@ -1,0 +1,36 @@
+name: Проверка фона сайта
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'styles.css'
+      - 'фон-анимация.gif'
+      - 'фон-сайта-статичный.webp'
+      - 'проверка/фон_сайта.cjs'
+      - '.github/workflows/сайт.yml'
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'styles.css'
+      - 'фон-анимация.gif'
+      - 'фон-сайта-статичный.webp'
+      - 'проверка/фон_сайта.cjs'
+      - '.github/workflows/сайт.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  background:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Установить Playwright
+        run: npm install --no-save --no-package-lock playwright-core@1.56.1
+      - name: Проверить анимацию в Chromium
+        run: node проверка/фон_сайта.cjs
