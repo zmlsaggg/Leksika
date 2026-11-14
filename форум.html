@@ -1,5 +1,20 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Форум — Лексика</title><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="сообщество.css"></head><body>
-<div id="авторизация" class="авторизация" aria-label="Учётная запись"></div><main class="полотно сообщество"><nav><a href="index.html">← Главная</a> · <a href="игры.html">Игры и программы</a> · <a href="playground.html">Песочница</a></nav><h1>Форум</h1><section data-сообщество="темы"><p>Читайте темы и создавайте свои после входа через GitHub.</p>
-<form id="форма-публикации"><label>Название <input id="название-публикации" maxlength="100" required></label><label>Сообщение <textarea id="текст-публикации" maxlength="5000" rows="5" required></textarea></label><button type="submit">Опубликовать тему</button></form>
-<p id="статус-сообщества" role="status"></p><div id="публикации"></div><p>После пяти уникальных жалоб тема скрывается для проверки администратором.</p></section>
-</main><script src="сообщество-сборка.js" defer></script></body></html>
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Форум — Лексика</title>
+  <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="сообщество.css?v=2">
+</head>
+<body class="форум-страница">
+<div id="авторизация" class="авторизация" aria-label="Учётная запись"></div>
+<main class="полотно сообщество форум" data-сообщество="темы">
+  <nav class="форум-навигация"><a href="index.html">← Главная</a><a href="игры.html">Игры и программы</a><a href="playground.html">Песочница</a></nav>
+  <header class="форум-шапка"><div><span class="форум-метка">СООБЩЕСТВО ЛЕКСИКИ</span><h1>Место для идей<br><em>и разговоров.</em></h1><p>Делитесь находками, задавайте вопросы и обсуждайте язык вместе.</p><a class="форум-к-примеру" href="#новая-тема">＋ Создать тему</a></div><div class="форум-символ" aria-hidden="true"><span>«</span><span>»</span></div></header>
+  <div class="форум-сетка">
+    <section class="форум-лента" aria-labelledby="темы-заголовок"><div class="форум-секция-шапка"><div><span class="форум-метка">ОБСУЖДЕНИЯ</span><h2 id="темы-заголовок">Свежие темы</h2></div><span class="форум-бейдж">Сообщество</span></div><div id="результат-загрузки" role="status" aria-live="polite"></div><div id="публикации"></div></section>
+    <aside><section class="форум-создание" id="новая-тема"><span class="форум-метка">ВАША ОЧЕРЕДЬ</span><h2>Новая тема</h2><p>Есть вопрос или идея? Начните разговор.</p>
+      <form id="форма-публикации"><label>Название <input id="название-публикации" maxlength="100" placeholder="О чём хотите поговорить?" required></label><label>Сообщение <textarea id="текст-публикации" maxlength="5000" rows="6" placeholder="Напишите подробнее…" required></textarea></label><button type="submit">Опубликовать тему <span aria-hidden="true">↗</span></button></form>
+      <p id="статус-сообщества" role="status" aria-live="polite"></p><small>Для публикации нужен вход через GitHub.</small>
+    </section><section class="форум-подсказка"><b>✦ &nbsp;Давайте общаться</b><p>Будьте доброжелательны, делитесь опытом и не бойтесь задавать вопросы.</p></section></aside>
+  </div>
+</main><script src="сообщество-сборка.js?v=2" defer></script></body></html>

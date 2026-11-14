@@ -25,6 +25,11 @@ try {
     pong.вызвать('шаг');
   }
   assert.equal(pongScore,1,'мяч отбит');
+  let question, calcScore = -1, calcEnd;
+  const calc = ЛексикаУчебная.создать(source('калькулятор'), {задание(a,b){ question=[a,b]; }, показатьсчёт(n){calcScore=n;}, завершить(n,won){calcEnd={n,won};}});
+  calc.вызвать('начать'); assert.equal(calcScore, 0);
+  calc.вызвать('ответ', question[0] + question[1]); assert.equal(calcScore, 1);
+  calc.вызвать('ответ', -100); assert.deepEqual(calcEnd,{n:1,won:false});
   const apple = ЛексикаУчебная.создать(source('bad-apple'));
   assert.equal(apple.вызвать('номеркадра',1.5),45);
   assert.equal(apple.вызвать('завершено',6571,6572),false);

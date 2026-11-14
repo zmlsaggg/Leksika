@@ -210,3 +210,29 @@ textarea {
   #код { min-height: 300px; }
   .ниже-редактора { margin-top: 48px; }
 }
+
+/* Просторное рабочее место и карточки вместо выпадающего списка. */
+@media (min-width: 851px) {
+  .страница { width: min(1920px, calc(100% - 64px)); }
+  .карточка { grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr); }
+  #код { min-height: 580px; }
+  #вывод { min-height: 580px; max-height: 85vh; }
+}
+.выбор-примеров { margin: 0 0 18px; }
+.примеры-шапка { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.примеры-шапка span { color: #91add4; font-size: 10px; letter-spacing: .14em; font-weight: 700; }
+.примеры-шапка h2 { margin: 2px 0 0; font-size: 20px; }
+.примеры-шапка p { margin: 0; color: var(--серый); font-size: 13px; }
+.примеры-сетка { display: grid; grid-template-columns: repeat(auto-fit, minmax(116px, 1fr)); gap: 8px; }
+.примеры-сетка button { display: flex; align-items: center; gap: 9px; text-align: left; min-height: 57px; padding: 8px 10px; border: 1px solid #2a3442; border-radius: 11px; background: #151a22; color: #c7d4e4; font-size: 12px; font-weight: 650; cursor: pointer; }
+.примеры-сетка button b { display: grid; place-items: center; flex: 0 0 29px; width: 29px; height: 29px; border-radius: 8px; background: #263750; color: #a7c8f8; font-size: 14px; }
+.примеры-сетка button:hover, .примеры-сетка button[aria-pressed="true"] { border-color: #688bc1; background: #202f45; color: #fff; }
+.вывод-панель { container-type: inline-size; }
+#вывод.анимация-кадр { font-size: clamp(4px, min(1.55cqw, 1.7vh), 15px); line-height: 1.05; }
+@media (max-width: 680px) {
+  .примеры-шапка { align-items: start; flex-direction: column; gap: 2px; }
+  .примеры-сетка { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .примеры-сетка button { min-height: 46px; }
+}
+/* Соотношение сторон под 100×40 символов: кадр занимает почти весь экран вывода. */
+#вывод.анимация-кадр { flex: none; width: 100%; height: auto; min-height: 0; max-height: none; aspect-ratio: 1.33; }
