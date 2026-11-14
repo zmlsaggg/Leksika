@@ -2,28 +2,28 @@
 setlocal
 set "LEK_ROOT=%~dp0"
 if "%~1"=="--нативно" goto native
-set "PYTHONUTF8=1"
+set "PYTHONUTF8="
 set "PYTHONIOENCODING=utf-8"
 
 if exist "%LEK_ROOT%питон\python.exe" goto embedded
 
 where py >nul 2>nul
 if errorlevel 1 goto system_python
-py -3 -c "import sys; raise SystemExit(0 if sys.version_info >= (3, 8) else 1)" >nul 2>nul
+py -3 -X utf8 -c "import sys; raise SystemExit(0 if sys.version_info >= (3, 8) else 1)" >nul 2>nul
 if errorlevel 1 goto system_python
-py -3 "%LEK_ROOT%лексус.lek" %*
+py -3 -X utf8 "%LEK_ROOT%лексус.lek" %*
 exit /b %ERRORLEVEL%
 
 :system_python
 where python >nul 2>nul
 if errorlevel 1 goto missing_python
-python -c "import sys; raise SystemExit(0 if sys.version_info >= (3, 8) else 1)" >nul 2>nul
+python -X utf8 -c "import sys; raise SystemExit(0 if sys.version_info >= (3, 8) else 1)" >nul 2>nul
 if errorlevel 1 goto missing_python
-python "%LEK_ROOT%лексус.lek" %*
+python -X utf8 "%LEK_ROOT%лексус.lek" %*
 exit /b %ERRORLEVEL%
 
 :embedded
-"%LEK_ROOT%питон\python.exe" "%LEK_ROOT%лексус.lek" %*
+"%LEK_ROOT%питон\python.exe" -X utf8 "%LEK_ROOT%лексус.lek" %*
 exit /b %ERRORLEVEL%
 
 :missing_python
