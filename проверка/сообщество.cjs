@@ -28,6 +28,7 @@ const assert = require('node:assert/strict');
     assert.match(await page.locator('.публикация h3').innerText(), /<img/);
     assert.match(await page.locator('#авторизация').innerText(), /tester/);
     await page.locator('.публикация button').click();
+    await page.waitForFunction(() => document.getElementById('статус-сообщества').textContent.includes('Жалоба отправлена'));
     assert(writes.some(w => decodeURI(w.url).includes('жалобы_программы') && w.body.автор === me));
     await page.locator('#название-публикации').fill('Моя программа');
     await page.locator('#текст-публикации').fill('сказать(42);');
