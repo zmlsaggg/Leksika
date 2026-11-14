@@ -35,6 +35,13 @@ try {
         ($intermediatesBefore -join ',') -ne ($intermediatesAfter -join ',')) {
         throw 'Тихая установка неожиданно изменила хранилище сертификатов'
     }
+    $modelDir = Join-Path $env:LOCALAPPDATA 'Лексика-модели'
+    if (Test-Path -LiteralPath $modelDir) { throw 'Тихая установка неожиданно загрузила модели' }
+    $modelScriptDir = Join-Path $installDir 'лексика'
+    $env:LEKSIKA_MODEL_DIR = $modelScriptDir
+    & (Join-Path $installDir 'питон/python.exe') -X utf8 "$PSScriptRoot/загрузка_моделей.py"
+    if ($LASTEXITCODE -ne 0) { throw 'Проверка загрузчика на встроенном Python не прошла' }
+    Remove-Item Env:LEKSIKA_MODEL_DIR
     $launcher = Join-Path $installDir 'Leksika.cmd'
     $native = Join-Path $installDir 'лексус-ядро.exe'
     $example = Join-Path $installDir 'примеры/нативная_vm.lek'
