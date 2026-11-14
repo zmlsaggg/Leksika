@@ -7,10 +7,31 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#ifdef _WIN32
+#include <windows.h>
+#include <shellapi.h>
+#include <wchar.h>
+#endif
 #include "словарь_формы.h"
 #include "словарь_индекс.h"
 #include "компилятор.h"
 #include "машина.h"
+
+/* Аргументы ядра — UTF-8; на Windows пути открываются через Unicode API. */
+static FILE *открыть_исходник(const char *путь)
+{
+#ifdef _WIN32
+    int n=MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,путь,-1,NULL,0);
+    if(n<=0) return NULL;
+    wchar_t *wide=(wchar_t *)malloc((size_t)n*sizeof(*wide));
+    if(!wide) return NULL;
+    if(!MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,путь,-1,wide,n)) { free(wide); return NULL; }
+    FILE *f=_wfopen(wide,L"rb");
+    free(wide); return f;
+#else
+    return fopen(путь,"rb");
+#endif
+}
 
 #define ЛЕКСУС_ВЕРСИЯ "0.6.0-native"
 typedef struct { size_t знаки, строки; } Счётчик;
@@ -309,13 +330,30 @@ static int самопроверка(void)
     if(количество!=12 || strcmp(именные[7].форма,"ручек")!=0) return 15;
     return 0;
 }
-int main(int argc,char **argv)
+static int основная_программа(int argc,char **argv)
 {
     /* Явный выбор нативного пути позволяет общему запускателю не вызывать Python. */
     if (argc >= 2 && strcmp(argv[1], "--нативно") == 0) { --argc; ++argv; }
     if (argc>=2 && (strcmp(argv[1],"выполнить")==0 || strcmp(argv[1],"запустить")==0)) {
-        if (argc!=3) { fputs("Использование: лексус-ядро выполнить файл.lek\n",stderr); return 2; }
-        FILE *f=fopen(argv[2],"rb");
+        unsigned профили=ЛЕКСУС_ПРОФИЛЬ_БЕЗ_ИЗМЕНЕНИЙ;
+        const char *путь=NULL;
+        for(int i=2;i<argc;++i) {
+            if(strcmp(argv[i],"--профиль=18+")==0) профили |= ЛЕКСУС_ПРОФИЛЬ_18_ПЛЮС;
+            else if(strcmp(argv[i],"--профиль=зумер")==0) профили |= ЛЕКСУС_ПРОФИЛЬ_ЗУМЕР;
+            else if(strncmp(argv[i],"--профиль=",strlen("--профиль="))==0) {
+                fprintf(stderr,"Лексус: неизвестный профиль «%s»; доступны 18+ и зумер.\n",argv[i]+strlen("--профиль="));
+                return 2;
+            } else if(!путь && strncmp(argv[i],"--",2)!=0) путь=argv[i];
+            else {
+                fputs("Использование: лексус-ядро выполнить [--профиль=18+] [--профиль=зумер] файл.lek\n",stderr);
+                return 2;
+            }
+        }
+        if(!путь) {
+            fputs("Использование: лексус-ядро выполнить [--профиль=18+] [--профиль=зумер] файл.lek\n",stderr);
+            return 2;
+        }
+        FILE *f=открыть_исходник(путь);
         if(!f){perror("Лексус: не удалось открыть исходник");return 2;}
         size_t length=0; unsigned char *source=прочитать(f,&length); fclose(f);
         if(!source){fputs("Лексус: не удалось прочитать исходник.\n",stderr);return 2;}
@@ -324,7 +362,7 @@ int main(int argc,char **argv)
             free(source); fputs("Лексус: исходник содержит некорректный UTF-8.\n",stderr); return 2;
         }
         ЛексусСкомпилированнаяПрограмма compiled; char error[512]={0};
-        if(!лексус_скомпилировать((const char*)source,length,&compiled,error,sizeof(error))){
+        if(!лексус_скомпилировать_с_профилями((const char*)source,length,профили,&compiled,error,sizeof(error))){
             fprintf(stderr,"Лексус: ошибка компиляции: %s.\n",error[0]?error:"неизвестная ошибка");
             free(source); return 1;
         }
@@ -402,7 +440,7 @@ int main(int argc,char **argv)
         if(argc>3) { fputs("Лексус: укажите не более одного имени файла.\n",stderr); return 2; }
         FILE *f=stdin;
         if(argc==3 && strcmp(argv[2],"-")!=0) {
-            f=fopen(argv[2],"rb");
+            f=открыть_исходник(argv[2]);
             if(!f) { perror("Лексус: не удалось открыть файл"); return 2; }
         }
         size_t n=0; unsigned char *d=прочитать(f,&n); if(f!=stdin) fclose(f);
@@ -428,7 +466,7 @@ int main(int argc,char **argv)
     puts("Лексус — нативное ядро " ЛЕКСУС_ВЕРСИЯ);
     puts("Команды:");
     puts("  версия");
-    puts("  выполнить <файл.lek>");
+    puts("  выполнить [--профиль=18+] [--профиль=зумер] <файл.lek>");
     puts("  самопроверка");
     puts("  проверить [файл.lek]");
     puts("  разобрать [файл.lek]");
@@ -438,4 +476,31 @@ int main(int argc,char **argv)
     puts("Нативное выполнение пока поддерживает объявление числовых переменных, арифметику и вывод.");
     puts("Для остальных конструкций используйте основной совместимый исполнитель.");
     return argc>1?2:0;
+}
+
+int main(int argc,char **argv)
+{
+#ifdef _WIN32
+    /* CRT argv использует системную кодовую страницу; берём исходные Unicode-аргументы. */
+    int count=0;
+    LPWSTR *wide=CommandLineToArgvW(GetCommandLineW(),&count);
+    if(!wide) { fputs("Лексус: не удалось прочитать аргументы.\n",stderr); return 2; }
+    char **utf8=(char **)calloc((size_t)count+1,sizeof(*utf8));
+    if(!utf8) { LocalFree(wide); return 2; }
+    int ok=1;
+    for(int i=0;i<count;++i) {
+        int n=WideCharToMultiByte(CP_UTF8,WC_ERR_INVALID_CHARS,wide[i],-1,NULL,0,NULL,NULL);
+        if(n<=0 || !(utf8[i]=(char *)malloc((size_t)n)) ||
+           !WideCharToMultiByte(CP_UTF8,WC_ERR_INVALID_CHARS,wide[i],-1,utf8[i],n,NULL,NULL)) {
+            ok=0; break;
+        }
+    }
+    int result=ok?основная_программа(count,utf8):2;
+    for(int i=0;i<count;++i) free(utf8[i]);
+    free(utf8); LocalFree(wide);
+    (void)argc; (void)argv;
+    return result;
+#else
+    return основная_программа(argc,argv);
+#endif
 }

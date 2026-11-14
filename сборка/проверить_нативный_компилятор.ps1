@@ -58,7 +58,7 @@ $NativeSources = @(
     (Join-Path $Kernel "машина.c"),
     (Join-Path $Kernel "компилятор.c")
 )
-Invoke-Gcc ($Common + @("-o", $Native) + $NativeSources)
+Invoke-Gcc ($Common + @("-o", $Native) + $NativeSources + @("-lshell32"))
 
 Write-Host "Сборка проверок..."
 Invoke-Gcc ($Common + @("-o", $ValuesTest,

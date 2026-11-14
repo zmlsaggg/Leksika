@@ -1,6 +1,7 @@
 CC ?= cc
 ifeq ($(OS),Windows_NT)
 EXEEXT ?= .exe
+NATIVE_LIBS = -lshell32
 else
 EXEEXT ?=
 endif
@@ -25,7 +26,7 @@ all: $(TARGET) $(DICT_INDEX)
 native: $(TARGET)
 
 $(TARGET): $(SOURCE) значения.h байткод.h машина.h компилятор.h словарь_индекс.h словарь_формы.h морфология_окончания.h морфология_имён.h
-	$(CC) $(CFLAGS) -o "$@" $(SOURCE)
+	$(CC) $(CFLAGS) -o "$@" $(SOURCE) $(NATIVE_LIBS)
 
 $(VALUE_TEST): значения.c значения_проверка.c значения.h
 	$(CC) $(CFLAGS) -o "$@" значения.c значения_проверка.c
