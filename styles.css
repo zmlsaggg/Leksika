@@ -76,18 +76,25 @@
 /* Ненавязчивые микроанимации: только opacity/transform, без тяжёлых фильтров и layout. */
 @media(prefers-reduced-motion:no-preference){.полотно>header,.полотно>main>section,.полотно>main>.оглавление{animation:leksika-appear .42s ease both}.полотно>main>section:nth-of-type(2){animation-delay:.04s}.полотно>main>section:nth-of-type(3){animation-delay:.08s}.кнопка,.плашка,.оглавление a,details summary{transition:transform .18s ease,border-color .18s ease,background-color .18s ease,color .18s ease}.кнопка:hover,.плашка:hover{transform:translateY(-2px)}.оглавление a:hover{color:#c7dcff;transform:translateX(2px)}header img{transition:filter .25s ease,transform .25s ease}header img:hover{filter:drop-shadow(0 16px 42px rgba(150,170,200,.25));transform:translateY(-2px)}}@keyframes leksika-appear{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 
-/* Облегчённая версия исходной анимации: неподвижный кадр при снижении движения. */
-body::before {
-  content: "";
+/* GIF выводим как изображение, а не CSS background: так браузеры надёжнее
+   воспроизводят кадры. При уменьшении движения picture подставляет стоп-кадр. */
+.фон-сайта {
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background: linear-gradient(rgba(7, 10, 17, .76), rgba(7, 10, 17, .86)),
-              url("фон-сайта-статичный.webp") center / cover no-repeat;
+  overflow: hidden;
+  background: var(--фон);
 }
-@media (prefers-reduced-motion: no-preference) {
-  body::before {
-    background-image: linear-gradient(rgba(7, 10, 17, .76), rgba(7, 10, 17, .86)), url("фон-сайта.webp");
-  }
+.фон-сайта picture, .фон-сайта img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.фон-сайта img { object-fit: cover; object-position: center; }
+.фон-сайта::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(rgba(7, 10, 17, .60), rgba(7, 10, 17, .80));
 }
