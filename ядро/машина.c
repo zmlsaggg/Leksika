@@ -5,6 +5,21 @@
 static void fail(char*p,size_t n,const char*s){if(p&&n)snprintf(p,n,"%s",s);}
 static void assign(ЛексусЗначение*dst,ЛексусЗначение src){лексус_значение_освободить(dst);*dst=src;}
 static int store_result(ЛексусЗначение*r,uint8_t dst,ЛексусОшибка e,ЛексусЗначение value,char*err,size_t errn){if(e.код!=ЛЕКСУС_ОК){fail(err,errn,e.сообщение?e.сообщение:"ошибка операции значения");лексус_значение_освободить(&value);return 0;}assign(&r[dst],value);return 1;}
+static int действие_разрешено(const ЛексусСредаИсполнения *env,uint32_t действие,
+                                const char *ресурс,char *err,size_t errn)
+{
+ if(!env)return 1; /* Стандартная доверенная среда stdin/stdout. */
+ if(!(env->разрешения&действие)){
+  fail(err,errn,"политика VM запретила действие среды");
+  return 0;
+ }
+ if(env->проверить_разрешение&&
+    env->проверить_разрешение(env->контекст,действие,ресурс?ресурс:"")!=1){
+  fail(err,errn,"политика VM отклонила ресурс среды");
+  return 0;
+ }
+ return 1;
+}
 static int вывести_байты(const ЛексусСредаИсполнения *env,const char *bytes,size_t length)
 {
  if(env&&env->вывод) return env->вывод(env->контекст,bytes,length)==1;
@@ -12,6 +27,7 @@ static int вывести_байты(const ЛексусСредаИсполне�
 }
 static int показать_значение(ЛексусЗначение v,const ЛексусСредаИсполнения *env,char *err,size_t errn)
 {
+ if(!действие_разрешено(env,ЛЕКСУС_РАЗРЕШИТЬ_ВЫВОД,"",err,errn))return 0;
  const char *text=NULL; size_t length=0; char *owned=NULL;
  switch(v.вид){
   case ЛЕКСУС_НИЧТО: text="ничто"; length=strlen(text); break;
@@ -291,6 +307,7 @@ int лексус_машина_исполнить_со_средой(const Лек�
     break;
    }
    case ЛЕКСУС_ОП_ВВОД: {
+    if(!действие_разрешено(env,ЛЕКСУС_РАЗРЕШИТЬ_ВВОД,"",err,errn)){ok=0;done=1;break;}
     const size_t capacity=65536u;
     char *buffer=(char*)malloc(capacity);
     if(!buffer){fail(err,errn,"не хватает памяти для ввода");ok=0;done=1;break;}
