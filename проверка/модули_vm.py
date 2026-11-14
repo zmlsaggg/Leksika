@@ -109,6 +109,23 @@ class МодулиVM(unittest.TestCase):
                 with self.assertRaisesRegex(ОшибкаСмысла, 'только внутри цикла'):
                     self.run_program(code)
 
+    def test_правило_не_прыгает_в_чужой_цикл(self):
+        for action in ('прервать', 'продолжить'):
+            with self.subTest(action=action):
+                code = ('правило проверить повторять\n' + action + '.\nконец правила.\n'
+                        'повторить два раза\nпроверить().\nконец повторить.')
+                with self.assertRaisesRegex(ОшибкаСмысла, 'только внутри цикла'):
+                    self.run_program(code)
+
+    def test_управление_циклом_внутри_правила(self):
+        code = ('правило проверить повторять\n'
+                'повторить три раза\nсказать 42.\nпрервать.\nконец повторить.\n'
+                'вернуть 7.\nконец правила.\nсказать проверить().')
+        expected, _ = self.run_program(code, tree=True)
+        output, _ = self.run_program(code)
+        self.assertEqual(output, expected)
+        self.assertEqual(output, ['42', '7'])
+
     def test_разрешение_чтения_модуля(self):
         from unittest.mock import patch
         from лексика import безопасность
