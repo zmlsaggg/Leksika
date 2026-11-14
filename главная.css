@@ -1,0 +1,175 @@
+/* Главная — самостоятельный визуальный язык, не затрагивающий другие страницы. */
+.главная-страница {
+  --бумага: #f2ede2;
+  --приглушённый: #aaa9a2;
+  --графит: #171a1b;
+  --линия: rgba(223, 216, 198, .20);
+  --медь: #e89167;
+  color: var(--бумага);
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.6;
+}
+.главная-страница .фон-сайта::after { background: linear-gradient(110deg, rgba(13, 18, 20, .91), rgba(17, 19, 19, .86) 58%, rgba(19, 22, 21, .91)); }
+.главная-страница .полотно { max-width: 1512px; padding: 0 clamp(22px, 5vw, 76px) 40px; }
+.главная-страница a { color: inherit; }
+.главная-страница a:hover { text-decoration: none; }
+.пропуск { position: fixed; top: 8px; left: 8px; z-index: 20; transform: translateY(-150%); background: var(--бумага); color: #191b1c !important; padding: 10px; }
+.пропуск:focus { transform: translateY(0); }
+.главная-навигация { display: flex; align-items: center; gap: 36px; min-height: 86px; border-bottom: 1px solid var(--линия); }
+.слово-знак { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; font-family: Georgia, "Times New Roman", serif; font-size: 23px; font-weight: 700; letter-spacing: -.04em; }
+.слово-знак > span:first-child { display: grid; place-items: center; width: 31px; height: 31px; border: 1px solid var(--медь); border-radius: 50%; color: var(--медь); font-size: 19px; }
+.точка { color: var(--медь); }
+.слово-знак .точка { margin-left: -7px; }
+.навигация-ссылки { display: flex; flex-wrap: wrap; gap: clamp(12px, 2vw, 28px); align-items: center; font-size: 13px; color: #cbc9bf; }
+.навигация-ссылки a, .текстовая-ссылка, .стрелочная-ссылка, .манифест-текст a, .закулисье a { text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .2s ease, color .2s ease; }
+.навигация-ссылки a:hover, .текстовая-ссылка:hover, .стрелочная-ссылка:hover, .манифест-текст a:hover, .закулисье a:hover { border-color: var(--медь); color: var(--медь); }
+.главная-навигация .авторизация { margin-left: auto; padding: 0; color: #b6b5ad; font: 12px/1.3 "Segoe UI", sans-serif; }
+.главная-навигация .авторизация button { background: transparent; border: 1px solid #777d78; color: var(--бумага); border-radius: 2px; padding: 8px 12px; font-size: 12px; }
+.главная-страница :focus-visible { outline: 2px solid #ffb18c; outline-offset: 4px; }
+.главная-страница .герой { padding: clamp(55px, 8vw, 115px) 0 70px; display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(290px, .75fr); align-items: center; gap: clamp(24px, 4vw, 70px); text-align: left; }
+.надстрочник, .метка-раздела, .маршрут-номер, .образец-метка, .образец-результат > span, .окно-заголовок, .образцы-пометка, .герой-сноска, .герой-подпись, .архитектура-полосы, .номер { font: 600 10px/1.4 "Courier New", monospace; letter-spacing: .12em; }
+.надстрочник { display: flex; align-items: center; gap: 10px; margin: 0 0 27px; color: #bdbdb4; }
+.живая-точка { width: 7px; height: 7px; border-radius: 50%; background: var(--медь); }
+.надстрочник .линия { height: 1px; width: 34px; background: #7d7971; }
+.главная-страница h1, .главная-страница h2, .главная-страница h3 { font-family: Georgia, "Times New Roman", serif; font-weight: 400; letter-spacing: -.045em; }
+.главная-страница .герой h1 { margin: 0; font-size: clamp(49px, 6.6vw, 100px); line-height: .99; }
+.главная-страница h1 em, .главная-страница h2 em { color: var(--медь); font-weight: 400; }
+.главная-страница .подзаголовок { max-width: 510px; margin: 27px 0 0; color: #c0c0b8; font-size: clamp(16px, 1.3vw, 18px); line-height: 1.75; }
+.герой-действия { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 25px; margin-top: 30px; }
+.главная-страница .кнопка.главная { display: inline-flex; align-items: center; justify-content: space-between; gap: 25px; background: var(--медь); color: #211715; border: 1px solid var(--медь); border-radius: 2px 15px 2px 2px; padding: 14px 19px; font-size: 13px; font-weight: 700; }
+.главная-страница .кнопка.главная:hover { background: #f3a97e; border-color: #f3a97e; }
+.текстовая-ссылка { font-size: 13px; color: #dbd8cc !important; padding: 5px 0; }
+.герой-сноска { display: flex; flex-wrap: wrap; gap: 12px 20px; margin-top: 55px; color: #a2a39b; }
+.герой-сноска span + span::before { content: "/"; margin-right: 20px; color: #65675f; }
+.герой-визуал { position: relative; padding: clamp(14px, 2vw, 24px); border: 1px solid #625c50; border-radius: 48% 48% 3px 3px; background: linear-gradient(155deg, rgba(226, 180, 146, .12), rgba(15, 17, 16, .92) 62%); }
+.герой-визуал::before { content: ""; position: absolute; inset: 12px; border: 1px solid rgba(234, 202, 177, .17); border-radius: 48% 48% 0 0; pointer-events: none; }
+.главная-страница .герой-эмблема { display: block; width: 100%; height: auto; margin: 18% 0 8%; mix-blend-mode: screen; filter: none; }
+.герой-подпись { display: flex; justify-content: space-between; gap: 10px; padding: 14px 2px 0; border-top: 1px solid #625c50; color: #b6aaa0; }
+.главная-страница section { scroll-margin-top: 25px; }
+.метка-раздела { color: #b9b4a9; white-space: nowrap; }
+.метка-раздела span { color: var(--медь); margin-right: 12px; }
+.главная-страница h2 { margin: 0; font-size: clamp(37px, 4.8vw, 66px); line-height: 1.08; }
+.главная-страница h3 { margin: 0; font-size: 26px; line-height: 1.2; }
+.манифест { display: grid; grid-template-columns: minmax(120px, .4fr) minmax(250px, 1fr) minmax(280px, 1fr); gap: 28px; padding: 60px 0 95px; border-top: 1px solid var(--линия); }
+.манифест-текст p, .особенности-вступление p, .образцы-вступление p, .закулисье p, .справка p { color: #c0c0b8; margin: 0 0 17px; max-width: 570px; }
+.манифест-текст a, .закулисье a { color: #f0aa88; font-size: 13px; font-weight: 700; }
+.главная-страница p code { color: #f4c3a9; background: rgba(229, 148, 111, .10); border-radius: 2px; padding: 1px 4px; }
+.образцы { display: grid; grid-template-columns: minmax(260px, .8fr) minmax(0, 1.2fr); background: #e6e0d2; color: #252824; padding: clamp(27px, 5vw, 67px); gap: clamp(32px, 5vw, 70px); border-radius: 4px 42px 4px 4px; }
+.образцы .метка-раздела { color: #6b7068; }
+.образцы-вступление h2 { margin: 28px 0 21px; }
+.образцы-вступление h2 em { color: #a74c32; }
+.образцы-вступление p { color: #595e58; }
+.стрелочная-ссылка { display: inline-block; color: #96472e !important; margin-top: 8px; padding-bottom: 5px; font-weight: 700; font-size: 13px; }
+.образцы-пометка { color: #777970; margin-top: 70px; line-height: 1.8; }
+.образцы-окно { min-width: 0; align-self: start; background: #1b2220; color: #e9e9df; box-shadow: 14px 14px 0 rgba(40, 48, 41, .12); border-radius: 3px; }
+.окно-заголовок { display: flex; justify-content: space-between; gap: 10px; color: #a9b1a4; padding: 15px 18px; border-bottom: 1px solid #414943; }
+.окно-заголовок i { display: inline-block; width: 7px; height: 7px; background: #e89167; border-radius: 50%; margin-right: 7px; }
+.переключатель-образцов { display: flex; overflow-x: auto; border-bottom: 1px solid #414943; }
+.переключатель-образцов button { flex: 1 0 auto; border: 0; border-right: 1px solid #414943; background: transparent; color: #afb7aa; padding: 12px; font: 600 11px/1.4 "Courier New", monospace; cursor: pointer; }
+.переключатель-образцов button[aria-pressed="true"] { background: #e89167; color: #24201c; }
+.переключатель-образцов button:hover:not([aria-pressed="true"]) { background: #303b34; color: #fff; }
+.образец-тело { padding: 24px; }
+.образец-метка { display: flex; justify-content: space-between; color: #a9b1a4; }
+.главная-страница .образцы pre { min-height: 148px; margin: 12px 0 24px; padding: 0; border: 0; background: transparent; border-radius: 0; color: #f0e9d7; font-size: clamp(12px, 1.12vw, 15px); line-height: 1.8; }
+.образец-результат { display: grid; grid-template-columns: 100px 1fr; gap: 15px; padding: 16px 0 0; border-top: 1px solid #414943; }
+.образец-результат > span { color: #a9b1a4; }
+.образец-результат output { white-space: pre-wrap; font: 14px/1.6 "Courier New", monospace; color: #a6d3b7; }
+.особенности { display: grid; grid-template-columns: .8fr 1.2fr; gap: clamp(35px, 6vw, 90px); padding: 120px 0; }
+.особенности-вступление h2 { margin: 25px 0 20px; }
+.особенности-список article { display: grid; grid-template-columns: 130px 1fr 65px; gap: 15px; padding: 23px 0 29px; border-top: 1px solid var(--линия); }
+.номер { color: #aeaa9e; padding-top: 7px; }
+.особенности-список p { color: #bbbcb3; font-size: 14px; max-width: 450px; margin: 10px 0 0; }
+.особенности-знак { color: #d39273; font: italic 35px/1 Georgia, serif; text-align: right; }
+.маршруты { padding: 0 0 110px; }
+.маршруты > h2 { margin: 22px 0 32px; }
+.маршруты-сетка { display: grid; grid-template-columns: 1.1fr .9fr; }
+.маршрут { padding: clamp(28px, 4vw, 52px); min-height: 290px; }
+.маршрут-браузер { background: #bd6f50; color: #211813; border-radius: 3px 0 0 3px; }
+.маршрут-компьютер { background: #28332e; color: #eff0e8; border-radius: 0 3px 35px 0; }
+.маршрут-номер { opacity: .8; }
+.маршрут h3 { margin: 40px 0 12px; font-size: 35px; }
+.маршрут p { margin: 0 0 25px; max-width: 490px; font-size: 14px; }
+.маршрут a { font-weight: 700; border-bottom: 1px solid currentColor; padding-bottom: 4px; font-size: 13px; }
+.маршрут details { border: 0; background: transparent; border-radius: 0; margin: 18px 0 0; padding: 0; font-size: 13px; }
+.маршрут details pre { background: #18201d; border-radius: 0; font-size: 12px; color: #e4e7dc; }
+.закулисье { border-top: 1px solid var(--линия); padding: 65px 0 110px; }
+.закулисье-сетка { display: grid; grid-template-columns: 1.1fr .9fr; gap: 45px; margin-top: 25px; }
+.архитектура-полосы { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 42px; border-top: 1px solid var(--линия); border-bottom: 1px solid var(--линия); color: #aaa99e; }
+.архитектура-полосы span { padding: 18px 16px 18px 0; }
+.архитектура-полосы span + span { border-left: 1px solid var(--линия); padding-left: 20px; }
+.архитектура-полосы b { display: block; color: #edeade; font: 400 17px/1.5 Georgia, serif; letter-spacing: 0; margin-top: 6px; }
+.справка { display: grid; grid-template-columns: 1fr 1fr; gap: 50px; padding: 65px; background: #eee9dc; color: #252824; border-radius: 3px 3px 48px 3px; }
+.справка .метка-раздела { color: #74786c; }
+.справка h2 { margin: 26px 0 15px; }
+.справка h2 em { color: #a74c32; }
+.справка p { color: #595e58; }
+.справка .кнопка { margin-top: 8px; }
+.ссылки-справки a { display: grid; grid-template-columns: 35px 1fr 20px; gap: 8px; padding: 15px 0; border-bottom: 1px solid #bbbdb3; align-items: baseline; }
+.ссылки-справки a span { color: #8e6654; font: 11px "Courier New", monospace; }
+.ссылки-справки a b { font: 400 20px Georgia, serif; }
+.ссылки-справки a:hover b { color: #a74c32; }
+.вопросы { display: grid; grid-template-columns: .8fr 1.2fr; gap: 60px; padding: 110px 0 70px; }
+.вопросы h2 { margin-top: 25px; }
+.вопросы-список details { border: 0; border-top: 1px solid var(--линия); border-radius: 0; background: transparent; padding: 19px 0; margin: 0; }
+.вопросы-список details:last-child { border-bottom: 1px solid var(--линия); }
+.вопросы-список summary { list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 16px; font-size: 15px; }
+.вопросы-список summary::-webkit-details-marker { display: none; }
+.вопросы-список summary::after { content: "+"; color: var(--медь); font: 24px/1 Georgia, serif; transition: transform .2s ease; }
+.вопросы-список details[open] summary::after { transform: rotate(45deg); }
+.вопросы-список p { max-width: 590px; color: #bcbeb6; font-size: 14px; }
+.вопросы-список p a { color: #f2aa88; text-decoration: underline; }
+.главный-подвал { display: grid; grid-template-columns: 1.2fr 1fr auto; gap: 20px; align-items: end; border-top: 1px solid var(--линия); margin-top: 0; padding: 28px 0 10px; }
+.главный-подвал p { margin: 10px 0 0; color: #a2a59d; font-size: 13px; }
+.главный-подвал > div:nth-child(2) { display: flex; gap: 16px; flex-wrap: wrap; color: #c3c6bc; font-size: 12px; }
+.главный-подвал > span { color: #8c8c83; font: 10px "Courier New", monospace; letter-spacing: .1em; }
+@media (prefers-reduced-motion: no-preference) {
+  .главная-страница .кнопка, .переключатель-образцов button, .ссылки-справки a, .герой-визуал { transition: transform .2s ease, background-color .2s ease, color .2s ease; }
+  .главная-страница .кнопка:hover { transform: translateY(-3px); }
+  .ссылки-справки a:hover { transform: translateX(5px); }
+  .герой-визуал:hover { transform: rotate(-1deg); }
+}
+@media (max-width: 1000px) {
+  .главная-навигация { gap: 18px; flex-wrap: wrap; padding: 15px 0; }
+  .навигация-ссылки { order: 3; width: 100%; }
+  .главная-страница .герой { grid-template-columns: 1.1fr .9fr; }
+  .манифест { grid-template-columns: 1fr 1fr; }
+  .манифест .метка-раздела { grid-column: 1 / -1; }
+  .особенности-список article { grid-template-columns: 1fr 50px; }
+  .особенности-список .номер { grid-column: 1 / -1; }
+}
+@media (max-width: 680px) {
+  .главная-страница .полотно { padding: 0 20px 30px; }
+  .главная-навигация { min-height: 0; }
+  .главная-навигация .авторизация { font-size: 11px; }
+  .навигация-ссылки { gap: 10px 18px; font-size: 12px; }
+  .главная-страница .герой { grid-template-columns: 1fr; gap: 32px; padding: 54px 0 54px; }
+  .главная-страница .герой h1 { font-size: clamp(45px, 12vw, 72px); }
+  .герой-сноска { margin-top: 35px; gap: 8px 12px; }
+  .герой-сноска span + span::before { margin-right: 12px; }
+  .герой-визуал { max-width: 390px; }
+  .манифест, .образцы, .особенности, .закулисье-сетка, .справка, .вопросы { grid-template-columns: 1fr; gap: 24px; }
+  .манифест { padding: 45px 0 65px; }
+  .манифест .метка-раздела { grid-column: auto; }
+  .образцы { padding: 28px 22px; border-radius: 3px 28px 3px 3px; }
+  .образцы-вступление h2 { margin-top: 18px; }
+  .образцы-пометка { margin-top: 28px; }
+  .образец-тело { padding: 19px; }
+  .образцы-окно { box-shadow: 7px 7px 0 rgba(40,48,41,.12); }
+  .особенности { padding: 75px 0; }
+  .маршруты { padding-bottom: 75px; }
+  .маршруты-сетка { grid-template-columns: 1fr; }
+  .маршрут { min-height: 0; padding: 28px; }
+  .маршрут h3 { margin-top: 25px; }
+  .маршрут-браузер { border-radius: 3px 3px 0 0; }
+  .маршрут-компьютер { border-radius: 0 0 28px 3px; }
+  .закулисье { padding: 45px 0 70px; }
+  .архитектура-полосы { grid-template-columns: 1fr; }
+  .архитектура-полосы span { padding: 12px 0; }
+  .архитектура-полосы span + span { border-left: 0; border-top: 1px solid var(--линия); padding-left: 0; }
+  .справка { padding: 28px 22px; border-radius: 3px 3px 30px 3px; }
+  .вопросы { padding: 75px 0 55px; }
+  .главный-подвал { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .главная-страница *, .главная-страница *::before, .главная-страница *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
