@@ -726,6 +726,8 @@
           throw new Error("У этого значения нет длины");
         }
         case "корень": return Math.sqrt(this.число(один()));
+        case "синус": return Math.sin(this.число(один()));
+        case "косинус": return Math.cos(this.число(один()));
         case "модуль": return Math.abs(this.число(один()));
         case "округлить": return Math.round(this.число(один()));
         case "целое": return Math.trunc(this.число(один()));
@@ -738,6 +740,13 @@
         case "взять": {
           if (значения.length !== 2 || !Array.isArray(значения[0])) throw new Error("Взять: нужны перечень и номер");
           return значения[0][this.число(значения[1])];
+        }
+        case "заменить": {
+          if (значения.length !== 3 || !Array.isArray(значения[0])) throw new Error("Заменить: нужны перечень, номер и значение");
+          const индекс = this.число(значения[1]);
+          if (!Number.isInteger(индекс) || индекс < 0 || индекс >= значения[0].length) throw new Error("Номер элемента вне перечня");
+          значения[0][индекс] = значения[2];
+          return null;
         }
         case "случайное": {
           if (значения.length !== 2) throw new Error("Случайное: укажите начало и конец");
