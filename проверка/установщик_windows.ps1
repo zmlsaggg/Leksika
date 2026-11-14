@@ -15,7 +15,7 @@ if ($version.OriginalFilename -ne 'leksika.exe' -or $version.ProductName -ne 'Le
 $oldLocalAppData = $env:LOCALAPPDATA
 $env:LOCALAPPDATA = Join-Path $env:RUNNER_TEMP ('leksika-smoke-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $env:LOCALAPPDATA | Out-Null
-$installDir = Join-Path $env:LOCALAPPDATA 'Лексус'
+$installDir = Join-Path $env:LOCALAPPDATA 'Своя папка/Лексика'
 
 function Run-Installer([string]$Argument) {
     $process = Start-Process -FilePath $Installer -ArgumentList $Argument -PassThru
@@ -28,7 +28,7 @@ function Run-Installer([string]$Argument) {
 try {
     $rootsBefore = @(Get-ChildItem Cert:\CurrentUser\Root | ForEach-Object Thumbprint | Sort-Object)
     $intermediatesBefore = @(Get-ChildItem Cert:\CurrentUser\CA | ForEach-Object Thumbprint | Sort-Object)
-    Run-Installer '--тихо'
+    Run-Installer ('--папка "' + $installDir + '" --тихо')
     $rootsAfter = @(Get-ChildItem Cert:\CurrentUser\Root | ForEach-Object Thumbprint | Sort-Object)
     $intermediatesAfter = @(Get-ChildItem Cert:\CurrentUser\CA | ForEach-Object Thumbprint | Sort-Object)
     if (($rootsBefore -join ',') -ne ($rootsAfter -join ',') -or
@@ -68,8 +68,11 @@ try {
     if ($LASTEXITCODE -ne 0 -or ($profileOutput -join "`n") -notmatch '(^|\s)42($|\s)') {
         throw 'Не прошёл запуск с профилем зумер'
     }
+    $userFile = Join-Path $installDir 'мои данные.txt'
+    Set-Content -LiteralPath $userFile -Value 'не удалять' -Encoding UTF8
     Run-Installer '--удалить'
-    if (Test-Path -LiteralPath $installDir) { throw 'Каталог установки не удалён' }
+    if (Test-Path -LiteralPath $launcher) { throw 'Файл программы не удалён' }
+    if (!(Test-Path -LiteralPath $userFile)) { throw 'Пользовательский файл был удалён' }
 } catch {
     $message = $_.Exception.Message -replace "`r|`n", ' '
     Write-Host "::error::Windows smoke test: $message"
