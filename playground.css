@@ -234,3 +234,5 @@ textarea {
   .примеры-сетка { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .примеры-сетка button { min-height: 46px; }
 }
+/* Соотношение сторон под 100×40 символов: кадр занимает почти весь экран вывода. */
+#вывод.анимация-кадр { flex: none; width: 100%; height: auto; min-height: 0; max-height: none; aspect-ratio: 1.33; }
