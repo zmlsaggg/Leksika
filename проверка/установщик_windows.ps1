@@ -26,7 +26,15 @@ function Run-Installer([string]$Argument) {
     if ($process.ExitCode -ne 0) { throw "Установщик ($Argument) вернул $($process.ExitCode)" }
 }
 try {
+    $rootsBefore = @(Get-ChildItem Cert:\CurrentUser\Root | ForEach-Object Thumbprint | Sort-Object)
+    $intermediatesBefore = @(Get-ChildItem Cert:\CurrentUser\CA | ForEach-Object Thumbprint | Sort-Object)
     Run-Installer '--тихо'
+    $rootsAfter = @(Get-ChildItem Cert:\CurrentUser\Root | ForEach-Object Thumbprint | Sort-Object)
+    $intermediatesAfter = @(Get-ChildItem Cert:\CurrentUser\CA | ForEach-Object Thumbprint | Sort-Object)
+    if (($rootsBefore -join ',') -ne ($rootsAfter -join ',') -or
+        ($intermediatesBefore -join ',') -ne ($intermediatesAfter -join ',')) {
+        throw 'Тихая установка неожиданно изменила хранилище сертификатов'
+    }
     $launcher = Join-Path $installDir 'Leksika.cmd'
     $native = Join-Path $installDir 'лексус-ядро.exe'
     $example = Join-Path $installDir 'примеры/нативная_vm.lek'

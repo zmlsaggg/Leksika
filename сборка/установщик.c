@@ -22,7 +22,10 @@ typedef unsigned short     u16;
 static FILE    *g_exe;
 static u64      g_base, g_payload_size;
 static wchar_t  g_dir[MAX_PATH * 2], g_self[MAX_PATH * 4];
-static HWND g_window, g_status_control, g_progress, g_button;
+static HWND g_window, g_status_control, g_progress, g_button, g_estimate;
+static HWND g_cert_option, g_giga_option, g_yandex_option;
+static u64 g_bytes_total, g_bytes_done;
+static ULONGLONG g_copy_started, g_last_update;
 static HFONT g_font_title, g_font_body;
 static HBRUSH g_background;
 static int g_started, g_finished, g_install_result;
@@ -108,6 +111,42 @@ static void сказать_код(const char *что, DWORD код)
     speak(buf);
 }
 
+/* Распаковка занимает 90% шкалы; оставшиеся 10% — самопроверка и настройка. */
+static void обновить_ход(int принудительно)
+{
+    ULONGLONG now = GetTickCount64(), elapsed = now - g_copy_started;
+    wchar_t текст[160];
+    unsigned percent;
+    if (!g_progress || (!принудительно && now - g_last_update < 100)) return;
+    g_last_update = now;
+    percent = g_bytes_total ? (unsigned)(90.0 * (double)g_bytes_done / (double)g_bytes_total) : 90;
+    if (percent > 90) percent = 90;
+    SendMessageW(g_progress, PBM_SETPOS, percent, 0);
+    if (g_bytes_done && elapsed >= 1000 && g_bytes_done < g_bytes_total) {
+        double seconds = ((double)elapsed / 1000.0) *
+            ((double)(g_bytes_total - g_bytes_done) / (double)g_bytes_done);
+        if (seconds > 86400) seconds = 86400;
+        swprintf(текст, 160, L"%u%%  ·  распаковка: осталось примерно %.0f с", percent, seconds);
+    } else {
+        swprintf(текст, 160, L"%u%%  ·  оценка времени появится во время распаковки", percent);
+    }
+    SetWindowTextW(g_estimate, текст);
+    pump_ui();
+}
+
+static int каталог_установки(void)
+{
+    DWORD n = GetEnvironmentVariableW(L"LOCALAPPDATA", g_dir, MAX_PATH);
+    if (!n || n >= MAX_PATH) {
+        if (SHGetFolderPathW(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, g_dir) != S_OK) return 0;
+    }
+    size_t len = wcslen(g_dir);
+    while (len && (g_dir[len - 1] == L'\\' || g_dir[len - 1] == L'/')) g_dir[--len] = 0;
+    if (!len || len + wcslen(L"\\Лексус") >= sizeof(g_dir)/sizeof(g_dir[0])) return 0;
+    wcscat(g_dir, L"\\Лексус");
+    return 1;
+}
+
 static int copy_file(const wchar_t *target, u64 offset, u64 size)
 {
     wchar_t tmp[64] = {0};
@@ -129,6 +168,8 @@ static int copy_file(const wchar_t *target, u64 offset, u64 size)
         if (got == 0) { fclose(out); return 0; }
         if (fwrite(chunk, 1, got, out) != got) { fclose(out); return 0; }
         left -= got;
+        g_bytes_done += got;
+        обновить_ход(0);
     }
     fclose(out);
     (void)tmp;
@@ -243,13 +284,7 @@ static int extract_all(u32 count)
             speak(g_записи[i].имя);
             speak("\n");
         }
-        if (g_progress) {
-            SendMessageW(g_progress, PBM_SETPOS, (WPARAM)(i + 1), 0);
-            char status[160];
-            sprintf(status, "Распаковка: %u из %u файлов", (unsigned)(i + 1), (unsigned)count);
-            показать_статус(status);
-            pump_ui();
-        }
+        if (errors) break;
     }
     return errors;
 }
@@ -512,17 +547,10 @@ static int выполнить_установку(int argc, char **argv)
         return 1;
     }
 
-    if (GetEnvironmentVariableW(L"LOCALAPPDATA", g_dir, MAX_PATH) == 0) {
-        if (SHGetFolderPathW(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, g_dir) != S_OK) {
-            wcscpy(g_dir, L"C:");
-        }
+    if (!каталог_установки()) {
+        error_box("Не удалось определить каталог установки.");
+        fclose(g_exe); g_exe = NULL; return 3;
     }
-    {
-        size_t дл = wcslen(g_dir);
-        while (дл > 0 && (g_dir[дл - 1] == L'\\' || g_dir[дл - 1] == L'/'))
-            g_dir[--дл] = 0;
-    }
-    wcscat(g_dir, L"\\Лексус");
 
     if (wargc > 1 && (!wcscmp(wargv[1], L"--удалить") || !wcscmp(wargv[1], L"/удалить")
                       || !wcscmp(wargv[1], L"--uninstall"))) {
@@ -564,12 +592,23 @@ static int выполнить_установку(int argc, char **argv)
         error_box("Пакет повреждён: оглавление, путь или смещение файла некорректны.");
         fclose(g_exe); g_exe = NULL; return 3;
     }
-    if (g_progress) SendMessageW(g_progress, PBM_SETRANGE32, 0, (LPARAM)count);
+    g_bytes_total = g_bytes_done = 0;
+    for (u32 i = 0; i < count; ++i) {
+        if (UINT64_MAX - g_bytes_total < g_записи[i].размер) {
+            error_box("Пакет повреждён: неверный размер файлов.");
+            fclose(g_exe); g_exe = NULL; return 3;
+        }
+        g_bytes_total += g_записи[i].размер;
+    }
+    g_copy_started = GetTickCount64(); g_last_update = 0;
+    обновить_ход(1);
     errors = extract_all(count);
     if (errors) {
         error_box("Не все файлы удалось распаковать. Проверьте свободное место и права на папку установки.");
         fclose(g_exe); g_exe = NULL; return 4;
     }
+    обновить_ход(1);
+    if (g_estimate) SetWindowTextW(g_estimate, L"90%  ·  самопроверка и настройка");
     speak("Файлы распакованы: ");
     {
         char num[32];
@@ -715,6 +754,12 @@ static int выполнить_установку(int argc, char **argv)
 static LRESULT CALLBACK окно_процедура(HWND окно, UINT сообщение, WPARAM w, LPARAM l)
 {
     switch (сообщение) {
+    case WM_CTLCOLORBTN:
+        if ((HWND)l != g_cert_option && (HWND)l != g_giga_option && (HWND)l != g_yandex_option)
+            break;
+        SetTextColor((HDC)w, RGB(226, 232, 242));
+        SetBkMode((HDC)w, TRANSPARENT);
+        return (LRESULT)g_background;
     case WM_CTLCOLORSTATIC:
         SetTextColor((HDC)w, RGB(226, 232, 242));
         SetBkMode((HDC)w, TRANSPARENT);
@@ -724,13 +769,26 @@ static LRESULT CALLBACK окно_процедура(HWND окно, UINT сооб
             if (!g_started) {
                 g_started = 1;
                 EnableWindow(g_button, FALSE);
+                EnableWindow(g_cert_option, FALSE);
+                EnableWindow(g_giga_option, FALSE);
+                EnableWindow(g_yandex_option, FALSE);
                 SetWindowTextW(g_button, L"Установка...");
                 показать_статус("Подготовка локального пакета...");
                 g_install_result = выполнить_установку(0, NULL);
                 g_finished = 1;
                 if (!g_install_result) {
                     показать_статус("Готово. Лексика установлена на этом компьютере.");
+                    SendMessageW(g_progress, PBM_SETPOS, 100, 0);
+                    SetWindowTextW(g_estimate, L"100%  ·  установка завершена");
                     SetWindowTextW(g_button, L"Открыть папку");
+                    if (SendMessageW(g_cert_option, BM_GETCHECK, 0, 0) == BST_CHECKED) {
+                        if (MessageBoxW(окно, L"Корневые сертификаты расширяют доверие Windows ко всем сертификатам, выданным этим центром. Откроется официальная страница Госуслуг; установка выполняется вами отдельно. Продолжить?", L"Сертификаты Минцифры", MB_ICONWARNING | MB_YESNO | MB_DEFBUTTON2) == IDYES)
+                            ShellExecuteW(окно, L"open", L"https://www.gosuslugi.ru/crt", NULL, NULL, SW_SHOWNORMAL);
+                    }
+                    if (SendMessageW(g_giga_option, BM_GETCHECK, 0, 0) == BST_CHECKED)
+                        ShellExecuteW(окно, L"open", L"https://huggingface.co/ai-sage/GigaChat3.1-10B-A1.8B-GGUF", NULL, NULL, SW_SHOWNORMAL);
+                    if (SendMessageW(g_yandex_option, BM_GETCHECK, 0, 0) == BST_CHECKED)
+                        ShellExecuteW(окно, L"open", L"https://huggingface.co/yandex/YandexGPT-5-Lite-8B-instruct-GGUF", NULL, NULL, SW_SHOWNORMAL);
                 } else {
                     показать_статус("Установка остановлена. Закройте окно и проверьте сообщение.");
                     SetWindowTextW(g_button, L"Закрыть");
@@ -742,7 +800,9 @@ static LRESULT CALLBACK окно_процедура(HWND окно, UINT сооб
             return 0;
         }
         break;
-    case WM_CLOSE: DestroyWindow(окно); return 0;
+    case WM_CLOSE:
+        if (!g_started || g_finished) DestroyWindow(окно);
+        return 0;
     case WM_DESTROY: PostQuitMessage(0); return 0;
     }
     return DefWindowProcW(окно, сообщение, w, l);
@@ -771,28 +831,34 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR cmdline, int sh
     RegisterClassW(&wc);
     g_window = CreateWindowExW(0, wc.lpszClassName, L"Лексика — установка",
         WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
-        CW_USEDEFAULT, CW_USEDEFAULT, 720, 440, NULL, NULL, instance, NULL);
+        CW_USEDEFAULT, CW_USEDEFAULT, 760, 680, NULL, NULL, instance, NULL);
     if (!g_window) return 1;
     g_font_title = CreateFontW(34,0,0,0,FW_BOLD,FALSE,FALSE,FALSE,DEFAULT_CHARSET,
         OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,CLEARTYPE_QUALITY,DEFAULT_PITCH|FF_DONTCARE,L"Segoe UI");
     g_font_body = CreateFontW(17,0,0,0,FW_NORMAL,FALSE,FALSE,FALSE,DEFAULT_CHARSET,
         OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,CLEARTYPE_QUALITY,DEFAULT_PITCH|FF_DONTCARE,L"Segoe UI");
-    HWND title = CreateWindowW(L"STATIC",L"ЛЕКСИКА",WS_CHILD|WS_VISIBLE,42,36,600,52,g_window,NULL,instance,NULL);
-    HWND subtitle = CreateWindowW(L"STATIC",L"Локальная среда программирования",WS_CHILD|WS_VISIBLE,44,94,630,34,g_window,NULL,instance,NULL);
-    HWND details = CreateWindowW(L"STATIC",
-        L"Пакет уже встроен в установщик — интернет во время установки не нужен.\r\nФайлы будут размещены в профиле текущего пользователя.",
-        WS_CHILD|WS_VISIBLE,44,158,630,58,g_window,NULL,instance,NULL);
-    g_status_control = CreateWindowW(L"STATIC",L"Готов к установке",WS_CHILD|WS_VISIBLE,44,260,620,32,g_window,NULL,instance,NULL);
-    g_progress = CreateWindowExW(0,PROGRESS_CLASSW,NULL,WS_CHILD|WS_VISIBLE|PBS_SMOOTH,
-        44,302,620,18,g_window,NULL,instance,NULL);
-    g_button = CreateWindowW(L"BUTTON",L"Установить локально",
-        WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_DEFPUSHBUTTON,440,346,224,42,g_window,
-        (HMENU)(INT_PTR)1001,instance,NULL);
+    if (!каталог_установки()) { error_box("Не удалось определить каталог установки."); return 1; }
+    HWND title = CreateWindowW(L"STATIC",L"ЛЕКСИКА",WS_CHILD|WS_VISIBLE,42,28,640,50,g_window,NULL,instance,NULL);
+    HWND subtitle = CreateWindowW(L"STATIC",L"Локальная среда программирования",WS_CHILD|WS_VISIBLE,44,82,660,28,g_window,NULL,instance,NULL);
+    HWND path_label = CreateWindowW(L"STATIC",L"ПАПКА УСТАНОВКИ",WS_CHILD|WS_VISIBLE,44,132,660,24,g_window,NULL,instance,NULL);
+    HWND path = CreateWindowW(L"EDIT",g_dir,WS_CHILD|WS_VISIBLE|ES_READONLY|ES_AUTOHSCROLL|WS_BORDER,44,158,655,28,g_window,NULL,instance,NULL);
+    HWND details = CreateWindowW(L"STATIC",L"Основной пакет встроен и устанавливается без интернета.",WS_CHILD|WS_VISIBLE,44,200,660,26,g_window,NULL,instance,NULL);
+    HWND options = CreateWindowW(L"STATIC",L"ДОПОЛНИТЕЛЬНО  ·  откроются страницы для ручной установки",WS_CHILD|WS_VISIBLE,44,246,660,28,g_window,NULL,instance,NULL);
+    g_cert_option = CreateWindowW(L"BUTTON",L"Сертификаты Минцифры — страница Госуслуг",WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_AUTOCHECKBOX,44,282,655,28,g_window,NULL,instance,NULL);
+    g_giga_option = CreateWindowW(L"BUTTON",L"GigaChat 3.1 10B — страница модели (≈ 6,5 ГБ)",WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_AUTOCHECKBOX,44,318,655,28,g_window,NULL,instance,NULL);
+    g_yandex_option = CreateWindowW(L"BUTTON",L"YandexGPT 5 Lite 8B — страница модели (≈ 5 ГБ)",WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_AUTOCHECKBOX,44,354,655,28,g_window,NULL,instance,NULL);
+    HWND note = CreateWindowW(L"STATIC",L"Модели и сертификаты автоматически не скачиваются и не включаются.\r\nМоделям нужны интернет, место на диске и совместимый llama.cpp.",WS_CHILD|WS_VISIBLE,44,392,655,50,g_window,NULL,instance,NULL);
+    g_status_control = CreateWindowW(L"STATIC",L"Готово к установке",WS_CHILD|WS_VISIBLE,44,454,655,26,g_window,NULL,instance,NULL);
+    g_progress = CreateWindowExW(0,PROGRESS_CLASSW,NULL,WS_CHILD|WS_VISIBLE|PBS_SMOOTH,44,488,655,20,g_window,NULL,instance,NULL);
+    SendMessageW(g_progress, PBM_SETRANGE32, 0, 100);
+    SendMessageW(g_progress, PBM_SETBARCOLOR, 0, RGB(100, 180, 255));
+    SendMessageW(g_progress, PBM_SETBKCOLOR, 0, RGB(37, 48, 68));
+    g_estimate = CreateWindowW(L"STATIC",L"Время зависит от скорости диска",WS_CHILD|WS_VISIBLE,44,518,655,26,g_window,NULL,instance,NULL);
+    g_button = CreateWindowW(L"BUTTON",L"Установить локально",WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_DEFPUSHBUTTON,475,556,224,42,g_window,(HMENU)(INT_PTR)1001,instance,NULL);
     SendMessageW(title,WM_SETFONT,(WPARAM)g_font_title,TRUE);
-    SendMessageW(subtitle,WM_SETFONT,(WPARAM)g_font_body,TRUE);
-    SendMessageW(details,WM_SETFONT,(WPARAM)g_font_body,TRUE);
-    SendMessageW(g_status_control,WM_SETFONT,(WPARAM)g_font_body,TRUE);
-    SendMessageW(g_button,WM_SETFONT,(WPARAM)g_font_body,TRUE);
+    HWND items[] = {subtitle,path_label,path,details,options,g_cert_option,g_giga_option,g_yandex_option,note,g_status_control,g_estimate,g_button};
+    for (size_t i = 0; i < sizeof(items)/sizeof(items[0]); ++i)
+        SendMessageW(items[i],WM_SETFONT,(WPARAM)g_font_body,TRUE);
     ShowWindow(g_window,show); UpdateWindow(g_window);
     MSG msg;
     while (GetMessageW(&msg,NULL,0,0)>0) { TranslateMessage(&msg); DispatchMessageW(&msg); }
