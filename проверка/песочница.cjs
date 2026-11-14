@@ -21,7 +21,7 @@ const assert = require('node:assert/strict');
       }
       assert.equal(await page.locator('.доп-панель').evaluate(el => el.open), false);
       assert.equal(await page.locator('#ии-запрос').isVisible(), false);
-      assert(!requests.some(url => url.includes('разговорные_слова.json')), 'Профили загружены без запроса');
+      assert(!requests.some(url => decodeURIComponent(url).includes('разговорные_слова.json')), 'Профили загружены без запроса');
       assert(!requests.some(url => url.includes('huggingface') || url.includes('transformers')), 'Модель загружена без запроса');
       assert(await page.locator('.ниже-редактора').evaluate((el) => el.offsetTop) > await page.locator('.карточка').evaluate((el) => el.offsetTop));
       const run = async (name) => {
@@ -53,7 +53,7 @@ const assert = require('node:assert/strict');
       assert(await page.locator('#ии-запрос').isVisible());
       await page.locator('.профили-языка > summary').click();
       await page.waitForFunction(() => !document.getElementById('профиль-зумер').disabled);
-      assert(requests.some(url => url.includes('разговорные_слова.json')));
+      assert(requests.some(url => decodeURIComponent(url).includes('разговорные_слова.json')));
       assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'Горизонтальная прокрутка');
       await page.goto('http://127.0.0.1:8766/', {waitUntil: 'load'});
       assert.equal(await page.locator('.быстрый-старт > div').count(), 3);
