@@ -27,7 +27,7 @@ const assert = require('node:assert/strict');
       const run = async (name) => {
         await page.selectOption('#пример', name);
         await page.click('#запустить');
-        assert.notEqual(await page.locator('#состояние').getAttribute('data-вид'), 'ошибка');
+        assert.notEqual(await page.locator('#состояние').getAttribute('data-вид'), 'ошибка', `${name}: ${await page.locator('#состояние').innerText()}`);
         return await page.locator('#вывод').innerText();
       };
       for (const name of ['начало','условие','цикл','правило','список']) await run(name);
