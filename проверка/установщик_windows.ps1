@@ -47,6 +47,10 @@ try {
     }
     Run-Installer '--удалить'
     if (Test-Path -LiteralPath $installDir) { throw 'Каталог установки не удалён' }
+} catch {
+    $message = $_.Exception.Message -replace "`r|`n", ' '
+    Write-Host "::error::Windows smoke test: $message"
+    throw
 } finally {
     $env:LOCALAPPDATA = $oldLocalAppData
 }
