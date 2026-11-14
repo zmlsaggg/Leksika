@@ -13,7 +13,7 @@ import zlib
 ЗДЕСЬ = os.path.dirname(os.path.abspath(__file__))
 КОРЕНЬ = os.path.dirname(ЗДЕСЬ)
 ГРУЗ_ПАПКА = os.path.join(ЗДЕСЬ, "груз")
-ВЫХОД = os.path.join(ЗДЕСЬ, "Лексус-установщик.exe")
+ВЫХОД = os.path.join(ЗДЕСЬ, "leksika.exe")
 ИСХОДНИК = os.path.join(ЗДЕСЬ, "установщик.c")
 
 MAGIC_TABLE = b"LEKSUS01"
@@ -208,11 +208,11 @@ def _png_уменьшить_до_256(данные):
             блок(b"IEND", b""))
 
 
-def собрать_значок():
-    """Собирает корректный ICO из текущего PNG-знака без сторонних библиотек."""
+def собрать_значок(установщик=False):
+    """Готовит ICO и компилирует ресурсы: значок и метаданные установщика."""
     png = os.path.join(КОРЕНЬ, "значки", "знак.png")
     ico = os.path.join(ЗДЕСЬ, "значок.ico")
-    описание = os.path.join(ЗДЕСЬ, "значок.rc")
+    описание = os.path.join(ЗДЕСЬ, "установщик.rc" if установщик else "значок.rc")
     windres = shutil.which("x86_64-w64-mingw32-windres") or (shutil.which("windres") if os.name == "nt" else None)
     if not windres or not os.path.isfile(png):
         print("  значок пропущен: нет windres или значки/знак.png")
@@ -231,10 +231,11 @@ def собрать_значок():
                          len(изображение), 22)
     with open(ico, "wb") as файл:
         файл.write(заголовок + запись + изображение)
-    with open(описание, "w", encoding="utf-8") as файл:
-        файл.write('1 ICON "значок.ico"\n')
-    вывод = os.path.join(ЗДЕСЬ, "значок.obj")
-    итог = subprocess.run([windres, "значок.rc", "-O", "coff", "-o", вывод],
+    if not os.path.isfile(описание):
+        print("  не найден файл ресурсов: " + описание, file=sys.stderr)
+        return None
+    вывод = os.path.join(ЗДЕСЬ, "установщик-ресурсы.obj" if установщик else "значок.obj")
+    итог = subprocess.run([windres, описание, "-O", "coff", "-o", вывод],
                           capture_output=True, text=True, cwd=ЗДЕСЬ)
     if итог.returncode != 0:
         print("  значок не собрался: " + итог.stderr.strip(), file=sys.stderr)
@@ -247,9 +248,12 @@ def собрать_exe():
         print("нужен MinGW-w64: в Linux установите mingw-w64; в Windows используйте терминал MSYS2 UCRT64", file=sys.stderr)
         return None
     вывод = os.path.join(ЗДЕСЬ, "установщик.exe")
-    значок = собрать_значок()
+    значок = собрать_значок(установщик=True)
+    if not значок:
+        print("сборка остановлена: отсутствуют ресурсы установщика и метаданные версии", file=sys.stderr)
+        return None
     итог = subprocess.run(
-        [компилятор, "-std=c11", "-O2", "-s", "-mwindows", "-o", вывод, ИСХОДНИК] + ([значок] if значок else []) +
+        [компилятор, "-std=c11", "-O2", "-mwindows", "-o", вывод, ИСХОДНИК] + ([значок] if значок else []) +
         ["-lole32", "-luuid", "-lshell32", "-luser32", "-ladvapi32", "-lcomctl32", "-lgdi32"],
         capture_output=True, text=True,
     )
@@ -315,7 +319,7 @@ def собрать_нативное_ядро():
         return False
     вывод = os.path.join(ГРУЗ_ПАПКА, "лексус-ядро.exe")
     ресурс = собрать_значок()
-    команда = [компилятор, "-std=c11", "-O2", "-s", "-Wall", "-Wextra",
+    команда = [компилятор, "-std=c11", "-O2", "-Wall", "-Wextra",
                "-finput-charset=UTF-8", "-fexec-charset=UTF-8",
                "-I", os.path.join(КОРЕНЬ, "ядро"), "-o", вывод,
                исходник, значения, индекс, байткод, машина, источник_компилятора]

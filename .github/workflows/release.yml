@@ -1,51 +1,144 @@
-name: Автосборка установщика Лексус
+name: Сборка и проверка релиза Лексики
 
 on:
   push:
-    branches:
-      - main
-      - master
+    branches: [main]
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/release.yml'
+      - '.github/workflows/нативное-ядро.yml'
+      - 'сборка/**'
+      - 'проверка/**'
+      - 'ядро/**'
+      - 'лексика/**'
+      - 'лексус.lek'
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Версия без v для существующего тега (например 0.4.0-beta.1); пусто = nightly'
+        required: false
+        type: string
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: leksus-installer-release
+  group: leksika-release-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  build-and-release:
+  tests:
+    # Повторный запуск того же набора на том же SHA; публикация зависит от всех заданий.
+    uses: ./.github/workflows/нативное-ядро.yml
+    permissions:
+      contents: read
+
+  build-windows:
+    needs: tests
     runs-on: ubuntu-latest
     steps:
-      - name: Получить исходники и подмодули
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
-
       - name: Установить MinGW-w64
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y mingw-w64
-
-      - name: Настроить Python
-        uses: actions/setup-python@v5
+        run: sudo apt-get update && sudo apt-get install -y mingw-w64
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
-      - name: Собрать установщик Windows
+      - name: Собрать установщик и контрольную сумму
         run: |
+          set -euo pipefail
           python3 сборка/собрать_exe.lek
-          test -s сборка/Лексус-установщик.exe
-          python3 -c "from pathlib import Path; p=Path('сборка/Лексус-установщик.exe'); assert p.read_bytes()[:2] == b'MZ', 'Файл не является PE/EXE'"
+          mkdir -p release
+          cp сборка/leksika.exe release/leksika.exe
+          python3 -c "from pathlib import Path; p=Path('release/leksika.exe'); assert p.is_file() and p.stat().st_size > 0 and p.read_bytes()[:2] == b'MZ', 'Некорректный PE-файл'"
+          (cd release && sha256sum leksika.exe > SHA256SUMS.txt)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: leksika-windows-${{ github.sha }}
+          path: release/
+          if-no-files-found: error
 
-      - name: Обновить постоянный релиз latest
+  smoke-windows:
+    needs: build-windows
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: leksika-windows-${{ github.sha }}
+          path: release
+      - name: Проверить скачанный пакет, установку, запуск и удаление
+        shell: pwsh
+        run: ./проверка/установщик_windows.ps1 -Installer "$PWD/release/leksika.exe" -Checksums "$PWD/release/SHA256SUMS.txt"
+
+  publish-nightly:
+    needs: [tests, build-windows, smoke-windows]
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && inputs.version == ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: leksika-windows-${{ github.sha }}
+          path: release
+      - name: Проверить контрольную сумму и обновить только nightly
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release delete latest --yes --cleanup-tag || true
-          git tag -f latest "$GITHUB_SHA"
-          git push origin refs/tags/latest --force
-          gh release create latest сборка/Лексус-установщик.exe \
-            --title "Последняя сборка Лексуса" \
-            --notes "Автоматическая сборка установщика из коммита $GITHUB_SHA."
+          set -euo pipefail
+          (cd release && sha256sum -c SHA256SUMS.txt)
+          # Запоздавшая сборка не должна перезаписать более свежую версию.
+          head=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq .object.sha)
+          if [ "$head" != "$GITHUB_SHA" ]; then
+            echo "main уже указывает на $head; устаревшую сборку не публикуем"
+            exit 0
+          fi
+          # Не удаляем рабочий релиз перед сборкой и тестами.
+          if gh release view nightly >/dev/null 2>&1; then
+            gh release upload nightly release/leksika.exe release/SHA256SUMS.txt --clobber
+            git push origin "$GITHUB_SHA:refs/tags/nightly" --force
+            gh release edit nightly --title 'Leksika nightly (предварительная сборка)' \
+              --notes "Автоматическая предварительная Windows-сборка из коммита $GITHUB_SHA. Не подписана; браузер и SmartScreen могут предупреждать. SHA-256: см. SHA256SUMS.txt." --prerelease
+          else
+            gh release create nightly release/leksika.exe release/SHA256SUMS.txt \
+              --target "$GITHUB_SHA" --title 'Leksika nightly (предварительная сборка)' \
+              --notes "Автоматическая предварительная Windows-сборка из коммита $GITHUB_SHA. Не подписана; браузер и SmartScreen могут предупреждать. SHA-256: см. SHA256SUMS.txt." --prerelease
+          fi
+
+  publish-versioned:
+    needs: [tests, build-windows, smoke-windows]
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.version != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: leksika-windows-${{ github.sha }}
+          path: release
+      - name: Опубликовать неизменяемый релиз проверенного тега
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-(alpha|beta|rc)\.(0|[1-9][0-9]*))?$ ]]; then
+            echo 'Ожидается версия вида 1.0.0 или 0.4.0-beta.1' >&2; exit 1
+          fi
+          tag="v$VERSION"
+          # dereference annotated and lightweight tags to a commit, without moving either.
+          commit=$(gh api "repos/$GITHUB_REPOSITORY/commits/$tag" --jq .sha)
+          if [ "$commit" != "$GITHUB_SHA" ]; then
+            echo "Тег $tag не указывает на проверенный коммит $GITHUB_SHA" >&2; exit 1
+          fi
+          (cd release && sha256sum -c SHA256SUMS.txt)
+          extra=()
+          if [[ "$VERSION" == *-* ]]; then extra+=(--prerelease); fi
+          gh release create "$tag" release/leksika.exe release/SHA256SUMS.txt \
+            --verify-tag --title "Leksika $VERSION" \
+            --notes "Windows-сборка из коммита $GITHUB_SHA. Не подписана; браузер и SmartScreen могут предупреждать. Подробности и SHA-256: SHA256SUMS.txt." "${extra[@]}"

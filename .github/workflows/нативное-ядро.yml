@@ -35,6 +35,7 @@ on:
       - "playground.html"
       - "playground-lexicon.js"
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
@@ -67,13 +68,16 @@ jobs:
 
       - name: Собрать ядро и словарь на Linux
         if: runner.os == 'Linux'
-        run: make clean all test 2>&1 | tee словарь-сборки.txt
+        run: |
+          set -euo pipefail
+          make clean all test 2>&1 | tee словарь-сборки.txt
         working-directory: ядро
         shell: bash
 
       - name: Собрать ядро и словарь на Windows
         if: runner.os == 'Windows'
         run: |
+          set -euo pipefail
           cp ../источники/russian-words/russian.txt russian-words-source.txt
           make clean all test \
             TARGET=leksus-core.exe VALUE_TEST=values-test.exe VM_TEST=vm-test.exe \
@@ -88,7 +92,9 @@ jobs:
 
       - name: Собрать ядро и словарь на macOS
         if: runner.os == 'macOS'
-        run: make clean all test 2>&1 | tee словарь-сборки.txt
+        run: |
+          set -euo pipefail
+          make clean all test 2>&1 | tee словарь-сборки.txt
         working-directory: ядро
         shell: bash
 
@@ -113,8 +119,11 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           python3 проверка/тесты.lek
+          python3 проверка/безопасность.lek
           python3 проверка/удобство.py
           python3 проверка/сопоставление_движков.py
+          python3 проверка/профили_синхронизация.py
+          python3 проверка/профили_cli.py
         shell: bash
 
       - name: Проверить браузерный индекс словоформ
@@ -207,38 +216,3 @@ jobs:
           & .\leksus-core.exe --self-test
           if ($LASTEXITCODE -ne 0) { throw "Самопроверка ядра завершилась с ошибкой" }
         working-directory: ядро
-
-  publish-dictionary:
-    name: Publish compressed dictionary for GitHub Pages
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Получить исходный код и закреплённый словарь
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          fetch-depth: 0
-
-      - name: Собрать и сжать бинарный индекс
-        run: |
-          make dictionary
-          gzip -n -9 -c русские_формы.lxd > русские_формы.lxd.gz
-          ls -lh русские_формы.lxd.gz
-          sha256sum русские_формы.lxd.gz
-        working-directory: ядро
-        shell: bash
-
-      - name: Опубликовать индекс в GitHub Pages
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add ядро/русские_формы.lxd.gz
-          if git diff --cached --quiet; then
-            echo "Опубликованный индекс не изменился."
-            exit 0
-          fi
-          git commit -m "Publish compressed Russian word index"
-          git push
-        shell: bash

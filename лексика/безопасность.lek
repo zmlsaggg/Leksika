@@ -85,8 +85,8 @@ def _предыдущий_хеш():
                 pass
         if последний:
             части = последний.rstrip("\n").split("\t")
-            if len(части) >= 6:
-                return части[5]
+            if len(части) == 7:
+                return части[6]
     except OSError:
         pass
     return "0" * 64

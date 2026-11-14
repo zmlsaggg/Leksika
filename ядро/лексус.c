@@ -314,8 +314,25 @@ int main(int argc,char **argv)
     /* Явный выбор нативного пути позволяет общему запускателю не вызывать Python. */
     if (argc >= 2 && strcmp(argv[1], "--нативно") == 0) { --argc; ++argv; }
     if (argc>=2 && (strcmp(argv[1],"выполнить")==0 || strcmp(argv[1],"запустить")==0)) {
-        if (argc!=3) { fputs("Использование: лексус-ядро выполнить файл.lek\n",stderr); return 2; }
-        FILE *f=fopen(argv[2],"rb");
+        unsigned профили=ЛЕКСУС_ПРОФИЛЬ_БЕЗ_ИЗМЕНЕНИЙ;
+        const char *путь=NULL;
+        for(int i=2;i<argc;++i) {
+            if(strcmp(argv[i],"--профиль=18+")==0) профили |= ЛЕКСУС_ПРОФИЛЬ_18_ПЛЮС;
+            else if(strcmp(argv[i],"--профиль=зумер")==0) профили |= ЛЕКСУС_ПРОФИЛЬ_ЗУМЕР;
+            else if(strncmp(argv[i],"--профиль=",strlen("--профиль="))==0) {
+                fprintf(stderr,"Лексус: неизвестный профиль «%s»; доступны 18+ и зумер.\n",argv[i]+strlen("--профиль="));
+                return 2;
+            } else if(!путь && strncmp(argv[i],"--",2)!=0) путь=argv[i];
+            else {
+                fputs("Использование: лексус-ядро выполнить [--профиль=18+] [--профиль=зумер] файл.lek\n",stderr);
+                return 2;
+            }
+        }
+        if(!путь) {
+            fputs("Использование: лексус-ядро выполнить [--профиль=18+] [--профиль=зумер] файл.lek\n",stderr);
+            return 2;
+        }
+        FILE *f=fopen(путь,"rb");
         if(!f){perror("Лексус: не удалось открыть исходник");return 2;}
         size_t length=0; unsigned char *source=прочитать(f,&length); fclose(f);
         if(!source){fputs("Лексус: не удалось прочитать исходник.\n",stderr);return 2;}
@@ -324,7 +341,7 @@ int main(int argc,char **argv)
             free(source); fputs("Лексус: исходник содержит некорректный UTF-8.\n",stderr); return 2;
         }
         ЛексусСкомпилированнаяПрограмма compiled; char error[512]={0};
-        if(!лексус_скомпилировать((const char*)source,length,&compiled,error,sizeof(error))){
+        if(!лексус_скомпилировать_с_профилями((const char*)source,length,профили,&compiled,error,sizeof(error))){
             fprintf(stderr,"Лексус: ошибка компиляции: %s.\n",error[0]?error:"неизвестная ошибка");
             free(source); return 1;
         }
@@ -428,7 +445,7 @@ int main(int argc,char **argv)
     puts("Лексус — нативное ядро " ЛЕКСУС_ВЕРСИЯ);
     puts("Команды:");
     puts("  версия");
-    puts("  выполнить <файл.lek>");
+    puts("  выполнить [--профиль=18+] [--профиль=зумер] <файл.lek>");
     puts("  самопроверка");
     puts("  проверить [файл.lek]");
     puts("  разобрать [файл.lek]");

@@ -27,7 +27,7 @@
     "windows": "passed full MinGW make clean all test",
     "linux_sanitizers": "passed AddressSanitizer and UndefinedBehaviorSanitizer",
     "linux_installer": "passed package contains binary index",
-    "macos": "CI verification pending"
+    "macos": "passed full make clean all test and installer index verification in CI"
   },
   "annotations": {
     "pos": "not present in source",
