@@ -98,3 +98,12 @@
   inset: 0;
   background: linear-gradient(rgba(7, 10, 17, .60), rgba(7, 10, 17, .80));
 }
+
+/* Короткий путь к запуску, без дополнительных скриптов. */
+.быстрый-старт { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 30px 0 0; }
+.быстрый-старт > div { padding: 15px; border: 1px solid #39465a; border-radius: 13px; background: rgba(12, 17, 26, .86); }
+.быстрый-старт span { display: block; color: #9bbcff; font-size: 12px; letter-spacing: .08em; }
+.быстрый-старт strong { display: block; margin-top: 3px; }
+.быстрый-старт p { margin: 4px 0 0; color: #bec9d8; font-size: 13px; line-height: 1.5; }
+:focus-visible { outline: 2px solid #a9caff; outline-offset: 3px; }
+@media (max-width: 650px) { .быстрый-старт { grid-template-columns: 1fr; gap: 8px; } }

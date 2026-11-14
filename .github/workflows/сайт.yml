@@ -6,6 +6,13 @@ on:
     paths:
       - 'index.html'
       - 'styles.css'
+      - 'playground.html'
+      - 'playground.css'
+      - 'playground.js'
+      - 'playground-lexicon.js'
+      - 'playground-chat.js'
+      - 'значки/Лексика-сайт.webp'
+      - 'проверка/песочница.cjs'
       - 'фон-анимация.gif'
       - 'фон-сайта-статичный.webp'
       - 'проверка/фон_сайта.cjs'
@@ -14,6 +21,13 @@ on:
     paths:
       - 'index.html'
       - 'styles.css'
+      - 'playground.html'
+      - 'playground.css'
+      - 'playground.js'
+      - 'playground-lexicon.js'
+      - 'playground-chat.js'
+      - 'значки/Лексика-сайт.webp'
+      - 'проверка/песочница.cjs'
       - 'фон-анимация.gif'
       - 'фон-сайта-статичный.webp'
       - 'проверка/фон_сайта.cjs'
@@ -34,3 +48,5 @@ jobs:
         run: npm install --no-save --no-package-lock playwright-core@1.56.1
       - name: Проверить анимацию в Chromium
         run: node проверка/фон_сайта.cjs
+      - name: Проверить песочницу в Chromium
+        run: node проверка/песочница.cjs
