@@ -913,11 +913,11 @@ static void нарисовать_фон(HWND окно)
     PAINTSTRUCT ps; HDC dc = BeginPaint(окно, &ps); RECT r;
     GetClientRect(окно, &r);
     FillRect(dc, &r, g_background);
-    /* Небольшое созвездие: перерисовывается только декоративный угол окна. */
-    for (int i = 0; i < 14; ++i) {
-        int x = r.right - 155 + ((i * 47 + g_phase) % 115);
-        int y = 24 + ((i * 29) % 78);
-        int bright = 75 + ((i * 13 + g_phase) % 75);
+    /* Тихое звёздное поле: без внешних изображений и тяжёлого декодирования. */
+    for (int i = 0; i < 55; ++i) {
+        int x = 10 + ((i * 137 + g_phase) % (r.right > 20 ? r.right - 20 : 1));
+        int y = 10 + ((i * 83) % (r.bottom > 20 ? r.bottom - 20 : 1));
+        int bright = 55 + ((i * 13 + g_phase) % 90);
         HBRUSH кисть = CreateSolidBrush(RGB(bright / 2, bright, bright + 40));
         HGDIOBJ старый = SelectObject(dc, кисть);
         HGDIOBJ перо = SelectObject(dc, GetStockObject(NULL_PEN));
@@ -935,10 +935,8 @@ static LRESULT CALLBACK окно_процедура(HWND окно, UINT сооб
     case WM_ERASEBKGND: return 1;
     case WM_TIMER:
         if (!IsIconic(окно)) {
-            RECT область; GetClientRect(окно, &область);
-            область.left = область.right - 170; область.top = 0; область.bottom = 115;
             g_phase = (g_phase + 2) % 115;
-            InvalidateRect(окно, &область, FALSE);
+            InvalidateRect(окно, NULL, FALSE);
         }
         return 0;
     case WM_CTLCOLORBTN:
@@ -1023,7 +1021,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR cmdline, int sh
     wc.hbrBackground = g_background;
     RegisterClassW(&wc);
     g_window = CreateWindowExW(0, wc.lpszClassName, L"Лексика — установка",
-        WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
+        WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_CLIPCHILDREN,
         CW_USEDEFAULT, CW_USEDEFAULT, 760, 680, NULL, NULL, instance, NULL);
     if (!g_window) return 1;
     g_font_title = CreateFontW(34,0,0,0,FW_BOLD,FALSE,FALSE,FALSE,DEFAULT_CHARSET,
@@ -1056,7 +1054,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR cmdline, int sh
     {
         BOOL анимация = TRUE;
         if (SystemParametersInfoW(SPI_GETCLIENTAREAANIMATION, 0, &анимация, 0) && анимация)
-            SetTimer(g_window, 1, 250, NULL);
+            SetTimer(g_window, 1, 500, NULL);
     }
     ShowWindow(g_window,show); UpdateWindow(g_window);
     MSG msg;
