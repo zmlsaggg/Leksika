@@ -236,3 +236,24 @@ textarea {
 }
 /* Соотношение сторон под 100×40 символов: кадр занимает почти весь экран вывода. */
 #вывод.анимация-кадр { flex: none; width: 100%; height: auto; min-height: 0; max-height: none; aspect-ratio: 1.33; }
+
+/* Компактная верхняя панель: больше экрана остаётся редактору. */
+.страница { padding-top: 12px; }
+.навигация { justify-content: flex-start; margin-bottom: 10px; gap: 18px; min-height: 34px; }
+.навигация .авторизация { margin-left: auto; padding: 0; }
+.шапка { max-width: none; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 5px 14px; margin: 0 auto 14px; }
+.шапка h1 { margin: 0; font-size: clamp(23px, 3vw, 32px); }
+.шапка .метка { font-size: 10px; }
+.примеры-шапка { margin-bottom: 8px; }
+.примеры-шапка h2 { font-size: 17px; }
+@media (max-width: 680px) {
+  .страница { padding-top: 8px; }
+  .навигация { flex-wrap: wrap; gap: 6px 12px; margin-bottom: 10px; }
+  .навигация .знак, .навигация .назад { font-size: 12px; }
+  .навигация .авторизация { font-size: 12px; }
+  .шапка { gap: 2px 8px; margin-bottom: 10px; }
+  .шапка h1 { font-size: 23px; }
+  .примеры-сетка { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .примеры-сетка button { min-height: 42px; padding: 6px; gap: 5px; font-size: 11px; }
+  .примеры-сетка button b { flex-basis: 24px; width: 24px; height: 24px; }
+}
