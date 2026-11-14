@@ -10,7 +10,7 @@
   <meta name="theme-color" content="#0d0f13">
   <link rel="canonical" href="https://leksika.gleeze.com/playground.html">
   <link rel="icon" href="значки/Лексика.ico" sizes="any">
-  <link rel="stylesheet" href="playground.css?v=4">
+  <link rel="stylesheet" href="playground.css?v=5">
 
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Лексика">
@@ -78,7 +78,6 @@
 <link rel="stylesheet" href="сообщество.css">
 </head>
 <body>
-<div id="авторизация" class="авторизация" aria-label="Учётная запись"></div>
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-K3CSQK5W"
   height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <noscript><div><img src="https://mc.yandex.ru/watch/114225735"
@@ -88,15 +87,12 @@
     <nav class="навигация" aria-label="Навигация">
       <a class="знак" href="./">ЛЕКСИКА · ЛЕКСУС</a>
       <a class="назад" href="./">← На главную проекта</a>
+      <div id="авторизация" class="авторизация" aria-label="Учётная запись"></div>
     </nav>
 
     <header class="шапка">
       <div class="метка">Браузерная среда · без установки</div>
       <h1>Попробуйте Лексику</h1>
-      <p class="описание">
-        Напишите программу на русском языке и запустите её прямо здесь.
-        Обычный запуск кода остаётся локальным. Для загрузки модели ИИ браузер скачивает её веса с Hugging Face.
-      </p>
     </header>
 
     <main>
@@ -112,6 +108,11 @@
           <button type="button" data-пример="арифметика" aria-pressed="false"><b>∑</b><span>Арифметика</span></button>
           <button type="button" data-пример="фибоначчи" aria-pressed="false"><b>φ</b><span>Фибоначчи</span></button>
           <button type="button" data-пример="простые" aria-pressed="false"><b>#</b><span>Простые числа</span></button>
+          <button type="button" data-пример="физбаз" aria-pressed="false"><b>Ⅲ</b><span>FizzBuzz</span></button>
+          <button type="button" data-пример="факториал" aria-pressed="false"><b>!</b><span>Факториал</span></button>
+          <button type="button" data-пример="коллатц" aria-pressed="false"><b>↗</b><span>Коллатц</span></button>
+          <button type="button" data-пример="паскаль" aria-pressed="false"><b>△</b><span>Треугольник Паскаля</span></button>
+          <button type="button" data-пример="палиндром" aria-pressed="false"><b>↔</b><span>Палиндром</span></button>
           <button type="button" data-пример="яблоко" aria-pressed="false"><b>◒</b><span>Bad Apple</span></button>
         </div>
       </section>
@@ -249,7 +250,7 @@
   <script src="playground-knowledge.js" defer></script>
   <script src="playground-lexicon.js" defer></script>
   <script src="учебная-машина.js" defer></script>
-  <script src="playground.js?v=5" defer></script>
+  <script src="playground.js?v=6" defer></script>
   <script src="playground-chat.js" defer></script>
   <script src="сообщество-сборка.js" defer></script>
 </body>
