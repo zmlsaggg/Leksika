@@ -10,6 +10,8 @@ const assert = require('node:assert/strict');
     browser = await chromium.launch({ executablePath: process.env.CHROME_PATH || '/usr/bin/google-chrome', args: ['--no-sandbox'] });
     for (const viewport of [{width: 1280, height: 800}, {width: 390, height: 844}]) {
       const page = await browser.newPage({ viewport });
+      // Еда змейки не должна случайно появляться на пути до нажатия «Остановить».
+      await page.addInitScript(() => { Math.random = () => 0; });
       const requests = [];
       await page.route('**/*', route => {
         const url = route.request().url(); requests.push(url);
@@ -140,4 +142,4 @@ const assert = require('node:assert/strict');
     assert(await noJS.locator('a[href="playground.html"]').first().isVisible());
     await noJS.close();
   } finally { if (browser) await browser.close(); server.kill(); }
-})().catch(error => { console.error(error); console.error(`::error::${String(error).replace(/[\r\n]/g, ' ')}`); process.exitCode = 1; });
+})().catch(error => { console.error(error); console.error(`::error::${String(error.stack || error).replace(/[\r\n]/g, ' ')}`); process.exitCode = 1; });
