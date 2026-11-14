@@ -325,6 +325,7 @@ def собрать_нативное_ядро():
                исходник, значения, индекс, байткод, машина, источник_компилятора]
     if ресурс:
         команда.append(ресурс)
+    команда.append("-lshell32")
     итог = subprocess.run(команда, capture_output=True, text=True)
     if итог.returncode != 0:
         print("  нативное ядро не собралось: " + итог.stderr.strip(), file=sys.stderr)

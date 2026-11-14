@@ -211,7 +211,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Не собрался тест контракта" }
           & .\contract-test.exe
           if ($LASTEXITCODE -ne 0) { throw "Тест контракта завершился с ошибкой" }
-          & $compiler @flags /Fe:leksus-core.exe лексус.c значения.c словарь_индекс.c байткод.c машина.c компилятор.c
+          & $compiler @flags /Fe:leksus-core.exe лексус.c значения.c словарь_индекс.c байткод.c машина.c компилятор.c shell32.lib
           if ($LASTEXITCODE -ne 0) { throw "Не собралось ядро" }
           & .\leksus-core.exe --self-test
           if ($LASTEXITCODE -ne 0) { throw "Самопроверка ядра завершилась с ошибкой" }
