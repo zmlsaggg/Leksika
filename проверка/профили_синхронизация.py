@@ -49,7 +49,7 @@ if browser_supported != SUPPORTED:
         f"browser={sorted(browser_supported)}, native={sorted(SUPPORTED)}"
     )
 
-if 'fetch("/данные/словарь/разговорные_слова.json"' not in browser:
+if 'new URL("данные/словарь/разговорные_слова.json", document.baseURI)' not in browser:
     raise SystemExit("Браузер больше не загружает общий JSON профилей")
 
 print(f"Профили синхронизированы: {len(expected)} синонимов команд; {len(SUPPORTED)} команд.")

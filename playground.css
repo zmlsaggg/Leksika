@@ -180,3 +180,33 @@ textarea {
   color: var(--приглушённый, #9aa0aa);
   font-size: .88rem;
 }
+
+/* Сначала работа с кодом, дополнительные возможности — ниже. */
+.карточка { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(0, .88fr); }
+.панель-редактора { min-width: 0; }
+#код { min-height: 410px; white-space: pre; }
+.вывод-панель { min-width: 0; display: flex; flex-direction: column; border-top: 0; border-left: 1px solid var(--рамка); }
+.вывод-заголовок { flex-wrap: wrap; }
+.вывод-действия { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.кнопка-стоп { min-height: 32px; padding: 3px 10px; font-size: 12px; }
+#вывод { flex: 1; max-height: 570px; min-height: 200px; }
+#вывод.анимация-кадр { white-space: pre; overflow-wrap: normal; line-height: 1.05; font-size: clamp(8px, 1vw, 14px); color: #f4f6fa; }
+.пример-пояснение { color: #a6b6cb; font-size: 12px; margin: 8px 0; }
+.ниже-редактора { margin-top: 80px; }
+.ниже-заголовок { margin-bottom: 16px; }
+.ниже-заголовок span { color: #9bbcff; font-size: 11px; font-weight: 700; letter-spacing: .14em; }
+.ниже-заголовок h2 { margin: 4px 0; font-size: 24px; letter-spacing: -.02em; }
+.ниже-заголовок p { margin: 0; font-size: 14px; color: var(--серый); }
+.доп-панель { border: 1px solid var(--рамка); border-radius: 14px; background: rgba(20, 23, 29, .72); }
+.доп-панель > summary { display: flex; justify-content: space-between; gap: 12px; padding: 17px 18px; cursor: pointer; font-weight: 700; }
+.доп-панель > summary span { color: var(--серый); font-size: 13px; font-weight: 400; }
+.доп-панель[open] > summary { border-bottom: 1px solid var(--рамка); }
+.доп-панель .ии-блок { margin: 0; border: 0; background: transparent; }
+:focus-visible { outline: 2px solid #a9caff; outline-offset: 3px; }
+@media (max-width: 850px) {
+  .карточка { grid-template-columns: 1fr; }
+  .вывод-панель { border-left: 0; border-top: 1px solid var(--рамка); }
+  #вывод { min-height: 160px; max-height: 380px; }
+  #код { min-height: 300px; }
+  .ниже-редактора { margin-top: 48px; }
+}
