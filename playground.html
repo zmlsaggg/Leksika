@@ -10,7 +10,7 @@
   <meta name="theme-color" content="#0d0f13">
   <link rel="canonical" href="https://leksika.gleeze.com/playground.html">
   <link rel="icon" href="значки/Лексика.ico" sizes="any">
-  <link rel="stylesheet" href="playground.css?v=3">
+  <link rel="stylesheet" href="playground.css?v=4">
 
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Лексика">
@@ -100,24 +100,25 @@
     </header>
 
     <main>
+      <section class="выбор-примеров" aria-labelledby="примеры-заголовок">
+        <div class="примеры-шапка"><div><span>НАЧНИТЕ С ПРИМЕРА</span><h2 id="примеры-заголовок">Что попробуем?</h2></div><p>Выберите карточку — код появится в редакторе.</p></div>
+        <div id="примеры" class="примеры-сетка" role="group" aria-label="Примеры программ">
+          <button type="button" data-пример="начало" aria-pressed="true"><b>✦</b><span>Первый запуск</span></button>
+          <button type="button" data-пример="условие" aria-pressed="false"><b>⑂</b><span>Условие</span></button>
+          <button type="button" data-пример="цикл" aria-pressed="false"><b>↻</b><span>Цикл</span></button>
+          <button type="button" data-пример="правило" aria-pressed="false"><b>ƒ</b><span>Свои правила</span></button>
+          <button type="button" data-пример="список" aria-pressed="false"><b>≡</b><span>Перечень</span></button>
+          <button type="button" data-пример="бутылки" aria-pressed="false"><b>99</b><span>99 Bottles</span></button>
+          <button type="button" data-пример="арифметика" aria-pressed="false"><b>∑</b><span>Арифметика</span></button>
+          <button type="button" data-пример="фибоначчи" aria-pressed="false"><b>φ</b><span>Фибоначчи</span></button>
+          <button type="button" data-пример="простые" aria-pressed="false"><b>#</b><span>Простые числа</span></button>
+          <button type="button" data-пример="яблоко" aria-pressed="false"><b>◒</b><span>Bad Apple</span></button>
+        </div>
+      </section>
       <section class="карточка" aria-label="Редактор Лексики">
         <div class="панель-редактора">
           <div class="панель-верх">
-            <div class="переключатели">
-              <label for="пример">Пример</label>
-              <select id="пример" aria-label="Выбрать пример">
-                <option value="начало">Первый запуск</option>
-                <option value="условие">Условие</option>
-                <option value="цикл">Цикл</option>
-                <option value="правило">Свои правила</option>
-                <option value="список">Перечень</option>
-                <option value="бутылки">99 Bottles of Beer</option>
-                <option value="арифметика">Сложная арифметика</option>
-                <option value="фибоначчи">Числа Фибоначчи</option>
-                <option value="простые">Простые числа</option>
-                <option value="яблоко">Bad Apple — полная анимация</option>
-              </select>
-            </div>
+            <strong>Редактор</strong>
             <div class="действия">
               <button class="кнопка главная" id="запустить" type="button">▶ Запустить</button>
               <button class="кнопка" id="очистить" type="button">Очистить</button>
@@ -137,11 +138,11 @@
             <span>Программа <code>.lek</code></span>
             <textarea id="код" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Исходный код на Лексике"></textarea>
           </label>
-          <p><a href="программы/bad-apple.lek">Программа выбора кадра .lek</a> · <a href="данные/bad-apple/ИСТОЧНИК.md">Источник медиа и права</a> · <a href="https://github.com/EmirXK/bad_apple">Исходный проект</a></p>
+          <p id="ссылки-яблока" hidden><a href="программы/bad-apple.lek">Программа выбора кадра .lek</a> · <a href="данные/bad-apple/ИСТОЧНИК.md">Источник медиа и права</a> · <a href="https://github.com/EmirXK/bad_apple">Исходный проект</a></p>
           <p id="пример-пояснение" class="пример-пояснение" role="status">Выберите пример или напишите свою программу.</p>
           <div id="редактор-подсказки" class="лексические-подсказки" role="listbox"
                aria-label="Подсказки русских словоформ" aria-live="polite" hidden></div>
-          <p class="подсказка">Подсказка: Ctrl + Enter запускает программу. Отступ для нового блока — Tab. Автодополнение использует ядро/русские_формы.lxd, если бинарный словарь опубликован рядом с сайтом.</p>
+          <p class="подсказка">Ctrl + Enter — запуск · Tab — отступ</p>
         </div>
 
         <div class="вывод-панель">
@@ -248,7 +249,7 @@
   <script src="playground-knowledge.js" defer></script>
   <script src="playground-lexicon.js" defer></script>
   <script src="учебная-машина.js" defer></script>
-  <script src="playground.js?v=4" defer></script>
+  <script src="playground.js?v=5" defer></script>
   <script src="playground-chat.js" defer></script>
   <script src="сообщество-сборка.js" defer></script>
 </body>
