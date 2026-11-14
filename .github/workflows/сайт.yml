@@ -17,6 +17,7 @@ on:
       - 'package-lock.json'
       - 'проверка/игры.cjs'
       - 'проверка/сообщество.cjs'
+      - 'проверка/supabase/**'
       - 'форум.html'
       - 'сообщество.css'
       - 'данные/bad-apple/**'
@@ -47,6 +48,7 @@ on:
       - 'package-lock.json'
       - 'проверка/игры.cjs'
       - 'проверка/сообщество.cjs'
+      - 'проверка/supabase/**'
       - 'форум.html'
       - 'сообщество.css'
       - 'данные/bad-apple/**'
@@ -89,3 +91,25 @@ jobs:
         run: node проверка/песочница.cjs
       - name: Проверить интерфейс сообщества с тестовым API
         run: node проверка/сообщество.cjs
+  database:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Проверить схему и политики на тестовой базе
+        env:
+          PGPASSWORD: test
+        run: |
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f проверка/supabase/подготовка.sql
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/схема.sql
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f проверка/supabase/политики.sql
