@@ -217,6 +217,7 @@ int main(void)
         for (unsigned i=0;i<300;++i) strcat(long_source," плюс 1");
         strcat(long_source,".");
         ЛексусСкомпилированнаяПрограмма compiled;
+        лексус_значение_освободить(&actual); лексус_значение_освободить(&expected);
         error[0]=0; actual=лексус_ничто(); expected=лексус_ничто(); equal=0;
         ok=лексус_скомпилировать(long_source,strlen(long_source),&compiled,error,sizeof(error));
         int compact=ok&&compiled.регистры<=2&&compiled.число_констант==1;
@@ -620,6 +621,7 @@ int main(void)
             "что ответ.\n"
             "вернуть ответ.";
         ЛексусСкомпилированнаяПрограмма compiled;
+        лексус_значение_освободить(&actual); лексус_значение_освободить(&expected);
         error[0]=0; actual=лексус_ничто(); expected=лексус_ничто(); equal=0;
         ok=лексус_скомпилировать(source,strlen(source),&compiled,error,sizeof(error));
         if(ok) {
@@ -639,6 +641,7 @@ int main(void)
     }
 
     {
+        лексус_значение_освободить(&actual); лексус_значение_освободить(&expected);
         error[0]=0; actual=лексус_ничто(); expected=лексус_ничто(); equal=0;
         ok=выполнить(
             "пусть сумма равно ноль.\n"
@@ -655,6 +658,7 @@ int main(void)
     }
 
     {
+        лексус_значение_освободить(&actual); лексус_значение_освободить(&expected);
         error[0]=0; actual=лексус_ничто(); expected=лексус_ничто(); equal=0;
         ok=выполнить(
             "пусть сумма равно ноль.\n"
@@ -673,6 +677,7 @@ int main(void)
     }
 
     {
+        лексус_значение_освободить(&actual); лексус_значение_освободить(&expected);
         error[0]=0; actual=лексус_ничто(); expected=лексус_ничто(); equal=0;
         ok=выполнить(
             "пусть сумма равно ноль.\n"
@@ -689,6 +694,7 @@ int main(void)
     }
 
     {
+        лексус_значение_освободить(&actual); лексус_значение_освободить(&expected);
         error[0]=0; actual=лексус_ничто(); expected=лексус_ничто(); equal=0;
         ok=выполнить(
             "пусть сумма равно ноль.\n"
@@ -722,6 +728,7 @@ int main(void)
     }
 
     {
+        лексус_значение_освободить(&actual); лексус_значение_освободить(&expected);
         error[0]=0; actual=лексус_ничто(); expected=лексус_ничто(); equal=0;
         ok=выполнить(
             "пусть сумма равно ноль.\n"
@@ -759,7 +766,8 @@ int main(void)
         for(size_t i=0;i<sizeof(формы)/sizeof(формы[0]);++i) {
             char source[256];
             snprintf(source,sizeof(source),"пускай счёт это 42. %s счёт. вернуть счёт",формы[i]);
-            error[0]=0; actual=лексус_ничто(); expected=лексус_ничто(); equal=0;
+            лексус_значение_освободить(&actual); лексус_значение_освободить(&expected);
+        error[0]=0; actual=лексус_ничто(); expected=лексус_ничто(); equal=0;
             ok=выполнить(source,&actual,error,sizeof(error));
             (void)лексус_число_создать("42",&expected);
             if(ok) (void)лексус_равно(actual,expected,&equal);
@@ -775,6 +783,7 @@ int main(void)
     }
 
     {
+        лексус_значение_освободить(&actual); лексус_значение_освободить(&expected);
         error[0]=0; actual=лексус_ничто(); expected=лексус_ничто(); equal=0;
         const char *source=
             "правило удвоить принимает число повторять\n"
@@ -793,6 +802,7 @@ int main(void)
     }
 
     {
+        лексус_значение_освободить(&actual); лексус_значение_освободить(&expected);
         error[0]=0; actual=лексус_ничто(); expected=лексус_ничто(); equal=0;
         const char *source=
             "правило проверка принимает число повторять\n"
