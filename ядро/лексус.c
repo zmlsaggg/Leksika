@@ -314,13 +314,7 @@ int main(int argc,char **argv)
     /* Явный выбор нативного пути позволяет общему запускателю не вызывать Python. */
     if (argc >= 2 && strcmp(argv[1], "--нативно") == 0) { --argc; ++argv; }
     if (argc>=2 && (strcmp(argv[1],"выполнить")==0 || strcmp(argv[1],"запустить")==0)) {
-        if (argc<3) { fputs("Использование: лексус-ядро выполнить файл.lek [--профиль=18+] [--профиль=зумер]\n",stderr); return 2; }
-        unsigned профили=ЛЕКСУС_ПРОФИЛЬ_БЕЗ_ИЗМЕНЕНИЙ;
-        for(int i=3;i<argc;++i) {
-            if(strcmp(argv[i],"--профиль=18+")==0) профили|=ЛЕКСУС_ПРОФИЛЬ_18_ПЛЮС;
-            else if(strcmp(argv[i],"--профиль=зумер")==0) профили|=ЛЕКСУС_ПРОФИЛЬ_ЗУМЕР;
-            else { fprintf(stderr,"Лексус: неизвестный параметр профиля: %s\n",argv[i]); return 2; }
-        }
+        if (argc!=3) { fputs("Использование: лексус-ядро выполнить файл.lek\n",stderr); return 2; }
         FILE *f=fopen(argv[2],"rb");
         if(!f){perror("Лексус: не удалось открыть исходник");return 2;}
         size_t length=0; unsigned char *source=прочитать(f,&length); fclose(f);
@@ -330,13 +324,15 @@ int main(int argc,char **argv)
             free(source); fputs("Лексус: исходник содержит некорректный UTF-8.\n",stderr); return 2;
         }
         ЛексусСкомпилированнаяПрограмма compiled; char error[512]={0};
-        if(!лексус_скомпилировать_с_профилями((const char*)source,length,профили,&compiled,error,sizeof(error))){
+        if(!лексус_скомпилировать((const char*)source,length,&compiled,error,sizeof(error))){
             fprintf(stderr,"Лексус: ошибка компиляции: %s.\n",error[0]?error:"неизвестная ошибка");
             free(source); return 1;
         }
         free(source);
         ЛексусПрограмма vm={compiled.код,compiled.число_инструкций,
-                             compiled.константы,compiled.число_констант,compiled.регистры};
+                             compiled.константы,compiled.число_констант,compiled.регистры,
+                             compiled.функции,compiled.число_функций,
+                             compiled.вызовы,compiled.число_вызовов};
         ЛексусЗначение result=лексус_ничто(); error[0]=0;
         int ok=лексус_машина_исполнить(&vm,10000000u,&result,error,sizeof(error));
         if(!ok) fprintf(stderr,"Лексус: ошибка исполнения: %s.\n",error[0]?error:"неизвестная ошибка");
@@ -432,7 +428,7 @@ int main(int argc,char **argv)
     puts("Лексус — нативное ядро " ЛЕКСУС_ВЕРСИЯ);
     puts("Команды:");
     puts("  версия");
-    puts("  выполнить <файл.lek> [--профиль=18+] [--профиль=зумер]");
+    puts("  выполнить <файл.lek>");
     puts("  самопроверка");
     puts("  проверить [файл.lek]");
     puts("  разобрать [файл.lek]");
