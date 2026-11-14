@@ -23,10 +23,14 @@ const assert = require('node:assert/strict');
       assert.match(decodeURIComponent(await img.evaluate(el => el.currentSrc)), /фон-анимация\.gif$/);
       await pause(600);
       const first = await page.screenshot();
-      await pause(2500);
-      const second = await page.screenshot();
-      assert(!first.equals(second), `Фон не меняется: ${viewport.width}x${viewport.height}`);
+      let changed = false;
+      for (let i = 0; i < 4 && !changed; i++) {
+        await pause(2000);
+        changed = !first.equals(await page.screenshot());
+      }
+      assert(changed, `Фон не меняется: ${viewport.width}x${viewport.height}`);
       await page.emulateMedia({ reducedMotion: 'reduce' });
+      await page.waitForFunction(() => decodeURIComponent(document.querySelector('.фон-сайта img').currentSrc).endsWith('фон-сайта-статичный.webp'));
       await img.evaluate(el => el.decode());
       assert.match(decodeURIComponent(await img.evaluate(el => el.currentSrc)), /фон-сайта-статичный\.webp$/);
       await pause(500);
@@ -40,4 +44,8 @@ const assert = require('node:assert/strict');
     if (browser) await browser.close();
     server.kill();
   }
-})().catch(error => { console.error(error); process.exitCode = 1; });
+})().catch(error => {
+  console.error(error);
+  console.error(`::error::${String(error).replace(/[\r\n]/g, ' ')}`);
+  process.exitCode = 1;
+});
