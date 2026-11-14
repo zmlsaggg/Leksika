@@ -751,6 +751,28 @@ static int выполнить_установку(int argc, char **argv)
 }
 
 
+/* Загрузка идёт отдельно от основного установщика и не ограничена таймаутом самопроверки. */
+static int запустить_загрузку_моделей(int giga, int yandex)
+{
+    wchar_t python[MAX_PATH * 4], скрипт[MAX_PATH * 4], команда[MAX_PATH * 12];
+    STARTUPINFOW si;
+    PROCESS_INFORMATION pi;
+    int n;
+    n = swprintf(python, MAX_PATH * 4, L"%ls\\питон\\python.exe", g_dir);
+    if (n < 0 || n >= MAX_PATH * 4) return 0;
+    n = swprintf(скрипт, MAX_PATH * 4, L"%ls\\лексика\\скачать_модели.py", g_dir);
+    if (n < 0 || n >= MAX_PATH * 4 || !file_exists(python) || !file_exists(скрипт)) return 0;
+    n = swprintf(команда, MAX_PATH * 12, L"\"%ls\" -X utf8 \"%ls\" --окно %ls %ls",
+                 python, скрипт, giga ? L"gigachat" : L"", yandex ? L"yandex" : L"");
+    if (n < 0 || n >= MAX_PATH * 12) return 0;
+    ZeroMemory(&si, sizeof(si)); si.cb = sizeof(si);
+    ZeroMemory(&pi, sizeof(pi));
+    if (!CreateProcessW(python, команда, NULL, NULL, FALSE, CREATE_NEW_CONSOLE,
+                        NULL, g_dir, &si, &pi)) return 0;
+    CloseHandle(pi.hThread); CloseHandle(pi.hProcess);
+    return 1;
+}
+
 static LRESULT CALLBACK окно_процедура(HWND окно, UINT сообщение, WPARAM w, LPARAM l)
 {
     switch (сообщение) {
@@ -785,10 +807,12 @@ static LRESULT CALLBACK окно_процедура(HWND окно, UINT сооб
                         if (MessageBoxW(окно, L"Корневые сертификаты расширяют доверие Windows ко всем сертификатам, выданным этим центром. Откроется официальная страница Госуслуг; установка выполняется вами отдельно. Продолжить?", L"Сертификаты Минцифры", MB_ICONWARNING | MB_YESNO | MB_DEFBUTTON2) == IDYES)
                             ShellExecuteW(окно, L"open", L"https://www.gosuslugi.ru/crt", NULL, NULL, SW_SHOWNORMAL);
                     }
-                    if (SendMessageW(g_giga_option, BM_GETCHECK, 0, 0) == BST_CHECKED)
-                        ShellExecuteW(окно, L"open", L"https://huggingface.co/ai-sage/GigaChat3.1-10B-A1.8B-GGUF", NULL, NULL, SW_SHOWNORMAL);
-                    if (SendMessageW(g_yandex_option, BM_GETCHECK, 0, 0) == BST_CHECKED)
-                        ShellExecuteW(окно, L"open", L"https://huggingface.co/yandex/YandexGPT-5-Lite-8B-instruct-GGUF", NULL, NULL, SW_SHOWNORMAL);
+                    {
+                        int giga = SendMessageW(g_giga_option, BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        int yandex = SendMessageW(g_yandex_option, BM_GETCHECK, 0, 0) == BST_CHECKED;
+                        if ((giga || yandex) && !запустить_загрузку_моделей(giga, yandex))
+                            MessageBoxW(окно, L"Лексика установлена, но окно загрузки моделей не запустилось. Повторите загрузку вручную по инструкции в README.md.", L"Модели не загружены", MB_ICONWARNING | MB_OK);
+                    }
                 } else {
                     показать_статус("Установка остановлена. Закройте окно и проверьте сообщение.");
                     SetWindowTextW(g_button, L"Закрыть");
@@ -843,11 +867,11 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR cmdline, int sh
     HWND path_label = CreateWindowW(L"STATIC",L"ПАПКА УСТАНОВКИ",WS_CHILD|WS_VISIBLE,44,132,660,24,g_window,NULL,instance,NULL);
     HWND path = CreateWindowW(L"EDIT",g_dir,WS_CHILD|WS_VISIBLE|ES_READONLY|ES_AUTOHSCROLL|WS_BORDER,44,158,655,28,g_window,NULL,instance,NULL);
     HWND details = CreateWindowW(L"STATIC",L"Основной пакет встроен и устанавливается без интернета.",WS_CHILD|WS_VISIBLE,44,200,660,26,g_window,NULL,instance,NULL);
-    HWND options = CreateWindowW(L"STATIC",L"ДОПОЛНИТЕЛЬНО  ·  откроются страницы для ручной установки",WS_CHILD|WS_VISIBLE,44,246,660,28,g_window,NULL,instance,NULL);
+    HWND options = CreateWindowW(L"STATIC",L"ДОПОЛНИТЕЛЬНО  ·  выключено по умолчанию",WS_CHILD|WS_VISIBLE,44,246,660,28,g_window,NULL,instance,NULL);
     g_cert_option = CreateWindowW(L"BUTTON",L"Сертификаты Минцифры — страница Госуслуг",WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_AUTOCHECKBOX,44,282,655,28,g_window,NULL,instance,NULL);
-    g_giga_option = CreateWindowW(L"BUTTON",L"GigaChat 3.1 10B — страница модели (≈ 6,5 ГБ)",WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_AUTOCHECKBOX,44,318,655,28,g_window,NULL,instance,NULL);
-    g_yandex_option = CreateWindowW(L"BUTTON",L"YandexGPT 5 Lite 8B — страница модели (≈ 5 ГБ)",WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_AUTOCHECKBOX,44,354,655,28,g_window,NULL,instance,NULL);
-    HWND note = CreateWindowW(L"STATIC",L"Модели и сертификаты автоматически не скачиваются и не включаются.\r\nМоделям нужны интернет, место на диске и совместимый llama.cpp.",WS_CHILD|WS_VISIBLE,44,392,655,50,g_window,NULL,instance,NULL);
+    g_giga_option = CreateWindowW(L"BUTTON",L"Скачать GigaChat 3.1 10B (≈ 6,5 ГБ)",WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_AUTOCHECKBOX,44,318,655,28,g_window,NULL,instance,NULL);
+    g_yandex_option = CreateWindowW(L"BUTTON",L"Скачать YandexGPT 5 Lite 8B (≈ 5 ГБ)",WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_AUTOCHECKBOX,44,354,655,28,g_window,NULL,instance,NULL);
+    HWND note = CreateWindowW(L"STATIC",L"Модели загружаются в отдельном окне; нужен интернет и llama.cpp.\r\nСертификаты: ручная установка на Госуслугах после предупреждения.",WS_CHILD|WS_VISIBLE,44,392,655,50,g_window,NULL,instance,NULL);
     g_status_control = CreateWindowW(L"STATIC",L"Готово к установке",WS_CHILD|WS_VISIBLE,44,454,655,26,g_window,NULL,instance,NULL);
     g_progress = CreateWindowExW(0,PROGRESS_CLASSW,NULL,WS_CHILD|WS_VISIBLE|PBS_SMOOTH,44,488,655,20,g_window,NULL,instance,NULL);
     SendMessageW(g_progress, PBM_SETRANGE32, 0, 100);
