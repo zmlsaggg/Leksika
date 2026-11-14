@@ -37,7 +37,7 @@ static int выполнить(const char *source,ЛексусЗначение *r
     ЛексусСкомпилированнаяПрограмма compiled;
     if (!лексус_скомпилировать(source,strlen(source),&compiled,error,error_size)) return 0;
     ЛексусПрограмма vm={compiled.код,compiled.число_инструкций,
-                         compiled.константы,compiled.число_констант,compiled.регистры};
+                         compiled.константы,compiled.число_констант,compiled.регистры,compiled.функции,compiled.число_функций,compiled.вызовы,compiled.число_вызовов};
     int ok=лексус_машина_исполнить(&vm,100000,result,error,error_size);
     лексус_скомпиляцию_освободить(&compiled);
     return ok;
@@ -68,7 +68,7 @@ static int выполнить_с_профилем(const char *source,unsigned pr
     if(!лексус_скомпилировать_с_профилями(source,strlen(source),profile,
                                           &compiled,error,error_size)) return 0;
     ЛексусПрограмма vm={compiled.код,compiled.число_инструкций,
-                        compiled.константы,compiled.число_констант,compiled.регистры};
+                        compiled.константы,compiled.число_констант,compiled.регистры,compiled.функции,compiled.число_функций,compiled.вызовы,compiled.число_вызовов};
     ЛексусСредаИсполнения env={state,NULL,тестовый_вывод,ЛЕКСУС_РАЗРЕШИТЬ_ВЫВОД,NULL};
     ЛексусЗначение result=лексус_ничто();
     int ok=лексус_машина_исполнить_со_средой(&vm,10000,&env,&result,error,error_size);
@@ -87,7 +87,7 @@ int main(void)
         ТестоваяСреда state={0};ЛексусЗначение result=лексус_ничто();
         if(ok){
             ЛексусПрограмма vm={compiled.код,compiled.число_инструкций,
-                compiled.константы,compiled.число_констант,compiled.регистры};
+                compiled.константы,compiled.число_констант,compiled.регистры,compiled.функции,compiled.число_функций,compiled.вызовы,compiled.число_вызовов};
             ЛексусСредаИсполнения env={&state,NULL,тестовый_вывод,0,NULL};
             ok=лексус_машина_исполнить_со_средой(&vm,1000,&env,&result,error,sizeof(error));
             лексус_скомпиляцию_освободить(&compiled);
@@ -103,7 +103,7 @@ int main(void)
         КонтекстРазрешений state={0};ЛексусЗначение result=лексус_ничто();
         if(ok){
             ЛексусПрограмма vm={compiled.код,compiled.число_инструкций,
-                compiled.константы,compiled.число_констант,compiled.регистры};
+                compiled.константы,compiled.число_констант,compiled.регистры,compiled.функции,compiled.число_функций,compiled.вызовы,compiled.число_вызовов};
             ЛексусСредаИсполнения env={&state,NULL,вывод_контекста_разрешений,
                 ЛЕКСУС_РАЗРЕШИТЬ_ВЫВОД,запретить_ресурс};
             ok=лексус_машина_исполнить_со_средой(&vm,1000,&env,&result,error,sizeof(error));
@@ -120,7 +120,7 @@ int main(void)
         ТестоваяСреда state={"не должен читаться",0,{0},0};ЛексусЗначение result=лексус_ничто();
         if(ok){
             ЛексусПрограмма vm={compiled.код,compiled.число_инструкций,
-                compiled.константы,compiled.число_констант,compiled.регистры};
+                compiled.константы,compiled.число_констант,compiled.регистры,compiled.функции,compiled.число_функций,compiled.вызовы,compiled.число_вызовов};
             ЛексусСредаИсполнения env={&state,тестовый_ввод,NULL,0,NULL};
             ok=лексус_машина_исполнить_со_средой(&vm,1000,&env,&result,error,sizeof(error));
             лексус_скомпиляцию_освободить(&compiled);
@@ -222,7 +222,7 @@ int main(void)
         int compact=ok&&compiled.регистры<=2&&compiled.число_констант==1;
         if (ok) {
             ЛексусПрограмма vm={compiled.код,compiled.число_инструкций,
-                                 compiled.константы,compiled.число_констант,compiled.регистры};
+                                 compiled.константы,compiled.число_констант,compiled.регистры,compiled.функции,compiled.число_функций,compiled.вызовы,compiled.число_вызовов};
             ok=лексус_машина_исполнить(&vm,100000,&actual,error,sizeof(error));
             лексус_скомпиляцию_освободить(&compiled);
         }
@@ -624,7 +624,7 @@ int main(void)
         ok=лексус_скомпилировать(source,strlen(source),&compiled,error,sizeof(error));
         if(ok) {
             ЛексусПрограмма vm={compiled.код,compiled.число_инструкций,
-                                 compiled.константы,compiled.число_констант,compiled.регистры};
+                                 compiled.константы,compiled.число_констант,compiled.регистры,compiled.функции,compiled.число_функций,compiled.вызовы,compiled.число_вызовов};
             ЛексусСредаИсполнения environment={&test,тестовый_ввод,тестовый_вывод,
                 ЛЕКСУС_РАЗРЕШИТЬ_ВВОД|ЛЕКСУС_РАЗРЕШИТЬ_ВЫВОД,NULL};
             ok=лексус_машина_исполнить_со_средой(&vm,1000,&environment,&actual,error,sizeof(error));
@@ -772,6 +772,53 @@ int main(void)
         ok=лексус_скомпилировать(ошибка_разделения,strlen(ошибка_разделения),&bad_separator,error,sizeof(error));
         if(ok) лексус_скомпиляцию_освободить(&bad_separator);
         failed+=проверить("пропуск точки внутри программы не скрывает ошибку",!ok);
+    }
+
+    {
+        error[0]=0; actual=лексус_ничто(); expected=лексус_ничто(); equal=0;
+        const char *source=
+            "правило удвоить принимает число повторять\n"
+            "    вернуть число умножить на два.\n"
+            "конец правила.\n"
+            "правило итог принимает число повторять\n"
+            "    вернуть удвоить(число) плюс один.\n"
+            "конец правила.\n"
+            "вернуть итог(20).";
+        ok=выполнить(source,&actual,error,sizeof(error));
+        (void)лексус_число_создать("41",&expected);
+        if(ok) (void)лексус_равно(actual,expected,&equal);
+        if(!ok) fprintf(stderr,"native function call error: %s\n",error);
+        failed+=проверить("нативные правила передают параметры и возвращают результат",ok&&equal);
+        лексус_значение_освободить(&actual); лексус_значение_освободить(&expected);
+    }
+
+    {
+        error[0]=0; actual=лексус_ничто(); expected=лексус_ничто(); equal=0;
+        const char *source=
+            "правило проверка принимает число повторять\n"
+            "    почему число равно 41 то речь Аргумент передан конец речи.\n"
+            "    вернуть число.\n"
+            "конец правила.\n"
+            "как проверка с 41.\n"
+            "вернуть 42.";
+        ok=выполнить(source,&actual,error,sizeof(error));
+        (void)лексус_число_создать("42",&expected);
+        if(ok) (void)лексус_равно(actual,expected,&equal);
+        failed+=проверить("естественный вызов «как» передаёт аргументы",ok&&equal);
+        лексус_значение_освободить(&actual); лексус_значение_освободить(&expected);
+    }
+
+    {
+        error[0]=0;
+        const char *source=
+            "правило ответ принимает число повторять\n"
+            "    вернуть число.\n"
+            "конец правила.\n"
+            "вернуть ответ().";
+        ЛексусСкомпилированнаяПрограмма bad_call;
+        ok=лексус_скомпилировать(source,strlen(source),&bad_call,error,sizeof(error));
+        if(ok) лексус_скомпиляцию_освободить(&bad_call);
+        failed+=проверить("нативный компилятор проверяет количество аргументов",!ok&&strstr(error,"число аргументов")!=NULL);
     }
 
     printf("Итого: %s\n",failed?"есть ошибки":"все проверки пройдены");
