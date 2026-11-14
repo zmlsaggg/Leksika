@@ -7,6 +7,17 @@ on:
       - 'index.html'
       - 'игры.html'
       - 'игры.js'
+      - 'учебная-машина.js'
+      - 'программы/**'
+      - 'профиль.html'
+      - 'сообщество-исходник.js'
+      - 'сообщество-сборка.js'
+      - 'supabase/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'проверка/игры.cjs'
+      - 'проверка/сообщество.cjs'
+      - 'проверка/supabase/**'
       - 'форум.html'
       - 'сообщество.css'
       - 'данные/bad-apple/**'
@@ -27,6 +38,17 @@ on:
       - 'index.html'
       - 'игры.html'
       - 'игры.js'
+      - 'учебная-машина.js'
+      - 'программы/**'
+      - 'профиль.html'
+      - 'сообщество-исходник.js'
+      - 'сообщество-сборка.js'
+      - 'supabase/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'проверка/игры.cjs'
+      - 'проверка/сообщество.cjs'
+      - 'проверка/supabase/**'
       - 'форум.html'
       - 'сообщество.css'
       - 'данные/bad-apple/**'
@@ -54,9 +76,40 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Проверить сборку клиента
+        run: |
+          npm ci
+          npm run build:community
+          git diff --exit-code -- сообщество-сборка.js
+      - name: Проверить программы на Лексике
+        run: node проверка/игры.cjs
       - name: Установить Playwright
         run: npm install --no-save --no-package-lock playwright-core@1.56.1
       - name: Проверить анимацию в Chromium
         run: node проверка/фон_сайта.cjs
       - name: Проверить песочницу в Chromium
         run: node проверка/песочница.cjs
+      - name: Проверить интерфейс сообщества с тестовым API
+        run: node проверка/сообщество.cjs
+  database:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Проверить схему и политики на тестовой базе
+        env:
+          PGPASSWORD: test
+        run: |
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f проверка/supabase/подготовка.sql
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/схема.sql
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f проверка/supabase/политики.sql

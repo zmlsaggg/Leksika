@@ -29,3 +29,8 @@ __pycache__/
 ядро/значения-тест*
 сборка/словарь-сборщик*
 ядро/компилятор-тест*
+
+# Site build and environment
+node_modules/
+.env.local
+ядро/контракт-тест*
