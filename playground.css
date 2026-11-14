@@ -190,7 +190,7 @@ textarea {
 .вывод-действия { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .кнопка-стоп { min-height: 32px; padding: 3px 10px; font-size: 12px; }
 #вывод { flex: 1; max-height: 570px; min-height: 200px; }
-#вывод.анимация-кадр { white-space: pre; overflow-wrap: normal; line-height: 1.05; font-size: clamp(8px, 1vw, 14px); color: #f4f6fa; }
+#вывод.анимация-кадр { white-space: pre; overflow-wrap: normal; line-height: 1.05; font-size: clamp(4px, .7vw, 7px); color: #f4f6fa; }
 .пример-пояснение { color: #a6b6cb; font-size: 12px; margin: 8px 0; }
 .ниже-редактора { margin-top: 80px; }
 .ниже-заголовок { margin-bottom: 16px; }
