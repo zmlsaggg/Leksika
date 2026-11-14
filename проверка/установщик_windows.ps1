@@ -33,6 +33,12 @@ try {
     foreach ($path in @($launcher, $native, $example, (Join-Path $installDir 'лексика.cmd'))) {
         if (!(Test-Path -LiteralPath $path)) { throw "Не установлен $path" }
     }
+    $helpOutput = & $launcher 'справка'
+    if ($LASTEXITCODE -ne 0) { throw "Python CLI launch failed: $LASTEXITCODE" }
+    $hello = Join-Path $installDir 'примеры/привет.lek'
+    if (!(Test-Path -LiteralPath $hello)) { throw "Не установлен пример $hello" }
+    & $launcher 'запустить' $hello
+    if ($LASTEXITCODE -ne 0) { throw "Обычный запуск программы не прошёл: $LASTEXITCODE" }
     & $launcher 'проверить' $example
     if ($LASTEXITCODE -ne 0) { throw "Проверка исходника не прошла: $LASTEXITCODE" }
     & $launcher '--нативно' 'запустить' $example
