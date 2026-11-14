@@ -6,6 +6,7 @@ const auth = document.getElementById('авторизация');
 const page = document.querySelector('[data-сообщество]');
 let user = null;
 let objectUrls = [];
+let номерЗагрузки = 0;
 const element = (tag, text) => { const el = document.createElement(tag); el.textContent = text; return el; };
 function message(text) { const el = document.getElementById('статус-сообщества'); if (el) el.textContent = text; }
 function showAuth() {
@@ -35,9 +36,22 @@ async function load() {
   const kind = page.dataset.сообщество, program = kind === 'программы';
   const table = program ? 'программы' : 'темы';
   const list = document.getElementById('публикации');
-  message('Загружаем…');
+  const status = document.getElementById('результат-загрузки');
+  const current = ++номерЗагрузки;
+  if (status) status.textContent = 'Загружаем публикации…';
   const { data, error } = await db.from(table).select('*').order('создано', {ascending:false}).limit(50);
-  if (error) { message('Не удалось загрузить публикации. Проверьте настройку Supabase и схему базы.'); return; }
+  if (current !== номерЗагрузки) return;
+  if (error) {
+    if (status) {
+      const box = element('div', ''); box.className = 'загрузка-списка';
+      const missing = ['PGRST205', '42P01'].includes(error.code);
+      box.append(element('p', missing ? 'Список пока недоступен: таблицы сообщества не найдены в базе.' : 'Не удалось загрузить список. Проверьте подключение и попробуйте ещё раз.'));
+      const retry = element('button', 'Повторить'); retry.type = 'button'; retry.addEventListener('click', () => load()); box.append(retry);
+      status.replaceChildren(box);
+    }
+    return;
+  }
+  if (status) status.textContent = '';
   objectUrls.forEach(url => URL.revokeObjectURL(url)); objectUrls = [];
   list.replaceChildren();
   if (!data.length) list.append(element('p', 'Пока нет публикаций.'));
@@ -62,7 +76,6 @@ async function load() {
     }
     list.append(card);
   }
-  message('');
 }
 if (page && page.dataset.сообщество !== 'профиль') {
   const form = document.getElementById('форма-публикации');
@@ -91,5 +104,5 @@ if (page && page.dataset.сообщество !== 'профиль') {
 db.auth.onAuthStateChange((_event, session) => {
   user = session?.user || null; showAuth();
   // Запросы к Supabase нельзя ожидать внутри callback блокировки сессии.
-  setTimeout(() => load().catch(() => message('Не удалось связаться с Supabase.')), 0);
+  setTimeout(() => load().catch(() => { const status = document.getElementById('результат-загрузки'); if (status) status.textContent = 'Не удалось связаться с сервером.'; }), 0);
 });

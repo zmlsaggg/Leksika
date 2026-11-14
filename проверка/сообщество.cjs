@@ -42,6 +42,18 @@ const assert = require('node:assert/strict');
     await page.locator('#форма-публикации button').click();
     await page.waitForFunction(() => document.getElementById('статус-сообщества').textContent.includes('Опубликовано'));
     assert(writes.some(w => decodeURI(w.url).includes('темы') && w.body.текст === 'Текст'));
+    await page.unroute('**/*');
+    await page.route('**/*', route => {
+      const url = route.request().url();
+      if (url.startsWith('http://127.0.0.1:8767/')) return route.continue();
+      if (url.includes('/rest/v1/')) return route.fulfill({status:404,contentType:'application/json',body:JSON.stringify({code:'PGRST205',message:'missing'})});
+      return route.abort();
+    });
+    await page.goto('http://127.0.0.1:8767/форум.html');
+    await page.waitForFunction(() => document.getElementById('результат-загрузки').textContent.includes('таблицы сообщества'));
+    assert.equal(await page.locator('#статус-сообщества').innerText(), '', 'Ошибка списка не относится к форме');
+    assert(await page.locator('#результат-загрузки button').isVisible());
+    assert(!((await page.locator('main').innerText()).includes('После пяти')));
     console.log('Интерфейс сообщества проверен с подменой Supabase API.');
   } finally { if(browser) await browser.close(); server.kill(); }
 })().catch(e => { console.error(e); console.error('::error::' + String(e.stack || e).replace(/[\r\n]/g, ' ')); process.exitCode = 1; });
