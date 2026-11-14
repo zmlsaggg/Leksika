@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - 'index.html'
+      - 'главная.css'
+      - 'главная.js'
       - 'игры.html'
       - 'игры.js'
       - 'учебная-машина.js'
@@ -16,6 +18,7 @@ on:
       - 'package.json'
       - 'package-lock.json'
       - 'проверка/игры.cjs'
+      - 'проверка/главная.cjs'
       - 'проверка/сообщество.cjs'
       - 'проверка/supabase/**'
       - 'форум.html'
@@ -36,6 +39,8 @@ on:
   pull_request:
     paths:
       - 'index.html'
+      - 'главная.css'
+      - 'главная.js'
       - 'игры.html'
       - 'игры.js'
       - 'учебная-машина.js'
@@ -47,6 +52,7 @@ on:
       - 'package.json'
       - 'package-lock.json'
       - 'проверка/игры.cjs'
+      - 'проверка/главная.cjs'
       - 'проверка/сообщество.cjs'
       - 'проверка/supabase/**'
       - 'форум.html'
@@ -83,6 +89,8 @@ jobs:
           git diff --exit-code -- сообщество-сборка.js
       - name: Проверить программы на Лексике
         run: node проверка/игры.cjs
+      - name: Проверить образцы главной
+        run: node проверка/главная.cjs
       - name: Установить Playwright
         run: npm install --no-save --no-package-lock playwright-core@1.56.1
       - name: Проверить анимацию в Chromium
