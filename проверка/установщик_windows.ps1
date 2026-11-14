@@ -35,10 +35,12 @@ try {
     }
     $helpOutput = & $launcher 'справка'
     if ($LASTEXITCODE -ne 0) { throw "Python CLI launch failed: $LASTEXITCODE" }
-    $hello = Join-Path $installDir 'примеры/привет.lek'
-    if (!(Test-Path -LiteralPath $hello)) { throw "Не установлен пример $hello" }
-    & $launcher 'запустить' $hello
-    if ($LASTEXITCODE -ne 0) { throw "Обычный запуск программы не прошёл: $LASTEXITCODE" }
+    $regularExample = Join-Path $installDir 'примеры/факториал.lek'
+    if (!(Test-Path -LiteralPath $regularExample)) { throw "Не установлен пример $regularExample" }
+    $regularOutput = & $launcher 'запустить' $regularExample
+    if ($LASTEXITCODE -ne 0 -or ($regularOutput -join "`n") -notmatch 'Факториал пяти равен 120') {
+        throw "Обычный запуск программы через Python CLI не прошёл: $LASTEXITCODE"
+    }
     & $launcher 'проверить' $example
     if ($LASTEXITCODE -ne 0) { throw "Проверка исходника не прошла: $LASTEXITCODE" }
     & $launcher '--нативно' 'запустить' $example
