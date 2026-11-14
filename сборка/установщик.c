@@ -639,7 +639,8 @@ static int выполнить_установку(int argc, char **argv)
     {
         wchar_t body[4096];
         wcscpy(body, L"cd /d \"%~dp0\"\r\n");
-        wcscat(body, L"set \"PYTHONUTF8=\"\r\n");\n        wcscat(body, L"set \"PYTHONIOENCODING=utf-8\"\r\n");
+        wcscat(body, L"set \"PYTHONUTF8=\"\r\n");
+        wcscat(body, L"set \"PYTHONIOENCODING=utf-8\"\r\n");
         wcscat(body, L"if not exist \"%~dp0питон\\python.exe\" (echo Встроенная среда не найдена.& exit /b 2)\r\n");
         wcscat(body, L"doskey Leksika=\"%~dp0Leksika.cmd\" $*\r\n");
         wcscat(body, L"doskey лексус=\"%~dp0Leksika.cmd\" $*\r\n");
