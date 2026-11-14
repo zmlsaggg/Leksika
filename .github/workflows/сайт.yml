@@ -5,6 +5,11 @@ on:
     branches: [main]
     paths:
       - 'index.html'
+      - 'игры.html'
+      - 'игры.js'
+      - 'форум.html'
+      - 'сообщество.css'
+      - 'данные/bad-apple/**'
       - 'styles.css'
       - 'playground.html'
       - 'playground.css'
@@ -20,6 +25,11 @@ on:
   pull_request:
     paths:
       - 'index.html'
+      - 'игры.html'
+      - 'игры.js'
+      - 'форум.html'
+      - 'сообщество.css'
+      - 'данные/bad-apple/**'
       - 'styles.css'
       - 'playground.html'
       - 'playground.css'

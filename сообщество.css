@@ -1,0 +1,10 @@
+.сообщество { max-width: 900px; }
+.сообщество nav { margin-bottom: 30px; }
+.сообщество section { margin: 20px 0; padding: 20px; border: 1px solid var(--рамка); background: var(--панель); border-radius: 14px; }
+.сообщество section h2 { margin: 0 0 10px; }
+.игры-сетка { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 14px; }
+.игры-сетка section { margin: 0; }
+.сообщество button { font: inherit; color: var(--свет); background: #273b60; border: 1px solid #46658e; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+.сообщество button:focus-visible { outline: 3px solid #8bb4ff; outline-offset: 2px; }
+.управление { display: flex; gap: 8px; flex-wrap: wrap; }
+#поле-игры { display: block; max-width: 100%; height: auto; background: #090e18; border: 1px solid #3a5a8f; }
