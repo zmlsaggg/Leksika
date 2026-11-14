@@ -22,13 +22,13 @@ typedef unsigned short     u16;
 static FILE    *g_exe;
 static u64      g_base, g_payload_size;
 static wchar_t  g_dir[MAX_PATH * 2], g_self[MAX_PATH * 4];
-static HWND g_window, g_status_control, g_progress, g_button, g_estimate;
+static HWND g_window, g_status_control, g_progress, g_button, g_estimate, g_path, g_browse;
 static HWND g_cert_option, g_giga_option, g_yandex_option;
 static u64 g_bytes_total, g_bytes_done;
 static ULONGLONG g_copy_started, g_last_update;
 static HFONT g_font_title, g_font_body;
 static HBRUSH g_background;
-static int g_started, g_finished, g_install_result;
+static int g_started, g_finished, g_install_result, g_phase;
 static char g_status_buffer[4096];
 static void wide_from_utf8(const char *s, wchar_t *out, int cap);
 
@@ -134,17 +134,113 @@ static void обновить_ход(int принудительно)
     pump_ui();
 }
 
+#define INSTALL_KEY L"Software\\Leksika"
+
+static int проверить_каталог(const wchar_t *путь, wchar_t *выход)
+{
+    wchar_t полный[MAX_PATH * 2];
+    DWORD n;
+    if (!путь || wcslen(путь) < 3 || wcschr(путь, L';')) return 0;
+    /* Только абсолютные пути на дисках, не корень диска и не слишком длинные пути. */
+    if (!((путь[0] >= L'A' && путь[0] <= L'Z') || (путь[0] >= L'a' && путь[0] <= L'z')) ||
+        путь[1] != L':' || (путь[2] != L'\\' && путь[2] != L'/')) return 0;
+    n = GetFullPathNameW(путь, MAX_PATH * 2, полный, NULL);
+    if (!n || n >= 220 || n <= 3) return 0;
+    while (n > 3 && (полный[n - 1] == L'\\' || полный[n - 1] == L'/')) полный[--n] = 0;
+    if (n <= 3) return 0;
+    wcscpy(выход, полный);
+    return 1;
+}
+
+static int сохранённый_каталог(wchar_t *out)
+{
+    HKEY ключ; DWORD тип = 0, размер = sizeof(wchar_t) * MAX_PATH * 2;
+    wchar_t путь[MAX_PATH * 2] = {0};
+    if (RegOpenKeyExW(HKEY_CURRENT_USER, INSTALL_KEY, 0, KEY_QUERY_VALUE, &ключ) != ERROR_SUCCESS) return 0;
+    LONG код = RegQueryValueExW(ключ, L"InstallDir", NULL, &тип, (BYTE *)путь, &размер);
+    RegCloseKey(ключ);
+    путь[MAX_PATH * 2 - 1] = 0;
+    return код == ERROR_SUCCESS && тип == REG_SZ && проверить_каталог(путь, out);
+}
+
+static int сохранить_каталог(void)
+{
+    HKEY ключ;
+    if (RegCreateKeyExW(HKEY_CURRENT_USER, INSTALL_KEY, 0, NULL, 0, KEY_SET_VALUE, NULL, &ключ, NULL) != ERROR_SUCCESS) return 0;
+    LONG код = RegSetValueExW(ключ, L"InstallDir", 0, REG_SZ, (BYTE *)g_dir,
+                              (DWORD)((wcslen(g_dir) + 1) * sizeof(wchar_t)));
+    RegCloseKey(ключ);
+    return код == ERROR_SUCCESS;
+}
+
 static int каталог_установки(void)
 {
-    DWORD n = GetEnvironmentVariableW(L"LOCALAPPDATA", g_dir, MAX_PATH);
+    wchar_t путь[MAX_PATH * 2];
+    DWORD n;
+    if (сохранённый_каталог(g_dir)) return 1;
+    if (GetDriveTypeW(L"D:\\") != DRIVE_NO_ROOT_DIR && GetDriveTypeW(L"D:\\") != DRIVE_UNKNOWN)
+        return проверить_каталог(L"D:\\Лексика", g_dir);
+    n = GetEnvironmentVariableW(L"LOCALAPPDATA", путь, MAX_PATH);
     if (!n || n >= MAX_PATH) {
-        if (SHGetFolderPathW(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, g_dir) != S_OK) return 0;
+        if (SHGetFolderPathW(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, путь) != S_OK) return 0;
     }
-    size_t len = wcslen(g_dir);
-    while (len && (g_dir[len - 1] == L'\\' || g_dir[len - 1] == L'/')) g_dir[--len] = 0;
-    if (!len || len + wcslen(L"\\Лексус") >= sizeof(g_dir)/sizeof(g_dir[0])) return 0;
-    wcscat(g_dir, L"\\Лексус");
+    if (wcslen(путь) + 9 >= MAX_PATH * 2) return 0;
+    wcscat(путь, L"\\Лексика");
+    return проверить_каталог(путь, g_dir);
+}
+
+/* Не работаем через точки перехода, чтобы не затрагивать чужие деревья. */
+static int нет_переходов(const wchar_t *путь)
+{
+    wchar_t часть[MAX_PATH * 4]; size_t n = wcslen(путь);
+    if (n >= MAX_PATH * 4) return 0;
+    wcscpy(часть, путь);
+    for (size_t i = 3; i <= n; ++i) {
+        if (часть[i] == L'\\' || часть[i] == L'/' || часть[i] == 0) {
+            wchar_t старый = часть[i]; часть[i] = 0;
+            DWORD атрибуты = GetFileAttributesW(часть);
+            часть[i] = старый;
+            if (атрибуты != INVALID_FILE_ATTRIBUTES && (атрибуты & FILE_ATTRIBUTE_REPARSE_POINT)) return 0;
+        }
+    }
     return 1;
+}
+
+static int пустой_каталог(const wchar_t *путь)
+{
+    wchar_t маска[MAX_PATH * 2 + 4]; WIN32_FIND_DATAW данные; HANDLE поиск;
+    swprintf(маска, MAX_PATH * 2 + 4, L"%ls\\*", путь);
+    поиск = FindFirstFileW(маска, &данные);
+    if (поиск == INVALID_HANDLE_VALUE) return GetFileAttributesW(путь) == INVALID_FILE_ATTRIBUTES;
+    do {
+        if (wcscmp(данные.cFileName, L".") && wcscmp(данные.cFileName, L"..")) {
+            FindClose(поиск); return 0;
+        }
+    } while (FindNextFileW(поиск, &данные));
+    FindClose(поиск); return 1;
+}
+
+static void выбрать_каталог(HWND окно)
+{
+    BROWSEINFOW info; PIDLIST_ABSOLUTE выбран; wchar_t путь[MAX_PATH * 2], полный[MAX_PATH * 2];
+    ZeroMemory(&info, sizeof(info));
+    info.hwndOwner = окно;
+    info.lpszTitle = L"Выберите папку для установки Лексики";
+    info.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
+    CoInitialize(NULL);
+    выбран = SHBrowseForFolderW(&info);
+    if (выбран) {
+        if (SHGetPathFromIDListW(выбран, путь)) {
+            size_t len = wcslen(путь);
+            if (len == 3 && путь[1] == L':') wcscat(путь, L"Лексика");
+            if (проверить_каталог(путь, полный)) {
+                wcscpy(g_dir, полный);
+                SetWindowTextW(g_path, g_dir);
+            } else MessageBoxW(окно, L"Выберите папку на диске с путём короче 220 символов.", L"Папка установки", MB_OK | MB_ICONWARNING);
+        }
+        CoTaskMemFree(выбран);
+    }
+    CoUninitialize();
 }
 
 static int copy_file(const wchar_t *target, u64 offset, u64 size)
@@ -154,7 +250,9 @@ static int copy_file(const wchar_t *target, u64 offset, u64 size)
     u64   left = size;
     FILE *out;
 
+    if (!нет_переходов(target)) return 0;
     make_parent_dirs(target);
+    if (!нет_переходов(target)) return 0;
     out = _wfopen(target, L"wb");
     if (!out) {
         сказать_код("  файл не открылся", GetLastError());
@@ -368,37 +466,31 @@ static int run_and_wait(const wchar_t *exe, const wchar_t *args)
     return (int)code;
 }
 
-static int g_глубина = 0;
-
-static void remove_tree(const wchar_t *dir)
+/* Удаляем только файлы установочного пакета и пустые родительские папки. */
+static void удалить_файл_пакета(const wchar_t *относительный)
 {
-
-    WIN32_FIND_DATAW fd;
-    wchar_t mask[MAX_PATH * 4];
-    HANDLE h;
-
-    wcscpy(mask, dir);
-    wcscat(mask, L"\\*");
-    h = FindFirstFileW(mask, &fd);
-    if (h != INVALID_HANDLE_VALUE) {
-        do {
-            wchar_t child[MAX_PATH * 4];
-            if (!wcscmp(fd.cFileName, L".") || !wcscmp(fd.cFileName, L".."))
-                continue;
-            wcscpy(child, dir);
-            wcscat(child, L"\\");
-            wcscat(child, fd.cFileName);
-            if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-                remove_tree(child);
-            } else {
-                SetFileAttributesW(child, FILE_ATTRIBUTE_NORMAL);
-                DeleteFileW(child);
-            }
-        } while (FindNextFileW(h, &fd));
-        FindClose(h);
+    wchar_t путь[MAX_PATH * 4];
+    if (swprintf(путь, MAX_PATH * 4, L"%ls\\%ls", g_dir, относительный) < 0 || !нет_переходов(путь)) return;
+    DeleteFileW(путь);
+    while (1) {
+        wchar_t *разделитель = wcsrchr(путь, L'\\');
+        if (!разделитель || (size_t)(разделитель - путь) <= wcslen(g_dir)) break;
+        *разделитель = 0;
+        RemoveDirectoryW(путь);
     }
-    RemoveDirectoryW(dir);
-    speak("удалено: "); speak("каталог установки\n");
+}
+
+static void удалить_файлы(u32 count)
+{
+    const wchar_t *доп[] = {L"Leksika.cmd", L"лексус.cmd", L"лексика.cmd", L"лек.cmd", L"лекс.cmd", L"лексу.cmd", L"leksus.cmd", L"lek.cmd", L"leks.cmd", L"Leksika-терминал.cmd"};
+    for (u32 i = 0; i < count; ++i) {
+        wchar_t имя[MAX_PATH * 2];
+        wide_from_utf8(g_записи[i].имя, имя, MAX_PATH * 2);
+        for (size_t k = 0; имя[k]; ++k) if (имя[k] == L'/') имя[k] = L'\\';
+        удалить_файл_пакета(имя);
+    }
+    for (size_t i = 0; i < sizeof(доп)/sizeof(доп[0]); ++i) удалить_файл_пакета(доп[i]);
+    RemoveDirectoryW(g_dir);
 }
 
 static int элемент_PATH_равен(const wchar_t *начало, size_t длина,
@@ -547,19 +639,41 @@ static int выполнить_установку(int argc, char **argv)
         return 1;
     }
 
-    if (!каталог_установки()) {
+    if (!g_window && !каталог_установки()) {
         error_box("Не удалось определить каталог установки.");
         fclose(g_exe); g_exe = NULL; return 3;
     }
-
+    if (!g_window && wargc > 2 && !wcscmp(wargv[1], L"--папка")) {
+        wchar_t путь[MAX_PATH * 2];
+        if (!проверить_каталог(wargv[2], путь)) {
+            error_box("Некорректный путь установки."); fclose(g_exe); g_exe = NULL; return 3;
+        }
+        wcscpy(g_dir, путь);
+    }
     if (wargc > 1 && (!wcscmp(wargv[1], L"--удалить") || !wcscmp(wargv[1], L"/удалить")
                       || !wcscmp(wargv[1], L"--uninstall"))) {
-        CoInitialize(NULL);
+        if (!сохранённый_каталог(g_dir)) {
+            wchar_t local[MAX_PATH * 2]; DWORD n = GetEnvironmentVariableW(L"LOCALAPPDATA", local, MAX_PATH);
+            if (!n || n >= MAX_PATH) { fclose(g_exe); g_exe = NULL; return 3; }
+            wcscat(local, L"\\Лексус");
+            if (!проверить_каталог(local, g_dir)) { fclose(g_exe); g_exe = NULL; return 3; }
+            {
+                wchar_t признак[MAX_PATH * 4];
+                swprintf(признак, MAX_PATH * 4, L"%ls\\лексус-ядро.exe", g_dir);
+                if (!file_exists(признак)) { fclose(g_exe); g_exe = NULL; return 3; }
+                swprintf(признак, MAX_PATH * 4, L"%ls\\Leksika.cmd", g_dir);
+                if (!file_exists(признак)) { fclose(g_exe); g_exe = NULL; return 3; }
+            }
+        }
+        if (!нет_переходов(g_dir) || !load_payload(&offset, &count) || !read_table(count)) {
+            error_box("Не удалось безопасно определить файлы для удаления."); fclose(g_exe); g_exe = NULL; return 3;
+        }
         изменить_PATH_пользователя(0);
-        remove_tree(g_dir);
+        удалить_файлы(count);
         удалить_ярлыки();
-        speak("\nЛексус снят. Пользовательские настройки сохранены.\n");
-        CoUninitialize();
+        RegDeleteKeyW(HKEY_CURRENT_USER, INSTALL_KEY);
+        fclose(g_exe); g_exe = NULL;
+        speak("Файлы Лексики удалены; остальные файлы сохранены.\n");
         return 0;
     }
 
@@ -583,9 +697,18 @@ static int выполнить_установку(int argc, char **argv)
     }
     speak("\n");
 
-    if (!CreateDirectoryW(g_dir, NULL) && GetLastError() != ERROR_ALREADY_EXISTS) {
-        сказать_код("каталог установки не создан", GetLastError());
-        fclose(g_exe); g_exe = NULL; return 3;
+    {
+        wchar_t прежний[MAX_PATH * 2];
+        int своя = сохранённый_каталог(прежний) && !_wcsicmp(прежний, g_dir);
+        if (!нет_переходов(g_dir) || (!своя && !пустой_каталог(g_dir))) {
+            error_box("Выберите пустую папку: существующие файлы и точки перехода не перезаписываются.");
+            fclose(g_exe); g_exe = NULL; return 3;
+        }
+        int код = SHCreateDirectoryExW(NULL, g_dir, NULL);
+        if (код != ERROR_SUCCESS && код != ERROR_ALREADY_EXISTS && код != ERROR_FILE_EXISTS) {
+            сказать_код("каталог установки не создан", (DWORD)код);
+            fclose(g_exe); g_exe = NULL; return 3;
+        }
     }
     speak("Каталог установки готов.\n");
     if (!read_table(count)) {
@@ -739,12 +862,24 @@ static int выполнить_установку(int argc, char **argv)
         speak("Самопроверка пройдена.\n");
     }
 
+    {
+        wchar_t прежний[MAX_PATH * 2];
+        int было = сохранённый_каталог(прежний);
+        if (!сохранить_каталог()) {
+            error_box("Не удалось сохранить путь установки. Путь в PATH не изменён.");
+            fclose(g_exe); g_exe = NULL; return 8;
+        }
+        if (было && _wcsicmp(прежний, g_dir)) {
+            wchar_t новый[MAX_PATH * 2]; wcscpy(новый, g_dir); wcscpy(g_dir, прежний);
+            изменить_PATH_пользователя(0); wcscpy(g_dir, новый);
+        }
+    }
     if (изменить_PATH_пользователя(1))
         speak("Команда Leksika добавлена в пользовательский PATH. Откройте новое окно терминала.\n");
     else
         speak("Не удалось обновить PATH; команда доступна из каталога установки и окна Лексики.\n");
 
-    speak("\nУстановка завершена. Лексика готова к локальной работе.\n");
+    speak("\nУстановка завершена. Лексика готова к работе.\n");
     speak("Запуск: Leksika запустить примеры\\привет.lek\n");
     fclose(g_exe); g_exe = NULL;
     return 0;
@@ -773,9 +908,37 @@ static int запустить_загрузку_моделей(int giga, int yand
     return 1;
 }
 
+static void нарисовать_фон(HWND окно)
+{
+    PAINTSTRUCT ps; HDC dc = BeginPaint(окно, &ps); RECT r;
+    GetClientRect(окно, &r);
+    FillRect(dc, &r, g_background);
+    /* Тихое звёздное поле: без внешних изображений и тяжёлого декодирования. */
+    for (int i = 0; i < 55; ++i) {
+        int x = 10 + ((i * 137 + g_phase) % (r.right > 20 ? r.right - 20 : 1));
+        int y = 10 + ((i * 83) % (r.bottom > 20 ? r.bottom - 20 : 1));
+        int bright = 55 + ((i * 13 + g_phase) % 90);
+        HBRUSH кисть = CreateSolidBrush(RGB(bright / 2, bright, bright + 40));
+        HGDIOBJ старый = SelectObject(dc, кисть);
+        HGDIOBJ перо = SelectObject(dc, GetStockObject(NULL_PEN));
+        int размер = i % 4 == 0 ? 4 : 2;
+        Ellipse(dc, x, y, x + размер, y + размер);
+        SelectObject(dc, перо); SelectObject(dc, старый); DeleteObject(кисть);
+    }
+    EndPaint(окно, &ps);
+}
+
 static LRESULT CALLBACK окно_процедура(HWND окно, UINT сообщение, WPARAM w, LPARAM l)
 {
     switch (сообщение) {
+    case WM_PAINT: нарисовать_фон(окно); return 0;
+    case WM_ERASEBKGND: return 1;
+    case WM_TIMER:
+        if (!IsIconic(окно)) {
+            g_phase = (g_phase + 2) % 115;
+            InvalidateRect(окно, NULL, FALSE);
+        }
+        return 0;
     case WM_CTLCOLORBTN:
         if ((HWND)l != g_cert_option && (HWND)l != g_giga_option && (HWND)l != g_yandex_option)
             break;
@@ -787,15 +950,19 @@ static LRESULT CALLBACK окно_процедура(HWND окно, UINT сооб
         SetBkMode((HDC)w, TRANSPARENT);
         return (LRESULT)g_background;
     case WM_COMMAND:
+        if ((LOWORD(w) == 1002 || LOWORD(w) == 1003) && !g_started) {
+            выбрать_каталог(окно); return 0;
+        }
         if (LOWORD(w) == 1001) {
             if (!g_started) {
                 g_started = 1;
                 EnableWindow(g_button, FALSE);
+                EnableWindow(g_path, FALSE); EnableWindow(g_browse, FALSE);
                 EnableWindow(g_cert_option, FALSE);
                 EnableWindow(g_giga_option, FALSE);
                 EnableWindow(g_yandex_option, FALSE);
                 SetWindowTextW(g_button, L"Установка...");
-                показать_статус("Подготовка локального пакета...");
+                показать_статус("Подготовка пакета...");
                 g_install_result = выполнить_установку(0, NULL);
                 g_finished = 1;
                 if (!g_install_result) {
@@ -827,7 +994,7 @@ static LRESULT CALLBACK окно_процедура(HWND окно, UINT сооб
     case WM_CLOSE:
         if (!g_started || g_finished) DestroyWindow(окно);
         return 0;
-    case WM_DESTROY: PostQuitMessage(0); return 0;
+    case WM_DESTROY: KillTimer(окно, 1); PostQuitMessage(0); return 0;
     }
     return DefWindowProcW(окно, сообщение, w, l);
 }
@@ -854,7 +1021,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR cmdline, int sh
     wc.hbrBackground = g_background;
     RegisterClassW(&wc);
     g_window = CreateWindowExW(0, wc.lpszClassName, L"Лексика — установка",
-        WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
+        WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_CLIPCHILDREN,
         CW_USEDEFAULT, CW_USEDEFAULT, 760, 680, NULL, NULL, instance, NULL);
     if (!g_window) return 1;
     g_font_title = CreateFontW(34,0,0,0,FW_BOLD,FALSE,FALSE,FALSE,DEFAULT_CHARSET,
@@ -862,10 +1029,11 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR cmdline, int sh
     g_font_body = CreateFontW(17,0,0,0,FW_NORMAL,FALSE,FALSE,FALSE,DEFAULT_CHARSET,
         OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,CLEARTYPE_QUALITY,DEFAULT_PITCH|FF_DONTCARE,L"Segoe UI");
     if (!каталог_установки()) { error_box("Не удалось определить каталог установки."); return 1; }
-    HWND title = CreateWindowW(L"STATIC",L"ЛЕКСИКА",WS_CHILD|WS_VISIBLE,42,28,640,50,g_window,NULL,instance,NULL);
-    HWND subtitle = CreateWindowW(L"STATIC",L"Локальная среда программирования",WS_CHILD|WS_VISIBLE,44,82,660,28,g_window,NULL,instance,NULL);
+    HWND title = CreateWindowW(L"STATIC",L"ЛЕКСИКА",WS_CHILD|WS_VISIBLE,42,28,440,50,g_window,NULL,instance,NULL);
+    HWND subtitle = CreateWindowW(L"STATIC",L"Среда программирования",WS_CHILD|WS_VISIBLE,44,82,440,28,g_window,NULL,instance,NULL);
     HWND path_label = CreateWindowW(L"STATIC",L"ПАПКА УСТАНОВКИ",WS_CHILD|WS_VISIBLE,44,132,660,24,g_window,NULL,instance,NULL);
-    HWND path = CreateWindowW(L"EDIT",g_dir,WS_CHILD|WS_VISIBLE|ES_READONLY|ES_AUTOHSCROLL|WS_BORDER,44,158,655,28,g_window,NULL,instance,NULL);
+    g_path = CreateWindowW(L"BUTTON",g_dir,WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_PUSHBUTTON|BS_LEFT,44,158,525,32,g_window,(HMENU)(INT_PTR)1002,instance,NULL);
+    g_browse = CreateWindowW(L"BUTTON",L"Обзор...",WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_PUSHBUTTON,579,158,120,32,g_window,(HMENU)(INT_PTR)1003,instance,NULL);
     HWND details = CreateWindowW(L"STATIC",L"Основной пакет встроен и устанавливается без интернета.",WS_CHILD|WS_VISIBLE,44,200,660,26,g_window,NULL,instance,NULL);
     HWND options = CreateWindowW(L"STATIC",L"ДОПОЛНИТЕЛЬНО  ·  выключено по умолчанию",WS_CHILD|WS_VISIBLE,44,246,660,28,g_window,NULL,instance,NULL);
     g_cert_option = CreateWindowW(L"BUTTON",L"Сертификаты Минцифры — страница Госуслуг",WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_AUTOCHECKBOX,44,282,655,28,g_window,NULL,instance,NULL);
@@ -878,11 +1046,16 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous, LPSTR cmdline, int sh
     SendMessageW(g_progress, PBM_SETBARCOLOR, 0, RGB(100, 180, 255));
     SendMessageW(g_progress, PBM_SETBKCOLOR, 0, RGB(37, 48, 68));
     g_estimate = CreateWindowW(L"STATIC",L"Время зависит от скорости диска",WS_CHILD|WS_VISIBLE,44,518,655,26,g_window,NULL,instance,NULL);
-    g_button = CreateWindowW(L"BUTTON",L"Установить локально",WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_DEFPUSHBUTTON,475,556,224,42,g_window,(HMENU)(INT_PTR)1001,instance,NULL);
+    g_button = CreateWindowW(L"BUTTON",L"Установить",WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_DEFPUSHBUTTON,475,556,224,42,g_window,(HMENU)(INT_PTR)1001,instance,NULL);
     SendMessageW(title,WM_SETFONT,(WPARAM)g_font_title,TRUE);
-    HWND items[] = {subtitle,path_label,path,details,options,g_cert_option,g_giga_option,g_yandex_option,note,g_status_control,g_estimate,g_button};
+    HWND items[] = {subtitle,path_label,g_path,g_browse,details,options,g_cert_option,g_giga_option,g_yandex_option,note,g_status_control,g_estimate,g_button};
     for (size_t i = 0; i < sizeof(items)/sizeof(items[0]); ++i)
         SendMessageW(items[i],WM_SETFONT,(WPARAM)g_font_body,TRUE);
+    {
+        BOOL анимация = TRUE;
+        if (SystemParametersInfoW(SPI_GETCLIENTAREAANIMATION, 0, &анимация, 0) && анимация)
+            SetTimer(g_window, 1, 500, NULL);
+    }
     ShowWindow(g_window,show); UpdateWindow(g_window);
     MSG msg;
     while (GetMessageW(&msg,NULL,0,0)>0) { TranslateMessage(&msg); DispatchMessageW(&msg); }
