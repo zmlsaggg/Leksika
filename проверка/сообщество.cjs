@@ -43,4 +43,4 @@ const assert = require('node:assert/strict');
     assert(writes.some(w => decodeURI(w.url).includes('темы') && w.body.текст === 'Текст'));
     console.log('Интерфейс сообщества проверен с подменой Supabase API.');
   } finally { if(browser) await browser.close(); server.kill(); }
-})().catch(e => { console.error(e); process.exitCode = 1; });
+})().catch(e => { console.error(e); console.error('::error::' + String(e.stack || e).replace(/[\r\n]/g, ' ')); process.exitCode = 1; });
