@@ -614,10 +614,10 @@ static int выполнить_установку(int argc, char **argv)
     {
         wchar_t body[4096];
         wcscpy(body, L"if \"%~1\"==\"--нативно\" goto native\r\n");
-        wcscat(body, L"set PYTHONUTF8=1\r\n");
-        wcscat(body, L"set PYTHONIOENCODING=utf-8\r\n");
+        wcscat(body, L"set \"PYTHONUTF8=\"\r\n");
+        wcscat(body, L"set \"PYTHONIOENCODING=utf-8\"\r\n");
         wcscat(body, L"if not exist \"%~dp0питон\\python.exe\" (echo Встроенная среда не найдена.& exit /b 2)\r\n");
-        wcscat(body, L"\"%~dp0питон\\python.exe\" \"%~dp0лексус.lek\" %*\r\n");
+        wcscat(body, L"\"%~dp0питон\\python.exe\" -X utf8 \"%~dp0лексус.lek\" %*\r\n");
         wcscat(body, L"exit /b %errorlevel%\r\n:native\r\n");
         wcscat(body, L"\"%~dp0лексус-ядро.exe\" %*\r\nexit /b %errorlevel%\r\n");
         write_cmd(cmd, body);
@@ -638,12 +638,13 @@ static int выполнить_установку(int argc, char **argv)
     }
     {
         wchar_t body[4096];
-        wcscpy(body, L"set PYTHONUTF8=1\r\n");
-        wcscat(body, L"set PYTHONIOENCODING=utf-8\r\n");
+        wcscpy(body, L"cd /d \"%~dp0\"\r\n");
+        wcscat(body, L"set \"PYTHONUTF8=\"\r\n");
+        wcscat(body, L"set \"PYTHONIOENCODING=utf-8\"\r\n");
         wcscat(body, L"if not exist \"%~dp0питон\\python.exe\" (echo Встроенная среда не найдена.& exit /b 2)\r\n");
-        wcscat(body, L"doskey Leksika=chcp 65001 ^>nul $T set PYTHONUTF8=1 $T set PYTHONIOENCODING=utf-8 $T \"%~dp0питон\\python.exe\" \"%~dp0лексус.lek\" $*\r\n");
-        wcscat(body, L"doskey лексус=Leksika $*\r\n");
-        wcscat(body, L"\"%~dp0питон\\python.exe\" \"%~dp0лексус.lek\" справка\r\n");
+        wcscat(body, L"doskey Leksika=\"%~dp0Leksika.cmd\" $*\r\n");
+        wcscat(body, L"doskey лексус=\"%~dp0Leksika.cmd\" $*\r\n");
+        wcscat(body, L"\"%~dp0питон\\python.exe\" -X utf8 \"%~dp0лексус.lek\" справка\r\n");
         wcscat(body, L"echo.\r\n");
         wcscat(body, L"echo Вводите команды Лексики. Например: Leksika запустить примеры\\привет.lek\r\n");
         write_cmd(terminal, body);
