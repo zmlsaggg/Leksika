@@ -25,7 +25,7 @@ Python-совместимый runtime: supported subset работает без 
 нужно указать путь явно. `checksums.txt` содержит SHA-256 всех архивов, а
 `SHA256SUMS.txt` — установщика. Linux собран на Ubuntu 24.04 и требует glibc
 2.39 или новее; macOS без подписи и notarization. Android — статический PIE
-для arm64/API 24+, проверяется в ARM64-эмуляторе Android 11, не в Termux или на
+для arm64/API 24+, проверяется в эмуляторе Android 15 с трансляцией ARM64, не в Termux или на
 реальном устройстве: совместимость с ними ещё не подтверждена. Шаблоны Scoop
 и Homebrew и инструкции для отдельных bucket/tap: `packaging/README.md`.
 
