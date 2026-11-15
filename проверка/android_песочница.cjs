@@ -1,0 +1,18 @@
+'use strict';
+const fs = require('node:fs');
+const vm = require('node:vm');
+const assert = require('node:assert/strict');
+const machine = fs.readFileSync('учебная-машина.js','utf8');
+const worker = fs.readFileSync('android/app/src/main/assets/worker.js','utf8');
+let result;
+const context = vm.createContext({importScripts: name => { assert.equal(name,'machine.js'); vm.runInContext(machine,context); }, postMessage: value => { result = value; }});
+vm.runInContext(worker, context);
+context.onmessage({data:'пусть сумма = 5; сумма += 10; сумма += 2; сказать(сумма);'});
+assert.equal(result.output,'17'); assert.equal(result.error,'');
+context.onmessage({data:'сказать(необъявленное);'});
+assert.notEqual(result.error,'');
+context.onmessage({data:'пока (да) { сказать(1); }'});
+assert.notEqual(result.error,'');
+const manifest = fs.readFileSync('android/app/src/main/AndroidManifest.xml','utf8');
+assert(!manifest.includes('android.permission.INTERNET'));
+console.log('Android: учебная машина и ограничение сети проверены.');

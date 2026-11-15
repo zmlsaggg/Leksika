@@ -9,7 +9,7 @@ root=$PWD
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 # Только нужные архивы, но проверяем каждый по опубликованной сумме.
-gh release download "v$version" -R "$GITHUB_REPOSITORY" -D "$tmp" -p checksums.txt
+gh release download "v$version" -R "$GITHUB_REPOSITORY" -D "$tmp" -p zz-checksums.txt
 if [[ "$kind" == scoop ]]; then
   files=(leksika-native-windows-x64.zip)
 else
@@ -17,10 +17,10 @@ else
 fi
 for f in "${files[@]}"; do
   gh release download "v$version" -R "$GITHUB_REPOSITORY" -D "$tmp" -p "$f"
-  grep -F "  $f" "$tmp/checksums.txt" > "$tmp/one.sum"
+  grep -F "  $f" "$tmp/zz-checksums.txt" > "$tmp/one.sum"
   (cd "$tmp" && sha256sum -c one.sum)
 done
-python3 "$root/packaging/update_templates.py" "$version" "$tmp/checksums.txt" "$tmp/generated"
+python3 "$root/packaging/update_templates.py" "$version" "$tmp/zz-checksums.txt" "$tmp/generated"
 gh auth setup-git
 gh repo clone "$repository" "$tmp/repo"
 cd "$tmp/repo"
