@@ -1,0 +1,25 @@
+{
+    "version": "0.0.0",
+    "description": "Leksika experimental native bootstrap core (not the full runtime)",
+    "homepage": "https://github.com/zmlsaggg/Leksika",
+    "license": "MIT",
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/zmlsaggg/Leksika/releases/download/v0.0.0/leksika-native-windows-x64.zip",
+            "hash": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+    },
+    "bin": "leksus-core.exe",
+    "checkver": {
+        "github": "https://github.com/zmlsaggg/Leksika",
+        "regex": "v([\\d.]+)"
+    },
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/zmlsaggg/Leksika/releases/download/v$version/leksika-native-windows-x64.zip",
+                "hash": { "url": "https://github.com/zmlsaggg/Leksika/releases/download/v$version/checksums.txt" }
+            }
+        }
+    }
+}
