@@ -28,6 +28,27 @@ int main(void){
  const ЛексусИнструкция badcode[]={{ЛЕКСУС_ОП_КОПИЯ,9,0,0,0}};
  ЛексусПрограмма bad={badcode,1,NULL,0,2,NULL,0,NULL,0};err[0]=0;
  failed+=check("верификатор отклоняет неверный регистр",!лексус_байткод_проверить(&bad,err,sizeof(err)));
+ /* Длина работает и с совпадающими исходным и целевым регистрами. */
+ ЛексусЗначение dictionary=лексус_ничто();
+ (void)лексус_словарь_создать(&dictionary);
+ const ЛексусИнструкция length_code[]={
+  {ЛЕКСУС_ОП_КОНСТАНТА,0,0,0,0}, {ЛЕКСУС_ОП_ДЛИНА,0,0,0,0}, {ЛЕКСУС_ОП_ВОЗВРАТ,0,0,0,0}};
+ ЛексусПрограмма length_program={length_code,3,&dictionary,1,1,NULL,0,NULL,0};
+ err[0]=0; result=лексус_ничто();
+ ok=лексус_машина_исполнить(&length_program,100,&result,err,sizeof(err));
+ ЛексусЗначение zero=лексус_ничто(); (void)лексус_число_создать("0",&zero); equal=0;
+ if(ok) (void)лексус_равно(result,zero,&equal);
+ failed+=check("длина словаря и совпадение регистров",ok&&equal);
+ лексус_значение_освободить(&result); лексус_значение_освободить(&zero); лексус_значение_освободить(&dictionary);
+ const ЛексусИнструкция bad_length[]={{ЛЕКСУС_ОП_ДЛИНА,0,2,0,0}};
+ ЛексусПрограмма bad_length_program={bad_length,1,NULL,0,2,NULL,0,NULL,0}; err[0]=0;
+ failed+=check("верификатор проверяет регистр длины",!лексус_байткод_проверить(&bad_length_program,err,sizeof(err)));
+ const ЛексусИнструкция wrong_type[]={
+  {ЛЕКСУС_ОП_КОНСТАНТА,0,0,0,0}, {ЛЕКСУС_ОП_ДЛИНА,0,0,0,0}, {ЛЕКСУС_ОП_СТОП,0,0,0,0}};
+ ЛексусПрограмма wrong_length={wrong_type,3,constants,1,1,NULL,0,NULL,0}; err[0]=0;
+ ok=лексус_машина_исполнить(&wrong_length,100,&result,err,sizeof(err));
+ failed+=check("длина числа даёт управляемую ошибку",!ok&&strstr(err,"длина")!=NULL);
+ лексус_значение_освободить(&result);
  const uint8_t parameter_register[]={0};
  const ЛексусФункция functions[]={{3,parameter_register,1},{6,parameter_register,1}};
  const ЛексусВызов calls[]={{0,1,parameter_register,1},{1,1,parameter_register,1}};

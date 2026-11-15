@@ -802,6 +802,15 @@ int main(void)
     }
 
     {
+        error[0]=0;
+        const char *source="сказать длина отсутствует.";
+        ЛексусСкомпилированнаяПрограмма compiled;
+        ok=лексус_скомпилировать(source,strlen(source),&compiled,error,sizeof(error));
+        if(ok) лексус_скомпиляцию_освободить(&compiled);
+        failed+=проверить("длина не создаёт необъявленное имя",!ok&&strstr(error,"не объявлено")!=NULL);
+    }
+
+    {
         лексус_значение_освободить(&actual); лексус_значение_освободить(&expected);
         error[0]=0; actual=лексус_ничто(); expected=лексус_ничто(); equal=0;
         const char *source=
