@@ -170,13 +170,13 @@ jobs:
           trap 'echo "::error::Не выполнена команда на строке $LINENO: $BASH_COMMAND"' ERR
           compiler="${ANDROID_NDK_HOME:?NDK не найден}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang"
           test -x "$compiler"
-          make -C ядро native TARGET=leksus-core CC="$compiler" CFLAGS='-std=c11 -O3 -Wall -Wextra -Wpedantic -fPIE -static-pie'
+          make -C ядро native TARGET=leksus-core CC="$compiler" CFLAGS='-std=c11 -O3 -Wall -Wextra -Wpedantic -fPIE -pie'
           bash сборка/пакет_ядра.sh android-arm64
           mkdir android-check
           tar -xzf release/leksika-native-android-arm64.tar.gz -C android-check
           readelf -h android-check/leksus-core | grep -q AArch64
           readelf -h android-check/leksus-core | grep -q DYN
-          if readelf -l android-check/leksus-core | grep -q INTERP; then echo 'Динамический загрузчик не ожидался' >&2; exit 1; fi
+          readelf -l android-check/leksus-core | grep -q '/system/bin/linker64'
       - uses: actions/upload-artifact@v4
         with:
           name: native-${{ matrix.platform }}-${{ github.sha }}
@@ -295,7 +295,7 @@ jobs:
   # Автообновление идёт через отдельные PR; checksum перед записью проверяется.
   # update-scoop:
   #   needs: publish-versioned
-  #   if: needs.publish-versioned.result == 'success'
+  #   if: needs.publish-versioned.result == 'success' && !contains(needs.publish-versioned.outputs.version, '-')
   #   runs-on: ubuntu-latest
   #   steps:
   #     - uses: actions/checkout@v4
@@ -306,7 +306,7 @@ jobs:
   #       run: bash packaging/update-repository.sh scoop "$VERSION" zmlsaggg/scoop-leksika
   # update-homebrew:
   #   needs: publish-versioned
-  #   if: needs.publish-versioned.result == 'success'
+  #   if: needs.publish-versioned.result == 'success' && !contains(needs.publish-versioned.outputs.version, '-')
   #   runs-on: ubuntu-latest
   #   steps:
   #     - uses: actions/checkout@v4
