@@ -12,6 +12,7 @@ on:
       - "Leksika.cmd"
       - "установить.lek"
       - "проверка/**"
+      - "инструменты/**"
       - "источники/russian-words/**"
       - ".gitmodules"
       - ".github/workflows/нативное-ядро.yml"
@@ -29,6 +30,7 @@ on:
       - "Leksika.cmd"
       - "установить.lek"
       - "проверка/**"
+      - "инструменты/**"
       - "источники/russian-words/**"
       - ".gitmodules"
       - ".github/workflows/нативное-ядро.yml"
@@ -53,6 +55,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - name: Проверить отдельный запуск Node.js
+        run: node проверка/узел.cjs
 
       - name: Установить MinGW-w64 и Make
         if: runner.os == 'Windows'
