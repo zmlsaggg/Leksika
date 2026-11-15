@@ -350,7 +350,8 @@ int лексус_машина_исполнить_со_средой(const Лек�
  cleanup_cycles(cycles,cycles_count);
  cleanup_iterators(iterators,iterators_count);
  while(frame_count)cleanup(frames[--frame_count].регистры,p->регистры);
- if(!ok)лексус_значение_освободить(out);return ok;
+ if(!ok) лексус_значение_освободить(out);
+ return ok;
 }
 int лексус_машина_исполнить(const ЛексусПрограмма*p,uint64_t limit,ЛексусЗначение*out,char*err,size_t errn)
 {

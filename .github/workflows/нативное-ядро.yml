@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - "ядро/**"
+      - "cpp/**"
+      - "примеры/**"
       - "лексика/**"
       - "лексус.lek"
       - "Leksika"
@@ -24,6 +26,8 @@ on:
       - main
     paths:
       - "ядро/**"
+      - "cpp/**"
+      - "примеры/**"
       - "лексика/**"
       - "лексус.lek"
       - "Leksika"
@@ -108,6 +112,16 @@ jobs:
           make clean all test 2>&1 | tee словарь-сборки.txt
         working-directory: ядро
         shell: bash
+
+      - name: Проверить C++ API на Linux и macOS
+        if: runner.os != 'Windows'
+        run: bash cpp/проверить.sh
+        shell: bash
+
+      - name: Проверить C++ API на Windows
+        if: runner.os == 'Windows'
+        run: bash cpp/проверить.sh
+        shell: msys2 {0}
 
       - name: Сохранить индекс и отчёт словаря
         uses: actions/upload-artifact@v4

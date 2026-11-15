@@ -38,6 +38,8 @@ class Сопоставление(unittest.TestCase):
             ('сказать сорок два.', '42\n', None),
             ('сказать ничто.', 'ничто\n', None),
             ('пусть коллекция равно перечень(1, 2, 3). сказать длина коллекция.', '3\n', None),
+            ('пусть элементы равно перечень(). добавить в элементы 1. добавь в элементы 2. сказать длина элементы.', '2\n', None),
+            ('пусть элементы равно перечень(). пусть копия равно элементы. добавить в копия 9. сказать длина элементы.', '1\n', None),
             ('пусть коллекция равно перечень(). сказать размер коллекция.', '0\n', None),
             ('пусть текст равно речь Ёж 🐈 конец речи. сказать длина текст.', '4\n', None),
         ]
@@ -64,6 +66,16 @@ class Сопоставление(unittest.TestCase):
             for command in ([str(NATIVE), 'выполнить', str(path)],
                             [sys.executable, str(ROOT / 'лексус.lek'), 'запустить', str(path)]):
                 self.assertNotEqual(subprocess.run(command, cwd=ROOT, capture_output=True).returncode, 0)
+
+    def test_пример_на_лексике(self):
+        if not NATIVE.is_file():
+            self.fail('Сначала соберите нативное ядро: make -C ядро native')
+        path = ROOT / 'примеры' / 'перечень_нативно.lek'
+        for command in ([str(NATIVE), 'выполнить', str(path)],
+                        [sys.executable, str(ROOT / 'лексус.lek'), 'запустить', str(path)],
+                        [sys.executable, str(ROOT / 'лексус.lek'), 'запустить', str(path), '--дерево']):
+            result = subprocess.run(command, cwd=ROOT, capture_output=True, text=True, encoding='utf-8')
+            self.assertEqual((result.returncode, result.stdout), (0, '12\n3\n'), result.stderr)
 
     @unittest.skipIf(os.name == 'nt', 'проверка Unix PATH')
     def test_нативный_запуск_без_python_в_path(self):

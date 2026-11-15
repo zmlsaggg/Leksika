@@ -4,6 +4,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef int (*ЛексусВводСреды)(void *контекст,char *буфер,size_t вместимость,size_t *длина);
 typedef int (*ЛексусВыводСреды)(void *контекст,const char *данные,size_t длина);
 
@@ -36,4 +40,7 @@ int лексус_машина_исполнить_со_средой(const Лек�
                                       ЛексусЗначение *результат,char *ошибка,size_t размер_ошибки);
 int лексус_машина_исполнить(const ЛексусПрограмма *программа,uint64_t предел_шагов,
                             ЛексусЗначение *результат,char *ошибка,size_t размер_ошибки);
+#ifdef __cplusplus
+}
+#endif
 #endif

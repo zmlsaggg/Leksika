@@ -4,6 +4,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
     ЛЕКСУС_ОП_КОНСТАНТА = 1,
     ЛЕКСУС_ОП_КОПИЯ,
@@ -75,4 +79,7 @@ typedef struct {
 } ЛексусПрограмма;
 
 int лексус_байткод_проверить(const ЛексусПрограмма *программа, char *ошибка, size_t размер);
+#ifdef __cplusplus
+}
+#endif
 #endif
