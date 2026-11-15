@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -Eeuo pipefail
+trap 'echo "::error::Ошибка на строке $LINENO: $BASH_COMMAND"' ERR
 platform=${1:?нужна платформа}
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT

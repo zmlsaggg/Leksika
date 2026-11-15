@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Запускается из корня checkout; имя цели и тестовый запуск задаёт workflow.
-set -euo pipefail
+set -Eeuo pipefail
+trap 'echo "::error::Ошибка на строке $LINENO: $BASH_COMMAND"' ERR
 platform=${1:?нужна платформа}
 case "$platform" in
   windows-x64) exe=leksus-core.exe; archive=leksika-native-windows-x64.zip ;;
