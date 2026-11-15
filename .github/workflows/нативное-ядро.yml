@@ -59,6 +59,12 @@ jobs:
       - name: Проверить отдельный запуск Node.js
         run: node проверка/узел.cjs
 
+      - name: Проверить консольные инструменты
+        run: |
+          node проверка/каталог_пакетов.cjs
+          node проверка/инспектор.cjs
+          node проверка/реквизиты.cjs
+
       - name: Установить MinGW-w64 и Make
         if: runner.os == 'Windows'
         uses: msys2/setup-msys2@v2
