@@ -1,0 +1,15 @@
+'use strict';
+const assert = require('node:assert/strict');
+const {инн, iban} = require('../инструменты/реквизиты.cjs');
+assert.equal(инн('7707083893'), true);
+assert.equal(инн('500100732259'), true);
+assert.equal(инн('7707083894'), false);
+assert.equal(инн('500100732258'), false);
+assert.equal(инн('7707083893\n'), false);
+assert.equal(инн('７７０７０８３８９３'), false);
+assert.equal(iban('GB82 WEST 1234 5698 7654 32'), true);
+assert.equal(iban('DE89 3704 0044 0532 0130 00'), true);
+assert.equal(iban('GB83 WEST 1234 5698 7654 32'), false);
+assert.equal(iban('ZZ89 3704 0044 0532 0130 00'), false);
+assert.equal(iban('GB82 WEST 1234 5698 7654 32\n'), false);
+console.log('Проверка реквизитов проверена.');

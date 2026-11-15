@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; worker-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Лексика — песочница</title><link rel="stylesheet" href="style.css"></head>
+<body><main><header><span class="badge">ЛЕКСИКА · ANDROID</span><h1>Пишите по-русски.</h1><p>Учебная песочница работает без интернета. Она понимает часть языка и не заменяет полный исполнитель Лексики.</p></header>
+<section><label for="code">Код программы</label><textarea id="code" spellcheck="false">пусть сумма равно пяти.
+положить пятнадцать в сумму.
+прибавить два к сумме.
+почему сумма равно 17 то речь Ошибка суммы конец речи.
+Сказал сумму.</textarea>
+<div class="actions"><button id="run" type="button">Запустить</button><button id="stop" type="button" disabled>Остановить</button></div></section>
+<section aria-live="polite"><div class="line"><label for="output">Вывод</label><span id="status">Готово к запуску</span></div><pre id="output" tabindex="0"></pre></section>
+<details class="help"><summary>Команды и примеры</summary>
+<p>Можно писать команды в разных формах, например <code>сказать</code>, <code>Сказал</code> и <code>что</code>. Имя переменной можно использовать в некоторых падежах: сумма, сумму, сумме.</p>
+<pre>пусть сумма равно пяти.
+прибавить два к сумме.
+что сумму.</pre>
+<p><code>почему</code> проверяет условие и сообщает причину ошибки, если оно ложно:</p>
+<pre>почему да то речь Ошибка конец речи.
+сказала 42.</pre>
+<p>Также доступны условия, циклы, правила, перечни, словари и некоторые математические функции. Часть команд настольной Лексики здесь ещё не работает; полное склонение не обещается.</p>
+</details><footer>В приложении нет доступа к сети и файлам. Поддерживаются не все команды .lek.</footer></main>
+<script src="editor.js" defer></script></body></html>

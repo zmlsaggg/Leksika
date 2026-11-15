@@ -1,0 +1,390 @@
+name: Сборка и проверка релиза Лексики
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/release.yml'
+      - '.github/workflows/нативное-ядро.yml'
+      - 'сборка/**'
+      - 'packaging/**'
+      - 'инструменты/**'
+      - 'проверка/**'
+      - 'ядро/**'
+      - 'cpp/**'
+      - 'примеры/**'
+      - 'android/**'
+      - 'учебная-машина.js'
+      - 'лексика/**'
+      - 'лексус.lek'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Версия без v для существующего тега (например 0.4.0-beta.1); пусто = nightly'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: leksika-release-${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || (inputs.version != '' && format('v{0}', inputs.version) || github.ref) }}
+  cancel-in-progress: false
+
+jobs:
+  tests:
+    # Повторный запуск того же набора на том же SHA; публикация зависит от всех заданий.
+    uses: ./.github/workflows/нативное-ядро.yml
+    permissions:
+      contents: read
+
+  build-windows:
+    needs: tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Проверить шаблоны пакетов
+        run: node проверка/пакеты.cjs
+      - name: Установить MinGW-w64
+        run: sudo apt-get update && sudo apt-get install -y mingw-w64
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Собрать установщик и контрольную сумму
+        run: |
+          set -euo pipefail
+          python3 сборка/собрать_exe.lek
+          mkdir -p release
+          cp сборка/leksika.exe release/leksika.exe
+          python3 -c "from pathlib import Path; p=Path('release/leksika.exe'); assert p.is_file() and p.stat().st_size > 0 and p.read_bytes()[:2] == b'MZ', 'Некорректный PE-файл'"
+          (cd release && sha256sum leksika.exe > SHA256SUMS.txt)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: leksika-windows-${{ github.sha }}
+          path: release/
+          if-no-files-found: error
+
+  smoke-windows:
+    needs: build-windows
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: leksika-windows-${{ github.sha }}
+          path: release
+      - name: Проверить скачанный пакет, установку, запуск и удаление
+        shell: pwsh
+        run: ./проверка/установщик_windows.ps1 -Installer "$PWD/release/leksika.exe" -Checksums "$PWD/release/SHA256SUMS.txt"
+
+  publish-nightly:
+    needs: [tests, smoke-windows, prepare-release]
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && inputs.version == ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-candidate-${{ github.sha }}
+          path: release
+      - name: Проверить и опубликовать полный комплект
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          (cd release && sha256sum -c zz-SHA256SUMS.txt && sha256sum -c zz-checksums.txt)
+          head=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq .object.sha)
+          if [ "$head" != "$GITHUB_SHA" ]; then
+            echo "main уже указывает на $head; устаревшую сборку не публикуем"
+            exit 0
+          fi
+          files=(release/00-Leksika-Windows.exe release/01-Leksika-Android.apk
+            release/leksika-native-windows-x64.zip release/leksika-native-linux-x64.tar.gz
+            release/leksika-native-macos-arm64.tar.gz release/leksika-native-macos-x64.tar.gz
+            release/leksika-native-android-arm64.tar.gz release/zz-SHA256SUMS.txt release/zz-checksums.txt)
+          notes="Windows: 00-Leksika-Windows.exe. Android: 01-Leksika-Android.apk (офлайн учебная песочница, не полный исполнитель). APK подписан временным ключом сборки: для обновления может потребоваться удалить приложение. Windows-установщик не подписан. Архивы содержат экспериментальное нативное ядро. SHA-256: zz-SHA256SUMS.txt. Коммит: $GITHUB_SHA."
+          if gh release view nightly >/dev/null 2>&1; then
+            gh release upload nightly "${files[@]}" --clobber
+          else
+            gh release create nightly "${files[@]}" --target "$GITHUB_SHA" --draft \
+              --title 'Leksika — актуальная сборка' --notes "$notes"
+          fi
+          gh api "repos/$GITHUB_REPOSITORY/releases/tags/nightly" > release-metadata.json
+          bash сборка/проверить_публикацию.sh release-metadata.json release
+          # Удаляем только старые имена из этого канала после проверки новых файлов.
+          for old in leksika.exe SHA256SUMS.txt checksums.txt; do
+            if jq -e --arg name "$old" '.assets[] | select(.name == $name)' release-metadata.json >/dev/null; then
+              gh release delete-asset nightly "$old" --yes
+            fi
+          done
+          head=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq .object.sha)
+          if [ "$head" != "$GITHUB_SHA" ]; then
+            echo "main изменился во время загрузки; метку не обновляем" >&2; exit 1
+          fi
+          git push origin "$GITHUB_SHA:refs/tags/nightly" --force
+          gh release edit nightly --title 'Leksika — актуальная сборка' --notes "$notes" --draft=false --prerelease=false --latest
+
+  # Один комплект для PR, обновляемой сборки main и версионных релизов.
+  native-packages:
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    name: Нативный пакет ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {platform: windows-x64, os: windows-latest}
+          - {platform: linux-x64, os: ubuntu-24.04}
+          - {platform: macos-arm64, os: macos-15}
+          - {platform: macos-x64, os: macos-15-intel}
+          - {platform: android-arm64, os: ubuntu-24.04}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Подготовить Windows-компилятор
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          install: mingw-w64-x86_64-gcc make p7zip
+      - name: Собрать Windows-ядро
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          make -C ядро native TARGET=leksus-core.exe CFLAGS='-std=c11 -O3 -Wall -Wextra -Wpedantic -finput-charset=UTF-8 -fexec-charset=UTF-8 -static'
+          bash сборка/пакет_ядра.sh windows-x64
+          bash сборка/проверить_пакет_ядра.sh windows-x64
+      - name: Собрать и проверить Linux и macOS
+        if: runner.os != 'Windows' && matrix.platform != 'android-arm64'
+        shell: bash
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          set -Eeuo pipefail
+          trap 'echo "::error::Не выполнена команда на строке $LINENO: $BASH_COMMAND"' ERR
+          make -C ядро native TARGET=leksus-core CFLAGS='-std=c11 -O3 -Wall -Wextra -Wpedantic -finput-charset=UTF-8 -fexec-charset=UTF-8'
+          bash сборка/пакет_ядра.sh "$PLATFORM"
+          bash сборка/проверить_пакет_ядра.sh "$PLATFORM"
+          case "$PLATFORM" in
+            linux-x64) test "$(uname -m)" = x86_64 ;;
+            macos-arm64) test "$(uname -m)" = arm64; info=$(lipo -info package/leksus-core); echo "::notice::lipo: $info"; [[ "$info" == *arm64* ]] ;;
+            macos-x64) test "$(uname -m)" = x86_64; info=$(lipo -info package/leksus-core); echo "::notice::lipo: $info"; [[ "$info" == *x86_64* ]] ;;
+          esac
+      - name: Собрать и проверить Android arm64
+        if: matrix.platform == 'android-arm64'
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          trap 'echo "::error::Не выполнена команда на строке $LINENO: $BASH_COMMAND"' ERR
+          compiler="${ANDROID_NDK_HOME:?NDK не найден}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang"
+          test -x "$compiler"
+          make -C ядро native TARGET=leksus-core CC="$compiler" CFLAGS='-std=c11 -O3 -Wall -Wextra -Wpedantic -fPIE -pie'
+          bash сборка/пакет_ядра.sh android-arm64
+          mkdir android-check
+          tar -xzf release/leksika-native-android-arm64.tar.gz -C android-check
+          readelf -h android-check/leksus-core | grep -q AArch64
+          readelf -h android-check/leksus-core | grep -q DYN
+          readelf -l android-check/leksus-core | grep -q '/system/bin/linker64'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-${{ matrix.platform }}-${{ github.sha }}
+          path: release/leksika-native-*
+          if-no-files-found: error
+
+  build-apk:
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Проверить учебную машину
+        run: node проверка/android_песочница.cjs
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Проверить Android SDK
+        run: |
+          test -f "$ANDROID_HOME/platforms/android-35/android.jar"
+          test -x "$ANDROID_HOME/build-tools/35.0.0/aapt"
+      - name: Собрать APK
+        run: bash сборка/собрать_apk.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: leksika-apk-${{ github.sha }}
+          path: release/01-Leksika-Android.apk
+          if-no-files-found: error
+
+  android-smoke:
+    needs: [native-packages, build-apk]
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: native-android-arm64-${{ github.sha }}
+          path: release
+      - uses: actions/download-artifact@v4
+        with:
+          name: leksika-apk-${{ github.sha }}
+          path: release
+      - name: Разрешить KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: bash сборка/проверить_android.sh && bash сборка/проверить_apk.sh
+
+  prepare-release:
+    needs: [native-packages, android-smoke, build-windows, build-apk]
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: leksika-windows-${{ github.sha }}
+          path: release
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: native-*-${{ github.sha }}
+          path: release
+          merge-multiple: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: leksika-apk-${{ github.sha }}
+          path: release
+      - name: Проверить подготовку комплекта
+        run: bash проверка/релиз.sh
+      - name: Проверить комплект и создать SHA-256
+        run: bash сборка/подготовить_релиз.sh release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-candidate-${{ github.sha }}
+          path: release/
+          if-no-files-found: error
+
+  publish-versioned:
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    needs: [tests, smoke-windows, prepare-release]
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.version != '')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Проверить существующий тег и запретить перезапись релиза
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REF_NAME: ${{ github.ref_name }}
+          VERSION: ${{ inputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then tag="$REF_NAME"; else tag="v$VERSION"; fi
+          if [[ ! "$tag" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-(alpha|beta|rc)\.(0|[1-9][0-9]*))?$ ]]; then
+            echo 'Нужен тег v1.0.0 или v0.4.0-beta.1' >&2; exit 1
+          fi
+          commit=$(gh api "repos/$GITHUB_REPOSITORY/commits/$tag" --jq .sha)
+          if [[ "$commit" != "$GITHUB_SHA" ]]; then echo 'Тег не указывает на проверенный коммит' >&2; exit 1; fi
+          # Отличаем 404 от ошибок API и не меняем существующие выпуски.
+          code=$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$tag" --silent --include 2>&1) && { echo 'Релиз уже существует' >&2; exit 1; }
+          if [[ "$code" != *'HTTP/2.0 404'* && "$code" != *'HTTP/1.1 404'* && "$code" != *'HTTP 404'* ]]; then echo "$code" >&2; exit 1; fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+          if [[ "$tag" == *-* ]]; then echo 'prerelease=true' >> "$GITHUB_OUTPUT"; else echo 'prerelease=false' >> "$GITHUB_OUTPUT"; fi
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-candidate-${{ github.sha }}
+          path: release
+      - name: Проверить контрольные суммы перед публикацией
+        run: |
+          set -euo pipefail
+          cd release
+          sha256sum -c zz-SHA256SUMS.txt
+          sha256sum -c zz-checksums.txt
+      - name: Создать релиз
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Leksika ${{ steps.version.outputs.tag }}
+          prerelease: ${{ steps.version.outputs.prerelease }}
+          draft: true
+          overwrite_files: false
+          fail_on_unmatched_files: true
+          body: |
+            Windows: 00-Leksika-Windows.exe. Android: 01-Leksika-Android.apk — офлайн учебная песочница, не полный исполнитель.
+            APK подписан временным ключом сборки: для обновления может потребоваться удаление приложения.
+            Нативные пакеты исполняют только подмножество языка, не заменяют полный runtime.
+            Android проверен в Android-эмуляторе с трансляцией ARM64, но не на физическом устройстве или в Termux; macOS не подписана и не нотариально заверена.
+            Android-архив содержит консольное ядро. SHA-256 всех файлов: zz-SHA256SUMS.txt; архивов отдельно: zz-checksums.txt.
+          files: |
+            release/00-Leksika-Windows.exe
+            release/01-Leksika-Android.apk
+            release/leksika-native-windows-x64.zip
+            release/leksika-native-linux-x64.tar.gz
+            release/leksika-native-macos-arm64.tar.gz
+            release/leksika-native-macos-x64.tar.gz
+            release/leksika-native-android-arm64.tar.gz
+            release/zz-SHA256SUMS.txt
+            release/zz-checksums.txt
+
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+      - name: Опубликовать после загрузки всех файлов
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          test "$(gh api "repos/$GITHUB_REPOSITORY/commits/$TAG" --jq .sha)" = "$GITHUB_SHA"
+          gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" > release-metadata.json
+          bash сборка/проверить_публикацию.sh release-metadata.json release
+          gh release edit "$TAG" --draft=false
+
+  # ДЛЯ БУДУЩЕГО: создайте zmlsaggg/scoop-leksika и zmlsaggg/homebrew-leksika,
+  # добавьте GH_PAT с Contents и Pull requests: read/write в оба репозитория.
+  # Включите каждый блок (уберите #), убедитесь, что default branch существует.
+  # Автообновление идёт через отдельные PR; checksum перед записью проверяется.
+  # update-scoop:
+  #   needs: publish-versioned
+  #   if: needs.publish-versioned.result == 'success' && !contains(needs.publish-versioned.outputs.version, '-')
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Проверить архив и обновить bucket через PR
+  #       env:
+  #         GH_TOKEN: ${{ secrets.GH_PAT }}
+  #         VERSION: ${{ needs.publish-versioned.outputs.version }}
+  #       run: bash packaging/update-repository.sh scoop "$VERSION" zmlsaggg/scoop-leksika
+  # update-homebrew:
+  #   needs: publish-versioned
+  #   if: needs.publish-versioned.result == 'success' && !contains(needs.publish-versioned.outputs.version, '-')
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Проверить архивы и обновить tap через PR
+  #       env:
+  #         GH_TOKEN: ${{ secrets.GH_PAT }}
+  #         VERSION: ${{ needs.publish-versioned.outputs.version }}
+  #       run: bash packaging/update-repository.sh homebrew "$VERSION" zmlsaggg/homebrew-leksika

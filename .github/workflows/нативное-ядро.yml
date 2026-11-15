@@ -6,25 +6,248 @@ on:
       - main
     paths:
       - "ядро/**"
+      - "cpp/**"
+      - "примеры/**"
+      - "лексика/**"
+      - "лексус.lek"
+      - "Leksika"
+      - "Leksika.cmd"
+      - "установить.lek"
+      - "проверка/**"
+      - "инструменты/**"
+      - "источники/russian-words/**"
+      - ".gitmodules"
       - ".github/workflows/нативное-ядро.yml"
+      - "playground.html"
+      - "playground-lexicon.js"
+      - "!ядро/русские_формы.lxd.gz"
   pull_request:
     branches:
       - main
     paths:
       - "ядро/**"
+      - "cpp/**"
+      - "примеры/**"
+      - "лексика/**"
+      - "лексус.lek"
+      - "Leksika"
+      - "Leksika.cmd"
+      - "установить.lek"
+      - "проверка/**"
+      - "инструменты/**"
+      - "источники/russian-words/**"
+      - ".gitmodules"
       - ".github/workflows/нативное-ядро.yml"
+      - "playground.html"
+      - "playground-lexicon.js"
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
 
 jobs:
-  сборка-и-тесты:
-    runs-on: ubuntu-latest
+  native-tests:
+    name: ${{ matrix.os }} — полная сборка и тесты
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
-      - name: Получить исходный код
+      - name: Получить исходный код и словарь
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Проверить отдельный запуск Node.js
+        run: node проверка/узел.cjs
+
+      - name: Проверить консольные инструменты
+        run: |
+          node проверка/каталог_пакетов.cjs
+          node проверка/инспектор.cjs
+          node проверка/реквизиты.cjs
+
+      - name: Установить MinGW-w64 и Make
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: mingw-w64-x86_64-gcc make
+
       - name: Проверить версию компилятора
         run: cc --version
-      - name: Собрать и проверить ядро
-        run: make -C ядро clean all test
+        shell: bash
+
+      - name: Собрать ядро и словарь на Linux
+        if: runner.os == 'Linux'
+        run: |
+          set -euo pipefail
+          make clean all test 2>&1 | tee словарь-сборки.txt
+        working-directory: ядро
+        shell: bash
+
+      - name: Собрать ядро и словарь на Windows
+        if: runner.os == 'Windows'
+        run: |
+          set -euo pipefail
+          cp ../источники/russian-words/russian.txt russian-words-source.txt
+          make clean all test \
+            TARGET=leksus-core.exe VALUE_TEST=values-test.exe VM_TEST=vm-test.exe \
+            COMPILER_TEST=compiler-test.exe CONTRACT_TEST=contract-test.exe \
+            DICT_BUILDER=dictionary-builder.exe DICT_TEST=dictionary-test.exe \
+            DICT_SOURCE=russian-words-source.txt DICT_INDEX=russian-forms.lxd \
+            2>&1 | tee словарь-сборки.txt
+          cp russian-forms.lxd русские_формы.lxd
+          rm -f russian-words-source.txt russian-forms.lxd
+        working-directory: ядро
+        shell: msys2 {0}
+
+      - name: Собрать ядро и словарь на macOS
+        if: runner.os == 'macOS'
+        run: |
+          set -euo pipefail
+          make clean all test 2>&1 | tee словарь-сборки.txt
+        working-directory: ядро
+        shell: bash
+
+      - name: Проверить C++ API на Linux и macOS
+        if: runner.os != 'Windows'
+        run: bash cpp/проверить.sh
+        shell: bash
+
+      - name: Проверить C++ API на Windows
+        if: runner.os == 'Windows'
+        run: |
+          set -o pipefail
+          bash cpp/проверить.sh 2>&1 | tee cpp-output.txt || {
+            while IFS= read -r line; do
+              line=${line//'%'/'%25'}
+              echo "::error::$line"
+            done < <(tail -15 cpp-output.txt)
+            exit 1
+          }
+        shell: msys2 {0}
+
+      - name: Сохранить индекс и отчёт словаря
+        uses: actions/upload-artifact@v4
+        with:
+          name: русский-словарь-${{ matrix.os }}
+          path: |
+            ядро/русские_формы.lxd
+            ядро/словарь-сборки.txt
+
+      - name: Проверить macOS-установщик и наличие бинарного словаря
+        if: runner.os == 'macOS'
+        run: |
+          tmp_dir=$(mktemp -d)
+          python3 установить.lek --папка "$tmp_dir/лексика" --куда "$tmp_dir/bin" --без-ярлыка
+          test -s "$tmp_dir/лексика/ядро/русские_формы.lxd"
+          rm -rf "$tmp_dir"
+        shell: bash
+
+      - name: Сопоставить нативный и переходный движки на общем подмножестве
+        if: runner.os == 'Linux'
+        run: |
+          python3 проверка/тесты.lek
+          python3 проверка/безопасность.lek
+          python3 проверка/удобство.py
+          python3 проверка/сопоставление_движков.py
+          python3 проверка/модули_vm.py
+          python3 проверка/загрузка_моделей.py
+          python3 проверка/профили_синхронизация.py
+          python3 проверка/профили_cli.py
+        shell: bash
+
+      - name: Проверить браузерный индекс словоформ
+        if: runner.os == 'Linux'
+        run: node --check playground-lexicon.js
+        shell: bash
+
+      - name: Проверить Linux-установщик и наличие бинарного словаря
+        if: runner.os == 'Linux'
+        run: |
+          tmp_dir=$(mktemp -d)
+          python3 установить.lek --папка "$tmp_dir/лексика" --куда "$tmp_dir/bin" --без-ярлыка
+          test -s "$tmp_dir/лексика/ядро/русские_формы.lxd"
+          rm -rf "$tmp_dir"
+        shell: bash
+  sanitizer-tests:
+    name: Linux — AddressSanitizer и UndefinedBehaviorSanitizer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Получить исходный код и словарь
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Полная сборка и тесты с санитайзерами
+        run: make sanitize-test
+        working-directory: ядро
+        shell: bash
+
+  windows-sanitizer-tests:
+    name: Windows — AddressSanitizer и UndefinedBehaviorSanitizer
+    runs-on: windows-latest
+    steps:
+      - name: Получить исходный код и словарь
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Подготовить MSVC SDK и linker
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Подготовить Clang с поддержкой санитайзеров
+        shell: pwsh
+        run: |
+          choco install llvm --yes --no-progress
+          $env:PATH = "C:\Program Files\LLVM\bin;$env:PATH"
+
+      - name: Полная сборка и тесты с ASan и UBSan
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $env:PATH = "C:\Program Files\LLVM\bin;$env:PATH"
+          $compiler = "C:\Program Files\LLVM\bin\clang-cl.exe"
+          if (!(Test-Path $compiler)) { throw "clang-cl не установлен" }
+          $resource = (& $compiler -print-resource-dir).Trim()
+          $runtime = Join-Path $resource "lib\windows"
+          if (!(Test-Path $runtime)) { throw "Не найден каталог sanitizer runtime: $runtime" }
+          $env:PATH = "$runtime;$env:PATH"
+          $flags = @("/nologo", "/utf-8", "/std:c11", "/O1", "/Zi", "-fsanitize=address,undefined", "-fsanitize-trap=undefined", "/D_CRT_SECURE_NO_WARNINGS")
+          & $compiler @flags /Fe:dictionary-builder.exe словарь_сборщик.c
+          if ($LASTEXITCODE -ne 0) { throw "Не собрался сборщик словаря" }
+          if (!(Test-Path ..\источники\russian-words\russian.txt)) { throw "Не найден закреплённый источник словоформ" }
+          Copy-Item ..\источники\russian-words\russian.txt .\russian-words-source.txt
+          & .\dictionary-builder.exe .\russian-words-source.txt .\russian-forms.lxd
+          $code = $LASTEXITCODE
+          if ($code -ne 0) { throw "Сборщик словаря завершился с кодом $code" }
+          & $compiler @flags /Fe:dictionary-test.exe словарь_индекс.c словарь_индекс_проверка.c
+          if ($LASTEXITCODE -ne 0) { throw "Не собрался тест индекса" }
+          & .\dictionary-test.exe
+          if ($LASTEXITCODE -ne 0) { throw "Тест индекса завершился с ошибкой" }
+          Remove-Item .\russian-words-source.txt, .\russian-forms.lxd -ErrorAction SilentlyContinue
+          & $compiler @flags /Fe:values-test.exe значения.c значения_проверка.c
+          if ($LASTEXITCODE -ne 0) { throw "Не собрался тест значений" }
+          & .\values-test.exe
+          if ($LASTEXITCODE -ne 0) { throw "Тест значений завершился с ошибкой" }
+          & $compiler @flags /Fe:vm-test.exe значения.c байткод.c машина.c машина_проверка.c
+          if ($LASTEXITCODE -ne 0) { throw "Не собрался тест VM" }
+          & .\vm-test.exe
+          if ($LASTEXITCODE -ne 0) { throw "Тест VM завершился с ошибкой" }
+          & $compiler @flags /Fe:compiler-test.exe значения.c байткод.c машина.c компилятор.c компилятор_проверка.c
+          if ($LASTEXITCODE -ne 0) { throw "Не собрался тест компилятора" }
+          & .\compiler-test.exe
+          if ($LASTEXITCODE -ne 0) { throw "Тест компилятора завершился с ошибкой" }
+          & $compiler @flags /Fe:contract-test.exe значения.c байткод.c машина.c компилятор.c контракт_проверка.c
+          if ($LASTEXITCODE -ne 0) { throw "Не собрался тест контракта" }
+          & .\contract-test.exe
+          if ($LASTEXITCODE -ne 0) { throw "Тест контракта завершился с ошибкой" }
+          & $compiler @flags /Fe:leksus-core.exe лексус.c значения.c словарь_индекс.c байткод.c машина.c компилятор.c shell32.lib
+          if ($LASTEXITCODE -ne 0) { throw "Не собралось ядро" }
+          & .\leksus-core.exe --self-test
+          if ($LASTEXITCODE -ne 0) { throw "Самопроверка ядра завершилась с ошибкой" }
+        working-directory: ядро

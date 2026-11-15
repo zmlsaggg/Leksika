@@ -13,7 +13,7 @@ import zlib
 ЗДЕСЬ = os.path.dirname(os.path.abspath(__file__))
 КОРЕНЬ = os.path.dirname(ЗДЕСЬ)
 ГРУЗ_ПАПКА = os.path.join(ЗДЕСЬ, "груз")
-ВЫХОД = os.path.join(ЗДЕСЬ, "Лексус-установщик.exe")
+ВЫХОД = os.path.join(ЗДЕСЬ, "leksika.exe")
 ИСХОДНИК = os.path.join(ЗДЕСЬ, "установщик.c")
 
 MAGIC_TABLE = b"LEKSUS01"
@@ -32,6 +32,7 @@ MAGIC_TRAILER = b"LEKSUSZZ"
     ("документы", "документы"),
     ("значки", "значки"),
     ("ядро", "ядро"),
+    ("данные/словарь", "данные/словарь"),
 ]
 
 
@@ -47,6 +48,7 @@ def собрать_груз():
             print(f"  пропущено (нет файла): {источник}")
             continue
         куда = os.path.join(ГРУЗ_ПАПКА, цель)
+        os.makedirs(os.path.dirname(куда), exist_ok=True)
         if os.path.isdir(полный):
             shutil.copytree(полный, куда,
                             ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
@@ -66,8 +68,9 @@ def скачать_питон():
         try:
             urllib.request.urlretrieve(ПИТОН_ССЫЛКА, ПИТОН_ФАЙЛ)
         except Exception as ошибка:
-            print(f"  не удалось скачать python: {ошибка}")
-            print("  установщик соберётся без него и возьмёт системный python")
+            print(f"  не удалось скачать встроенный Python: {ошибка}", file=sys.stderr)
+            print("  сборка автономного Windows-установщика остановлена: системный Python не используется",
+                  file=sys.stderr)
             return False
     os.makedirs(папка)
     with zipfile.ZipFile(ПИТОН_ФАЙЛ) as архив:
@@ -205,11 +208,11 @@ def _png_уменьшить_до_256(данные):
             блок(b"IEND", b""))
 
 
-def собрать_значок():
-    """Собирает корректный ICO из текущего PNG-знака без сторонних библиотек."""
+def собрать_значок(установщик=False):
+    """Готовит ICO и компилирует ресурсы: значок и метаданные установщика."""
     png = os.path.join(КОРЕНЬ, "значки", "знак.png")
     ico = os.path.join(ЗДЕСЬ, "значок.ico")
-    описание = os.path.join(ЗДЕСЬ, "значок.rc")
+    описание = os.path.join(ЗДЕСЬ, "установщик.rc" if установщик else "значок.rc")
     windres = shutil.which("x86_64-w64-mingw32-windres") or (shutil.which("windres") if os.name == "nt" else None)
     if not windres or not os.path.isfile(png):
         print("  значок пропущен: нет windres или значки/знак.png")
@@ -228,10 +231,11 @@ def собрать_значок():
                          len(изображение), 22)
     with open(ico, "wb") as файл:
         файл.write(заголовок + запись + изображение)
-    with open(описание, "w", encoding="utf-8") as файл:
-        файл.write('1 ICON "значок.ico"\n')
-    вывод = os.path.join(ЗДЕСЬ, "значок.obj")
-    итог = subprocess.run([windres, "значок.rc", "-O", "coff", "-o", вывод],
+    if not os.path.isfile(описание):
+        print("  не найден файл ресурсов: " + описание, file=sys.stderr)
+        return None
+    вывод = os.path.join(ЗДЕСЬ, "установщик-ресурсы.obj" if установщик else "значок.obj")
+    итог = subprocess.run([windres, описание, "-O", "coff", "-o", вывод],
                           capture_output=True, text=True, cwd=ЗДЕСЬ)
     if итог.returncode != 0:
         print("  значок не собрался: " + итог.stderr.strip(), file=sys.stderr)
@@ -244,9 +248,12 @@ def собрать_exe():
         print("нужен MinGW-w64: в Linux установите mingw-w64; в Windows используйте терминал MSYS2 UCRT64", file=sys.stderr)
         return None
     вывод = os.path.join(ЗДЕСЬ, "установщик.exe")
-    значок = собрать_значок()
+    значок = собрать_значок(установщик=True)
+    if not значок:
+        print("сборка остановлена: отсутствуют ресурсы установщика и метаданные версии", file=sys.stderr)
+        return None
     итог = subprocess.run(
-        [компилятор, "-std=c11", "-O2", "-s", "-mwindows", "-o", вывод, ИСХОДНИК] + ([значок] if значок else []) +
+        [компилятор, "-std=c11", "-O2", "-mwindows", "-o", вывод, ИСХОДНИК] + ([значок] if значок else []) +
         ["-lole32", "-luuid", "-lshell32", "-luser32", "-ladvapi32", "-lcomctl32", "-lgdi32"],
         capture_output=True, text=True,
     )
@@ -301,20 +308,55 @@ def собрать_нативное_ядро():
     """Собирает первый нативный модуль, не требующий Python при запуске."""
     компилятор = shutil.which("x86_64-w64-mingw32-gcc") or (shutil.which("gcc") if os.name == "nt" else None)
     исходник = os.path.join(КОРЕНЬ, "ядро", "лексус.c")
-    if not компилятор or not os.path.isfile(исходник):
+    индекс = os.path.join(КОРЕНЬ, "ядро", "словарь_индекс.c")
+    значения = os.path.join(КОРЕНЬ, "ядро", "значения.c")
+    байткод = os.path.join(КОРЕНЬ, "ядро", "байткод.c")
+    машина = os.path.join(КОРЕНЬ, "ядро", "машина.c")
+    источник_компилятора = os.path.join(КОРЕНЬ, "ядро", "компилятор.c")
+    if not компилятор or not all(os.path.isfile(p) for p in
+                                 (исходник, индекс, значения, байткод, машина, источник_компилятора)):
         print("  нативное ядро: пропуск (нужен mingw-w64)")
         return False
     вывод = os.path.join(ГРУЗ_ПАПКА, "лексус-ядро.exe")
     ресурс = собрать_значок()
-    команда = [компилятор, "-std=c11", "-O2", "-s", "-Wall", "-Wextra",
-               "-o", вывод, исходник]
+    команда = [компилятор, "-std=c11", "-O2", "-Wall", "-Wextra",
+               "-finput-charset=UTF-8", "-fexec-charset=UTF-8",
+               "-I", os.path.join(КОРЕНЬ, "ядро"), "-o", вывод,
+               исходник, значения, индекс, байткод, машина, источник_компилятора]
     if ресурс:
         команда.append(ресурс)
+    команда.append("-lshell32")
     итог = subprocess.run(команда, capture_output=True, text=True)
     if итог.returncode != 0:
         print("  нативное ядро не собралось: " + итог.stderr.strip(), file=sys.stderr)
         return False
     print("  нативное ядро: лексус-ядро.exe")
+    return True
+
+def собрать_словарь():
+    """Собирает встроенный индекс нативным C-bootstrap до упаковки установщика."""
+    источник = os.path.join(КОРЕНЬ, "источники", "russian-words", "russian.txt")
+    исходник = os.path.join(КОРЕНЬ, "ядро", "словарь_сборщик.c")
+    выход = os.path.join(КОРЕНЬ, "ядро", "русские_формы.lxd")
+    if not os.path.isfile(источник):
+        print("  нет закреплённого источника словаря.")
+        print("  выполните: git submodule update --init --recursive")
+        return False
+    компилятор = shutil.which("gcc") or shutil.which("cc")
+    if not компилятор:
+        print("  для сборки индекса нужен C11-компилятор (gcc/clang).", file=sys.stderr)
+        return False
+    инструмент = os.path.join(ЗДЕСЬ, "словарь-сборщик.exe" if os.name == "nt" else "словарь-сборщик")
+    команда = [компилятор, "-std=c11", "-O2", "-Wall", "-Wextra", "-Wpedantic", исходник, "-o", инструмент]
+    сборка = subprocess.run(команда, capture_output=True, text=True)
+    if сборка.returncode != 0:
+        print("  сборщик словаря не собрался: " + сборка.stderr.strip(), file=sys.stderr)
+        return False
+    итог = subprocess.run([инструмент, источник, выход], capture_output=True, text=True)
+    if итог.returncode != 0:
+        print("  индекс словаря не собран: " + итог.stderr.strip(), file=sys.stderr)
+        return False
+    print("  " + итог.stdout.strip())
     return True
 
 def main():
@@ -324,8 +366,17 @@ def main():
     аргументы = разборщик.parse_args()
 
     print("сборка установщика Лексус\n")
+    if not собрать_словарь():
+        return 4
     собрать_груз()
-    собрать_нативное_ядро()
+    индекс_в_грузе = os.path.join(ГРУЗ_ПАПКА, "ядро", "русские_формы.lxd")
+    лицензия_в_грузе = os.path.join(ГРУЗ_ПАПКА, "данные", "словарь", "LICENSE-danakt-MIT.txt")
+    if not os.path.isfile(индекс_в_грузе) or not os.path.isfile(лицензия_в_грузе):
+        print("сборка остановлена: встроенный индекс или MIT-уведомление не попали в пакет", file=sys.stderr)
+        return 5
+    if not собрать_нативное_ядро():
+        print("сборка остановлена: нативное ядро не собрано.", file=sys.stderr)
+        return 6
     if not аргументы.без_питона:
         if not скачать_питон():
             print("сборка остановлена: встроенная среда Python обязательна для автономного установщика", file=sys.stderr)

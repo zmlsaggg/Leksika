@@ -1,0 +1,42 @@
+name: Сообщить об ошибке
+description: Ошибка языка, движка, установщика или документации
+title: "[Ошибка]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: "Перед отправкой проверьте, что в отчёте нет паролей, токенов и персональных данных. Уязвимости сообщайте приватно по SECURITY.md."
+  - type: input
+    id: version
+    attributes:
+      label: Версия или commit
+      placeholder: "commit SHA или тег"
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: Операционная система
+      placeholder: "Windows 11 / Ubuntu 24.04 / macOS ..."
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Шаги воспроизведения
+      description: Минимальная команда и небольшой пример программы.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Ожидаемое поведение
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Фактическое поведение и журнал
+      description: Удалите секреты и личные данные.
+    validations:
+      required: true

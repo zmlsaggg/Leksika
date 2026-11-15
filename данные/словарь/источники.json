@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "language": "ru",
+  "layers": [
+    {
+      "id": "ru-forms-danakt",
+      "kind": "word_forms",
+      "upstream": "https://github.com/danakt/russian-words",
+      "file": "russian.txt",
+      "immutable_commit": "d68c007fe9260d2d40ce413f13f77335c5af1e62",
+      "raw_url": "https://raw.githubusercontent.com/danakt/russian-words/d68c007fe9260d2d40ce413f13f77335c5af1e62/russian.txt",
+      "encoding": "windows-1251",
+      "reported_records": 1531464,
+      "license": "MIT",
+      "license_file": "LICENSE-danakt-MIT.txt",
+      "attribution": "Copyright (c) 2020 Danakt Frost",
+      "imported": false,
+      "notes": "Inflected forms only; no lemma, POS, frequency, or reliable style metadata is present in the upstream file. These annotations require a separately licensed compatible corpus or editorial review.",
+      "integration_status": "binary_index_built_verified_linux_windows_and_published",
+      "runtime_policy": "embedded_read_only_resource_no_runtime_download_or_text_parsing",
+      "build_method": "native_c11_bootstrap_to_LEKSLXD1",
+      "submodule_path": "источники/russian-words",
+      "runtime_index": "ядро/русские_формы.lxd",
+      "runtime_status": "native_reader_verified; linux_installer_verified; macos_installer_ci_pending",
+      "actual_source_lines": 1532628,
+      "validated_unique_forms": 1528715,
+      "discarded_records": 194,
+      "binary_index_size_bytes": 41051188,
+      "binary_index_crc32": "78EE39A5",
+      "compressed_pages_artifact": {
+        "path": "ядро/русские_формы.lxd.gz",
+        "size_mib": 6.7,
+        "sha256": "9a12d0960dc58653fe27721e9213e971a9002016b20d8b51be1458434615c12a"
+      },
+      "metadata_status": "pos_frequency_style_not_yet_annotated"
+    }
+  ],
+  "excluded": [
+    {
+      "file": "russian_surnames.txt",
+      "reason": "Surnames are not part of the general lexical base."
+    }
+  ]
+}

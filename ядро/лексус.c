@@ -1,15 +1,39 @@
 /*
- * Лексус — нативное ядро, этап 2: UTF-8 и первичный лексер.
- * C11, только стандартная библиотека. Не исполняет .lek и не заменяет
- * совместимый интерпретатор: это самостоятельная проверка исходного текста.
+ * Лексус — нативное ядро: UTF-8, лексический анализ, ограниченный компилятор .lek и VM.
+ * C11 и стандартная библиотека используются как временный bootstrap.
+ * Полная грамматика языка пока остаётся в переходной реализации.
  */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#ifdef _WIN32
+#include <windows.h>
+#include <shellapi.h>
+#include <wchar.h>
+#endif
 #include "словарь_формы.h"
+#include "словарь_индекс.h"
+#include "компилятор.h"
+#include "машина.h"
 
-#define ЛЕКСУС_ВЕРСИЯ "0.4.0-native"
+/* Аргументы ядра — UTF-8; на Windows пути открываются через Unicode API. */
+static FILE *открыть_исходник(const char *путь)
+{
+#ifdef _WIN32
+    int n=MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,путь,-1,NULL,0);
+    if(n<=0) return NULL;
+    wchar_t *wide=(wchar_t *)malloc((size_t)n*sizeof(*wide));
+    if(!wide) return NULL;
+    if(!MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,путь,-1,wide,n)) { free(wide); return NULL; }
+    FILE *f=_wfopen(wide,L"rb");
+    free(wide); return f;
+#else
+    return fopen(путь,"rb");
+#endif
+}
+
+#define ЛЕКСУС_ВЕРСИЯ "0.6.0-native"
 typedef struct { size_t знаки, строки; } Счётчик;
 typedef struct { const unsigned char *текст; size_t длина, позиция, строка, столбец; } Сканер;
 typedef struct { const char *вид; size_t начало, длина, строка, столбец; } Токен;
@@ -69,6 +93,7 @@ static int русское_нижнее(const char *вход,char *выход,siz
         if(!utf8_код((const unsigned char*)вход+i,n-i,&w,&c)) return 0;
         if(c>=0x0410 && c<=0x042F) c+=0x20;
         else if(c==0x0401) c=0x0451;
+        else if(c>='A' && c<='Z') c+=0x20;
         unsigned char b[4]; size_t k;
         if(c<0x80) { b[0]=(unsigned char)c; k=1; }
         else if(c<0x800) { b[0]=(unsigned char)(0xC0|(c>>6)); b[1]=(unsigned char)(0x80|(c&0x3F)); k=2; }
@@ -210,7 +235,7 @@ static int следующий(Сканер *s,Токен *t,char *ошибка,s
     snprintf(ошибка,размер,"знак или символ запрещён: строка %zu, столбец %zu",s->строка,s->столбец);
     return -1;
 }
-static int разобрать_поток(const unsigned char *d,size_t n,int печатать,int сообщать,size_t *число)
+static int разобрать_поток(const unsigned char *d,size_t n,int печатать,int сообщать,const ЛексусИндекс *индекс,size_t *число)
 {
     Сканер s={d,n,0,1,1}; size_t всего=0; char ошибка[256];
     for(;;) {
@@ -226,6 +251,12 @@ static int разобрать_поток(const unsigned char *d,size_t n,int п�
                 memcpy(форма,d+t.начало,t.длина); форма[t.длина]='\0';
                 const char *лемма=найти_служебную_лемму(форма);
                 if(лемма) printf("  (лемма: %s)",лемма);
+                if(индекс) {
+                    char нормализованная[512];
+                    if(русское_нижнее(форма,нормализованная,sizeof(нормализованная)) &&
+                       лексус_индекс_найти(индекс,нормализованная))
+                        printf("  (словарная форма)");
+                }
                 МорфологическийВариант варианты[32];
                 size_t найдено=морфология_разобрать(форма,варианты,32);
                 if(найдено) {
@@ -260,9 +291,9 @@ static int самопроверка(void)
     static const unsigned char латинское[]="hello";
     static const unsigned char речь_без_конца[]="сказать речь не закрыта";
     size_t n=0;
-    if(разобрать_поток(исходник,sizeof(исходник)-1,0,0,&n)!=0||n!=8) return 1;
-    if(разобрать_поток(латинское,sizeof(латинское)-1,0,0,NULL)==0) return 2;
-    if(разобрать_поток(речь_без_конца,sizeof(речь_без_конца)-1,0,0,NULL)==0) return 3;
+    if(разобрать_поток(исходник,sizeof(исходник)-1,0,0,NULL,&n)!=0||n!=8) return 1;
+    if(разобрать_поток(латинское,sizeof(латинское)-1,0,0,NULL,NULL)==0) return 2;
+    if(разобрать_поток(речь_без_конца,sizeof(речь_без_конца)-1,0,0,NULL,NULL)==0) return 3;
     if(strcmp(найти_служебную_лемму("скажи"),"сказать")!=0) return 4;
     if(strcmp(найти_служебную_лемму("покажи"),"сказать")!=0) return 5;
     if(найти_служебную_лемму("привет")!=NULL) return 6;
@@ -297,10 +328,97 @@ static int самопроверка(void)
     if(количество!=12 || strcmp(именные[7].форма,"покупок")!=0) return 14;
     количество=склонить_имя_нативно("ручка","ж",0,именные);
     if(количество!=12 || strcmp(именные[7].форма,"ручек")!=0) return 15;
+    количество=склонить_имя_нативно("СТАНЦИЯ","ж",0,именные);
+    const char *станция[] = {"станция", "станции", "станции", "станцию", "станцией", "станции",
+                              "станции", "станций", "станциям", "станции", "станциями", "станциях"};
+    if(количество!=12) return 16;
+    for(size_t i=0;i<12;++i) if(strcmp(именные[i].форма,станция[i])!=0) return 16;
     return 0;
 }
-int main(int argc,char **argv)
+static int основная_программа(int argc,char **argv)
 {
+    /* Явный выбор нативного пути позволяет общему запускателю не вызывать Python. */
+    if (argc >= 2 && strcmp(argv[1], "--нативно") == 0) { --argc; ++argv; }
+    if (argc>=2 && (strcmp(argv[1],"выполнить")==0 || strcmp(argv[1],"запустить")==0)) {
+        unsigned профили=ЛЕКСУС_ПРОФИЛЬ_БЕЗ_ИЗМЕНЕНИЙ;
+        const char *путь=NULL;
+        for(int i=2;i<argc;++i) {
+            if(strcmp(argv[i],"--профиль=18+")==0) профили |= ЛЕКСУС_ПРОФИЛЬ_18_ПЛЮС;
+            else if(strcmp(argv[i],"--профиль=зумер")==0) профили |= ЛЕКСУС_ПРОФИЛЬ_ЗУМЕР;
+            else if(strncmp(argv[i],"--профиль=",strlen("--профиль="))==0) {
+                fprintf(stderr,"Лексус: неизвестный профиль «%s»; доступны 18+ и зумер.\n",argv[i]+strlen("--профиль="));
+                return 2;
+            } else if(!путь && strncmp(argv[i],"--",2)!=0) путь=argv[i];
+            else {
+                fputs("Использование: лексус-ядро выполнить [--профиль=18+] [--профиль=зумер] файл.lek\n",stderr);
+                return 2;
+            }
+        }
+        if(!путь) {
+            fputs("Использование: лексус-ядро выполнить [--профиль=18+] [--профиль=зумер] файл.lek\n",stderr);
+            return 2;
+        }
+        FILE *f=открыть_исходник(путь);
+        if(!f){perror("Лексус: не удалось открыть исходник");return 2;}
+        size_t length=0; unsigned char *source=прочитать(f,&length); fclose(f);
+        if(!source){fputs("Лексус: не удалось прочитать исходник.\n",stderr);return 2;}
+        Счётчик счётчик={0,0};
+        if(!utf8_проверить(source,length,&счётчик)){
+            free(source); fputs("Лексус: исходник содержит некорректный UTF-8.\n",stderr); return 2;
+        }
+        ЛексусСкомпилированнаяПрограмма compiled; char error[512]={0};
+        if(!лексус_скомпилировать_с_профилями((const char*)source,length,профили,&compiled,error,sizeof(error))){
+            fprintf(stderr,"Лексус: ошибка компиляции: %s.\n",error[0]?error:"неизвестная ошибка");
+            free(source); return 1;
+        }
+        free(source);
+        ЛексусПрограмма vm={compiled.код,compiled.число_инструкций,
+                             compiled.константы,compiled.число_констант,compiled.регистры,
+                             compiled.функции,compiled.число_функций,
+                             compiled.вызовы,compiled.число_вызовов};
+        ЛексусЗначение result=лексус_ничто(); error[0]=0;
+        int ok=лексус_машина_исполнить(&vm,10000000u,&result,error,sizeof(error));
+        if(!ok) fprintf(stderr,"Лексус: ошибка исполнения: %s.\n",error[0]?error:"неизвестная ошибка");
+        лексус_значение_освободить(&result);
+        лексус_скомпиляцию_освободить(&compiled);
+        return ok?0:1;
+    }
+    if (argc >= 3 && strcmp(argv[1], "слово") == 0) {
+        const char *path = argc >= 4 ? argv[3] : "ядро/русские_формы.lxd";
+        ЛексусИндекс index; char error[256];
+        if (!лексус_индекс_открыть(&index, path, error, sizeof(error))) {
+            fprintf(stderr, "Лексус: %s\n", error); return 2;
+        }
+        size_t length = strlen(argv[2]);
+        char *normalized = (char *)malloc(length + 1);
+        if (!normalized || !русское_нижнее(argv[2], normalized, length + 1)) {
+            free(normalized); лексус_индекс_закрыть(&index);
+            fputs("Лексус: неверная UTF-8-форма слова.\n", stderr); return 2;
+        }
+        int found = лексус_индекс_найти(&index, normalized);
+        free(normalized);
+        puts(found ? "Слово есть в лексической базе." : "Слово не найдено в лексической базе.");
+        лексус_индекс_закрыть(&index);
+        return found ? 0 : 1;
+    }
+    if (argc >= 3 && strcmp(argv[1], "подсказки") == 0) {
+        const char *path = argc >= 4 ? argv[3] : "ядро/русские_формы.lxd";
+        ЛексусИндекс index; char error[256]; const char *items[20];
+        if (!лексус_индекс_открыть(&index, path, error, sizeof(error))) {
+            fprintf(stderr, "Лексус: %s\n", error); return 2;
+        }
+        size_t length = strlen(argv[2]);
+        char *normalized = (char *)malloc(length + 1);
+        if (!normalized || !русское_нижнее(argv[2], normalized, length + 1)) {
+            free(normalized); лексус_индекс_закрыть(&index);
+            fputs("Лексус: неверный UTF-8-префикс.\n", stderr); return 2;
+        }
+        size_t n = лексус_индекс_подсказать(&index, normalized, items, 20);
+        for (size_t i = 0; i < n; ++i) puts(items[i]);
+        free(normalized);
+        лексус_индекс_закрыть(&index);
+        return 0;
+    }
     /* Основные команды — русские. Старые флаги оставлены для совместимости. */
     int версия = argc==2 && (strcmp(argv[1],"версия")==0 || strcmp(argv[1],"--version")==0);
     int проверка = argc==2 && (strcmp(argv[1],"самопроверка")==0 || strcmp(argv[1],"--self-test")==0);
@@ -316,9 +434,9 @@ int main(int argc,char **argv)
         int одуш = argc>=5 && strcmp(argv[4],"одушевлённое")==0;
         ИменнаяФорма формы[12];
         size_t число = склонить_имя_нативно(argv[2],род,одуш,формы);
-        if(число!=12) { fputs("Лексус: не удалось склонить слово.\\n",stderr); return 2; }
+        if(число!=12) { fputs("Лексус: не удалось склонить слово.\n",stderr); return 2; }
         for(size_t i=0;i<число;++i)
-            printf("%s %s: %s\\n",формы[i].падеж,формы[i].число,формы[i].форма);
+            printf("%s %s: %s\n",формы[i].падеж,формы[i].число,формы[i].форма);
         return 0;
     }
     int разбор = argc>=2 && (strcmp(argv[1],"разобрать")==0 || strcmp(argv[1],"--lex")==0);
@@ -327,7 +445,7 @@ int main(int argc,char **argv)
         if(argc>3) { fputs("Лексус: укажите не более одного имени файла.\n",stderr); return 2; }
         FILE *f=stdin;
         if(argc==3 && strcmp(argv[2],"-")!=0) {
-            f=fopen(argv[2],"rb");
+            f=открыть_исходник(argv[2]);
             if(!f) { perror("Лексус: не удалось открыть файл"); return 2; }
         }
         size_t n=0; unsigned char *d=прочитать(f,&n); if(f!=stdin) fclose(f);
@@ -338,18 +456,56 @@ int main(int argc,char **argv)
             if(result) fputs("Лексус: вход не является корректным UTF-8.\n",stderr);
             else printf("Проверка UTF-8 пройдена: %zu знаков, %zu строк.\n",счётчик.знаки,счётчик.строки);
         } else {
-            size_t токенов=0; result=разобрать_поток(d,n,1,1,&токенов);
+            ЛексусИндекс индекс; int индекс_открыт=0; char ошибка_словаря[256];
+            if(лексус_индекс_открыть(&индекс,"ядро/русские_формы.lxd",ошибка_словаря,sizeof(ошибка_словаря)))
+                индекс_открыт=1;
+            else
+                fprintf(stderr,"Лексус: общий словарь недоступен: %s\n",ошибка_словаря);
+            size_t токенов=0;
+            result=разобрать_поток(d,n,1,1,индекс_открыт?&индекс:NULL,&токенов);
             if(!result) printf("Всего токенов: %zu\n",токенов);
+            if(индекс_открыт) лексус_индекс_закрыть(&индекс);
         }
         free(d); return result;
     }
     puts("Лексус — нативное ядро " ЛЕКСУС_ВЕРСИЯ);
     puts("Команды:");
     puts("  версия");
+    puts("  выполнить [--профиль=18+] [--профиль=зумер] <файл.lek>");
     puts("  самопроверка");
     puts("  проверить [файл.lek]");
     puts("  разобрать [файл.lek]");
     puts("  склонять слово [м|ж|с] [одушевлённое]");
-    puts("Полное исполнение .lek пока выполняет совместимый интерпретатор.");
+    puts("  слово <форма> [путь-к-индексу]");
+    puts("  подсказки <начало> [путь-к-индексу]");
+    puts("Нативное выполнение пока поддерживает объявление числовых переменных, арифметику и вывод.");
+    puts("Для остальных конструкций используйте основной совместимый исполнитель.");
     return argc>1?2:0;
+}
+
+int main(int argc,char **argv)
+{
+#ifdef _WIN32
+    /* CRT argv использует системную кодовую страницу; берём исходные Unicode-аргументы. */
+    int count=0;
+    LPWSTR *wide=CommandLineToArgvW(GetCommandLineW(),&count);
+    if(!wide) { fputs("Лексус: не удалось прочитать аргументы.\n",stderr); return 2; }
+    char **utf8=(char **)calloc((size_t)count+1,sizeof(*utf8));
+    if(!utf8) { LocalFree(wide); return 2; }
+    int ok=1;
+    for(int i=0;i<count;++i) {
+        int n=WideCharToMultiByte(CP_UTF8,WC_ERR_INVALID_CHARS,wide[i],-1,NULL,0,NULL,NULL);
+        if(n<=0 || !(utf8[i]=(char *)malloc((size_t)n)) ||
+           !WideCharToMultiByte(CP_UTF8,WC_ERR_INVALID_CHARS,wide[i],-1,utf8[i],n,NULL,NULL)) {
+            ok=0; break;
+        }
+    }
+    int result=ok?основная_программа(count,utf8):2;
+    for(int i=0;i<count;++i) free(utf8[i]);
+    free(utf8); LocalFree(wide);
+    (void)argc; (void)argv;
+    return result;
+#else
+    return основная_программа(argc,argv);
+#endif
 }
