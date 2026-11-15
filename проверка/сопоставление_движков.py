@@ -21,6 +21,8 @@ class Сопоставление(unittest.TestCase):
         cases = [
             ('пускай счёт это 2. что (счёт плюс 3) умножить на 4', '20\n', None),
             ('пусть счёт равно 42. скажи счёт', '42\n', None),
+            ('Сказал 42. сказала 7. скажет 1. что 3.', '42\n7\n1\n3\n', None),
+            ('почему да то речь ошибка конец речи. что 42.', '42\n', None),
             ('пусть счёт это 42. выведи счёт', '42\n', None),
             ('пусть счёт это 42. говори счёт', '42\n', None),
             ('когда 2 больше 1 тогда\nпокажи 42.\nконец когда', '42\n', None),
@@ -51,6 +53,13 @@ class Сопоставление(unittest.TestCase):
                                                 capture_output=True, text=True, encoding='utf-8', errors='replace')
                         self.assertEqual(result.returncode, 0, result.stderr)
                         self.assertEqual(result.stdout, expected)
+            path.write_text('почему нет то речь Причина ошибки конец речи.', encoding='utf-8')
+            for command in ([str(NATIVE), 'выполнить', str(path)],
+                            [sys.executable, str(ROOT / 'лексус.lek'), 'запустить', str(path)],
+                            [sys.executable, str(ROOT / 'лексус.lek'), 'запустить', str(path), '--дерево']):
+                result = subprocess.run(command, cwd=ROOT, capture_output=True, text=True, encoding='utf-8')
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn('Причина ошибки', result.stderr)
             path.write_text('что неизвестное', encoding='utf-8')
             for command in ([str(NATIVE), 'выполнить', str(path)],
                             [sys.executable, str(ROOT / 'лексус.lek'), 'запустить', str(path)]):

@@ -11,7 +11,7 @@ work=$(mktemp -d); trap 'rm -rf "$work"' EXIT
 mkdir -p "$work/classes" "$work/dex" "$work/assets" release
 cp android/app/src/main/assets/* "$work/assets/"
 cp учебная-машина.js "$work/assets/machine.js"
-"$tools/aapt" package -f -M android/app/src/main/AndroidManifest.xml -I "$platform" -A "$work/assets" -F "$work/app-unsigned.apk"
+"$tools/aapt" package -f -M android/app/src/main/AndroidManifest.xml -I "$platform" -S android/app/src/main/res -A "$work/assets" -F "$work/app-unsigned.apk"
 javac -encoding UTF-8 -source 8 -target 8 -bootclasspath "$platform" -d "$work/classes" android/app/src/main/java/org/leksika/sandbox/MainActivity.java
 (cd "$work/classes" && jar cf "$work/classes.jar" .)
 "$tools/d8" --min-api 24 --lib "$platform" --output "$work/dex" "$work/classes.jar"
@@ -23,4 +23,6 @@ keytool -genkeypair -keystore "$work/key.jks" -storepass android -keypass androi
 "$tools/apksigner" sign --ks "$work/key.jks" --ks-pass pass:android --key-pass pass:android \
   --out release/01-Leksika-Android.apk "$work/aligned.apk"
 "$tools/apksigner" verify --verbose release/01-Leksika-Android.apk
-"$tools/aapt" dump badging release/01-Leksika-Android.apk | grep -F "package: name='org.leksika.sandbox'"
+"$tools/aapt" dump badging release/01-Leksika-Android.apk > "$work/badging.txt"
+grep -F "package: name='org.leksika.sandbox'" "$work/badging.txt"
+grep -F 'application-icon-' "$work/badging.txt"

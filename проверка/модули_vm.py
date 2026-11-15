@@ -51,6 +51,18 @@ class МодулиVM(unittest.TestCase):
         self.assertIn('данные', vm.модули)
         self.assertEqual(sum(c[0] == 'подключить' for c in vm.программа.команды), 2)
 
+    def test_почему_в_модуле_с_переносом_выражений(self):
+        self.module('проверка', 'пусть число равно 3. почему число равно 3 то речь не совпало конец речи. сказать число.')
+        code = 'пусть первое равно 9. сказать первое. подключить проверка.'
+        expected, _ = self.run_program(code, tree=True)
+        actual, _ = self.run_program(code)
+        self.assertEqual(actual, ['9', '3'])
+        self.assertEqual(actual, expected)
+        self.module('проверка', 'почему нет то речь модуль отклонён конец речи.')
+        for tree in (True, False):
+            with self.assertRaisesRegex(ОшибкаСмысла, 'модуль отклонён'):
+                self.run_program(code, tree=tree)
+
     def test_вложенные_циклические_модули(self):
         self.module('первый', 'сказать речь первый конец речи. подключить второй. '
                     'сказать речь первый конец речи.')
