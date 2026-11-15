@@ -207,10 +207,40 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           script: bash сборка/проверить_android.sh
 
+  prepare-release:
+    needs: [native-packages, android-smoke, build-windows]
+    if: github.event_name == 'pull_request' || startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.version != '')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: leksika-windows-${{ github.sha }}
+          path: release
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: native-*-${{ github.sha }}
+          path: release
+          merge-multiple: true
+      - name: Проверить комплект и создать SHA-256
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd release
+          sha256sum -c SHA256SUMS.txt
+          files=(leksika-native-windows-x64.zip leksika-native-linux-x64.tar.gz leksika-native-macos-arm64.tar.gz leksika-native-macos-x64.tar.gz leksika-native-android-arm64.tar.gz)
+          for f in "${files[@]}"; do test -s "$f"; done
+          sha256sum "${files[@]}" > checksums.txt
+          sha256sum -c checksums.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-candidate-${{ github.sha }}
+          path: release/
+          if-no-files-found: error
+
   publish-versioned:
     outputs:
       version: ${{ steps.version.outputs.version }}
-    needs: [tests, build-windows, smoke-windows, native-packages, android-smoke]
+    needs: [tests, smoke-windows, prepare-release]
     if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.version != '')
     runs-on: ubuntu-latest
     permissions:
@@ -239,22 +269,13 @@ jobs:
           if [[ "$tag" == *-* ]]; then echo 'prerelease=true' >> "$GITHUB_OUTPUT"; else echo 'prerelease=false' >> "$GITHUB_OUTPUT"; fi
       - uses: actions/download-artifact@v4
         with:
-          name: leksika-windows-${{ github.sha }}
+          name: release-candidate-${{ github.sha }}
           path: release
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: native-*-${{ github.sha }}
-          path: release
-          merge-multiple: true
-      - name: Проверить комплект и создать SHA-256
-        shell: bash
+      - name: Проверить контрольные суммы перед публикацией
         run: |
           set -euo pipefail
           cd release
           sha256sum -c SHA256SUMS.txt
-          files=(leksika-native-windows-x64.zip leksika-native-linux-x64.tar.gz leksika-native-macos-arm64.tar.gz leksika-native-macos-x64.tar.gz leksika-native-android-arm64.tar.gz)
-          for f in "${files[@]}"; do test -s "$f"; done
-          sha256sum "${files[@]}" > checksums.txt
           sha256sum -c checksums.txt
       - name: Создать релиз
         uses: softprops/action-gh-release@v2
