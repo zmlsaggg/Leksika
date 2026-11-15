@@ -8,11 +8,11 @@
 Словарь установлен рядом с пакетом: Scoop хранит его в каталоге версии пакета,
 Homebrew — в `pkgshare`; для `слово`/`подсказки` передайте его путь явно.
 
-После выпуска стабильного `vX.Y.Z` скачайте `checksums.txt` и все необходимые
+После выпуска стабильного `vX.Y.Z` скачайте `zz-checksums.txt` и все необходимые
 архивы, проверьте их по SHA-256, затем сформируйте реальные манифесты:
 
 ```sh
-python3 packaging/update_templates.py 1.2.3 checksums.txt готовые-манифесты
+python3 packaging/update_templates.py 1.2.3 zz-checksums.txt готовые-манифесты
 ```
 
 Перенесите `leksus-core.json` в `bucket/` отдельного Scoop bucket и

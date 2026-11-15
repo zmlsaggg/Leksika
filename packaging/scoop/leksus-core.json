@@ -18,7 +18,7 @@
         "architecture": {
             "64bit": {
                 "url": "https://github.com/zmlsaggg/Leksika/releases/download/v$version/leksika-native-windows-x64.zip",
-                "hash": { "url": "https://github.com/zmlsaggg/Leksika/releases/download/v$version/checksums.txt" }
+                "hash": { "url": "https://github.com/zmlsaggg/Leksika/releases/download/v$version/zz-checksums.txt" }
             }
         }
     }

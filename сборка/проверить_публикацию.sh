@@ -3,7 +3,7 @@
 set -euo pipefail
 metadata=${1:?нужен JSON ответа GitHub}
 dir=${2:?нужен каталог релиза}
-files=(leksika.exe SHA256SUMS.txt checksums.txt leksika-native-windows-x64.zip
+files=(00-Leksika-Windows.exe 01-Leksika-Android.apk zz-SHA256SUMS.txt zz-checksums.txt leksika-native-windows-x64.zip
        leksika-native-linux-x64.tar.gz leksika-native-macos-arm64.tar.gz
        leksika-native-macos-x64.tar.gz leksika-native-android-arm64.tar.gz)
 for file in "${files[@]}"; do

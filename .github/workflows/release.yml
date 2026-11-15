@@ -14,6 +14,8 @@ on:
       - 'инструменты/**'
       - 'проверка/**'
       - 'ядро/**'
+      - 'android/**'
+      - 'учебная-машина.js'
       - 'лексика/**'
       - 'лексус.lek'
   workflow_dispatch:
@@ -97,17 +99,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          (cd release && sha256sum -c SHA256SUMS.txt && sha256sum -c checksums.txt)
+          (cd release && sha256sum -c zz-SHA256SUMS.txt && sha256sum -c zz-checksums.txt)
           head=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq .object.sha)
           if [ "$head" != "$GITHUB_SHA" ]; then
             echo "main уже указывает на $head; устаревшую сборку не публикуем"
             exit 0
           fi
-          files=(release/leksika.exe release/SHA256SUMS.txt release/checksums.txt
+          files=(release/00-Leksika-Windows.exe release/01-Leksika-Android.apk
             release/leksika-native-windows-x64.zip release/leksika-native-linux-x64.tar.gz
             release/leksika-native-macos-arm64.tar.gz release/leksika-native-macos-x64.tar.gz
-            release/leksika-native-android-arm64.tar.gz)
-          notes="Автоматическая обновляемая сборка из коммита $GITHUB_SHA. Windows-установщик не подписан. Архивы содержат экспериментальное нативное ядро, не полный runtime. Android — консольный бинарник, не APK. SHA-256 всех файлов: SHA256SUMS.txt."
+            release/leksika-native-android-arm64.tar.gz release/zz-SHA256SUMS.txt release/zz-checksums.txt)
+          notes="Windows: 00-Leksika-Windows.exe. Android: 01-Leksika-Android.apk (офлайн учебная песочница, не полный исполнитель). APK подписан временным ключом сборки: для обновления может потребоваться удалить приложение. Windows-установщик не подписан. Архивы содержат экспериментальное нативное ядро. SHA-256: zz-SHA256SUMS.txt. Коммит: $GITHUB_SHA."
           if gh release view nightly >/dev/null 2>&1; then
             gh release upload nightly "${files[@]}" --clobber
           else
@@ -116,6 +118,12 @@ jobs:
           fi
           gh api "repos/$GITHUB_REPOSITORY/releases/tags/nightly" > release-metadata.json
           bash сборка/проверить_публикацию.sh release-metadata.json release
+          # Удаляем только старые имена из этого канала после проверки новых файлов.
+          for old in leksika.exe SHA256SUMS.txt checksums.txt; do
+            if jq -e --arg name "$old" '.assets[] | select(.name == $name)' release-metadata.json >/dev/null; then
+              gh release delete-asset nightly "$old" --yes
+            fi
+          done
           head=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq .object.sha)
           if [ "$head" != "$GITHUB_SHA" ]; then
             echo "main изменился во время загрузки; метку не обновляем" >&2; exit 1
@@ -192,8 +200,31 @@ jobs:
           path: release/leksika-native-*
           if-no-files-found: error
 
+  build-apk:
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Проверить учебную машину
+        run: node проверка/android_песочница.cjs
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Проверить Android SDK
+        run: |
+          test -f "$ANDROID_HOME/platforms/android-35/android.jar"
+          test -x "$ANDROID_HOME/build-tools/35.0.0/aapt"
+      - name: Собрать APK
+        run: bash сборка/собрать_apk.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: leksika-apk-${{ github.sha }}
+          path: release/01-Leksika-Android.apk
+          if-no-files-found: error
+
   android-smoke:
-    needs: native-packages
+    needs: [native-packages, build-apk]
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-24.04
     timeout-minutes: 25
@@ -202,6 +233,10 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: native-android-arm64-${{ github.sha }}
+          path: release
+      - uses: actions/download-artifact@v4
+        with:
+          name: leksika-apk-${{ github.sha }}
           path: release
       - name: Разрешить KVM
         run: |
@@ -214,10 +249,10 @@ jobs:
           target: google_apis
           arch: x86_64
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
-          script: bash сборка/проверить_android.sh
+          script: bash сборка/проверить_android.sh && bash сборка/проверить_apk.sh
 
   prepare-release:
-    needs: [native-packages, android-smoke, build-windows]
+    needs: [native-packages, android-smoke, build-windows, build-apk]
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
@@ -231,6 +266,10 @@ jobs:
           pattern: native-*-${{ github.sha }}
           path: release
           merge-multiple: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: leksika-apk-${{ github.sha }}
+          path: release
       - name: Проверить подготовку комплекта
         run: bash проверка/релиз.sh
       - name: Проверить комплект и создать SHA-256
@@ -279,8 +318,8 @@ jobs:
         run: |
           set -euo pipefail
           cd release
-          sha256sum -c SHA256SUMS.txt
-          sha256sum -c checksums.txt
+          sha256sum -c zz-SHA256SUMS.txt
+          sha256sum -c zz-checksums.txt
       - name: Создать релиз
         uses: softprops/action-gh-release@v2
         with:
@@ -291,19 +330,21 @@ jobs:
           overwrite_files: false
           fail_on_unmatched_files: true
           body: |
-            Проверенный Windows-установщик leksika.exe и экспериментальные автономные C11-ядра.
+            Windows: 00-Leksika-Windows.exe. Android: 01-Leksika-Android.apk — офлайн учебная песочница, не полный исполнитель.
+            APK подписан временным ключом сборки: для обновления может потребоваться удаление приложения.
             Нативные пакеты исполняют только подмножество языка, не заменяют полный runtime.
             Android проверен в Android-эмуляторе с трансляцией ARM64, но не на физическом устройстве или в Termux; macOS не подписана и не нотариально заверена.
-            Android-пакет — консольное ядро, не APK. SHA-256 всех файлов: SHA256SUMS.txt; архивов отдельно: checksums.txt.
+            Android-архив содержит консольное ядро. SHA-256 всех файлов: zz-SHA256SUMS.txt; архивов отдельно: zz-checksums.txt.
           files: |
-            release/leksika.exe
-            release/SHA256SUMS.txt
+            release/00-Leksika-Windows.exe
+            release/01-Leksika-Android.apk
             release/leksika-native-windows-x64.zip
             release/leksika-native-linux-x64.tar.gz
             release/leksika-native-macos-arm64.tar.gz
             release/leksika-native-macos-x64.tar.gz
             release/leksika-native-android-arm64.tar.gz
-            release/checksums.txt
+            release/zz-SHA256SUMS.txt
+            release/zz-checksums.txt
 
       - uses: actions/checkout@v4
         with:
