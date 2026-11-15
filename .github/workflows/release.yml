@@ -80,7 +80,7 @@ jobs:
         run: ./проверка/установщик_windows.ps1 -Installer "$PWD/release/leksika.exe" -Checksums "$PWD/release/SHA256SUMS.txt"
 
   publish-nightly:
-    needs: [tests, build-windows, smoke-windows]
+    needs: [tests, smoke-windows, prepare-release]
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && inputs.version == ''
     runs-on: ubuntu-latest
     permissions:
@@ -89,35 +89,43 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: leksika-windows-${{ github.sha }}
+          name: release-candidate-${{ github.sha }}
           path: release
-      - name: Проверить контрольную сумму и обновить только nightly
+      - name: Проверить и опубликовать полный комплект
         env:
           GH_TOKEN: ${{ github.token }}
+        shell: bash
         run: |
           set -euo pipefail
-          (cd release && sha256sum -c SHA256SUMS.txt)
-          # Запоздавшая сборка не должна перезаписать более свежую версию.
+          (cd release && sha256sum -c SHA256SUMS.txt && sha256sum -c checksums.txt)
           head=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq .object.sha)
           if [ "$head" != "$GITHUB_SHA" ]; then
             echo "main уже указывает на $head; устаревшую сборку не публикуем"
             exit 0
           fi
-          # Не удаляем рабочий релиз перед сборкой и тестами.
+          files=(release/leksika.exe release/SHA256SUMS.txt release/checksums.txt
+            release/leksika-native-windows-x64.zip release/leksika-native-linux-x64.tar.gz
+            release/leksika-native-macos-arm64.tar.gz release/leksika-native-macos-x64.tar.gz
+            release/leksika-native-android-arm64.tar.gz)
+          notes="Автоматическая обновляемая сборка из коммита $GITHUB_SHA. Windows-установщик не подписан. Архивы содержат экспериментальное нативное ядро, не полный runtime. Android — консольный бинарник, не APK. SHA-256 всех файлов: SHA256SUMS.txt."
           if gh release view nightly >/dev/null 2>&1; then
-            gh release upload nightly release/leksika.exe release/SHA256SUMS.txt --clobber
-            git push origin "$GITHUB_SHA:refs/tags/nightly" --force
-            gh release edit nightly --title 'Leksika nightly (предварительная сборка)' \
-              --notes "Автоматическая предварительная Windows-сборка из коммита $GITHUB_SHA. Не подписана; браузер и SmartScreen могут предупреждать. SHA-256: см. SHA256SUMS.txt." --prerelease
+            gh release upload nightly "${files[@]}" --clobber
           else
-            gh release create nightly release/leksika.exe release/SHA256SUMS.txt \
-              --target "$GITHUB_SHA" --title 'Leksika nightly (предварительная сборка)' \
-              --notes "Автоматическая предварительная Windows-сборка из коммита $GITHUB_SHA. Не подписана; браузер и SmartScreen могут предупреждать. SHA-256: см. SHA256SUMS.txt." --prerelease
+            gh release create nightly "${files[@]}" --target "$GITHUB_SHA" --draft \
+              --title 'Leksika — актуальная сборка' --notes "$notes"
           fi
+          gh api "repos/$GITHUB_REPOSITORY/releases/tags/nightly" > release-metadata.json
+          bash сборка/проверить_публикацию.sh release-metadata.json release
+          head=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq .object.sha)
+          if [ "$head" != "$GITHUB_SHA" ]; then
+            echo "main изменился во время загрузки; метку не обновляем" >&2; exit 1
+          fi
+          git push origin "$GITHUB_SHA:refs/tags/nightly" --force
+          gh release edit nightly --title 'Leksika — актуальная сборка' --notes "$notes" --draft=false --prerelease=false --latest
 
-  # Проверяется также в PR; nightly и прежний установщик не меняются.
+  # Один комплект для PR, обновляемой сборки main и версионных релизов.
   native-packages:
-    if: github.event_name == 'pull_request' || startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.version != '')
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     name: Нативный пакет ${{ matrix.platform }}
     strategy:
       fail-fast: false
@@ -186,7 +194,7 @@ jobs:
 
   android-smoke:
     needs: native-packages
-    if: github.event_name == 'pull_request' || startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.version != '')
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
@@ -210,9 +218,10 @@ jobs:
 
   prepare-release:
     needs: [native-packages, android-smoke, build-windows]
-    if: github.event_name == 'pull_request' || startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.version != '')
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           name: leksika-windows-${{ github.sha }}
@@ -222,16 +231,10 @@ jobs:
           pattern: native-*-${{ github.sha }}
           path: release
           merge-multiple: true
+      - name: Проверить подготовку комплекта
+        run: bash проверка/релиз.sh
       - name: Проверить комплект и создать SHA-256
-        shell: bash
-        run: |
-          set -euo pipefail
-          cd release
-          sha256sum -c SHA256SUMS.txt
-          files=(leksika-native-windows-x64.zip leksika-native-linux-x64.tar.gz leksika-native-macos-arm64.tar.gz leksika-native-macos-x64.tar.gz leksika-native-android-arm64.tar.gz)
-          for f in "${files[@]}"; do test -s "$f"; done
-          sha256sum "${files[@]}" > checksums.txt
-          sha256sum -c checksums.txt
+        run: bash сборка/подготовить_релиз.sh release
       - uses: actions/upload-artifact@v4
         with:
           name: release-candidate-${{ github.sha }}
@@ -291,7 +294,7 @@ jobs:
             Проверенный Windows-установщик leksika.exe и экспериментальные автономные C11-ядра.
             Нативные пакеты исполняют только подмножество языка, не заменяют полный runtime.
             Android проверен в Android-эмуляторе с трансляцией ARM64, но не на физическом устройстве или в Termux; macOS не подписана и не нотариально заверена.
-            SHA-256 архивов: checksums.txt; SHA-256 установщика: SHA256SUMS.txt.
+            Android-пакет — консольное ядро, не APK. SHA-256 всех файлов: SHA256SUMS.txt; архивов отдельно: checksums.txt.
           files: |
             release/leksika.exe
             release/SHA256SUMS.txt
@@ -302,6 +305,9 @@ jobs:
             release/leksika-native-android-arm64.tar.gz
             release/checksums.txt
 
+      - uses: actions/checkout@v4
+        with:
+          clean: false
       - name: Опубликовать после загрузки всех файлов
         env:
           GH_TOKEN: ${{ github.token }}
@@ -309,6 +315,8 @@ jobs:
         run: |
           set -euo pipefail
           test "$(gh api "repos/$GITHUB_REPOSITORY/commits/$TAG" --jq .sha)" = "$GITHUB_SHA"
+          gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" > release-metadata.json
+          bash сборка/проверить_публикацию.sh release-metadata.json release
           gh release edit "$TAG" --draft=false
 
   # ДЛЯ БУДУЩЕГО: создайте zmlsaggg/scoop-leksika и zmlsaggg/homebrew-leksika,
