@@ -159,8 +159,8 @@ jobs:
           bash сборка/проверить_пакет_ядра.sh "$PLATFORM"
           case "$PLATFORM" in
             linux-x64) test "$(uname -m)" = x86_64 ;;
-            macos-arm64) test "$(uname -m)" = arm64; lipo -verify_arch arm64 ядро/leksus-core ;;
-            macos-x64) test "$(uname -m)" = x86_64; lipo -verify_arch x86_64 ядро/leksus-core ;;
+            macos-arm64) test "$(uname -m)" = arm64; info=$(lipo -info package/leksus-core); echo "::notice::lipo: $info"; [[ "$info" == *arm64* ]] ;;
+            macos-x64) test "$(uname -m)" = x86_64; info=$(lipo -info package/leksus-core); echo "::notice::lipo: $info"; [[ "$info" == *x86_64* ]] ;;
           esac
       - name: Собрать и проверить Android arm64
         if: matrix.platform == 'android-arm64'
