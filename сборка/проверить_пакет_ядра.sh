@@ -10,18 +10,7 @@ case "$platform" in
 esac
 cd "$tmp"
 test -s dictionary.lxd && test -s LICENSE.txt && test -s DICTIONARY-LICENSE.txt && test -s README.txt
-if [[ "$platform" == android-arm64 ]]; then
-  readelf -h "$exe" | grep -q 'AArch64'
-  readelf -h "$exe" | grep -q 'DYN'
-  if readelf -l "$exe" | grep -q INTERP; then echo 'Android: неожиданный динамический загрузчик' >&2; exit 1; fi
-  if ! qemu-aarch64 -strace "./$exe" --self-test > qemu.log 2>&1; then
-    tail -n 8 qemu.log | while IFS= read -r line; do echo "::error::QEMU: $line"; done
-    exit 1
-  fi
-  run=(qemu-aarch64 "./$exe")
-else
-  run=("./$exe")
-fi
+run=("./$exe")
 "${run[@]}" --self-test
 "${run[@]}" выполнить example.lek | grep -q 'Готово!'
 "${run[@]}" слово книга dictionary.lxd | grep -q 'Слово есть'

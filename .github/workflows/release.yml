@@ -168,22 +168,44 @@ jobs:
         run: |
           set -Eeuo pipefail
           trap 'echo "::error::Не выполнена команда на строке $LINENO: $BASH_COMMAND"' ERR
-          sudo apt-get update && sudo apt-get install -y qemu-user
           compiler="${ANDROID_NDK_HOME:?NDK не найден}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang"
           test -x "$compiler"
           make -C ядро native TARGET=leksus-core CC="$compiler" CFLAGS='-std=c11 -O3 -Wall -Wextra -Wpedantic -fPIE -static-pie'
           bash сборка/пакет_ядра.sh android-arm64
-          bash сборка/проверить_пакет_ядра.sh android-arm64
+          mkdir android-check
+          tar -xzf release/leksika-native-android-arm64.tar.gz -C android-check
+          readelf -h android-check/leksus-core | grep -q AArch64
+          readelf -h android-check/leksus-core | grep -q DYN
+          if readelf -l android-check/leksus-core | grep -q INTERP; then echo 'Динамический загрузчик не ожидался' >&2; exit 1; fi
       - uses: actions/upload-artifact@v4
         with:
           name: native-${{ matrix.platform }}-${{ github.sha }}
           path: release/leksika-native-*
           if-no-files-found: error
 
+  android-smoke:
+    needs: native-packages
+    if: github.event_name == 'pull_request' || startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.version != '')
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: native-android-arm64-${{ github.sha }}
+          path: release
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          target: google_apis
+          arch: arm64-v8a
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: bash сборка/проверить_android.sh
+
   publish-versioned:
     outputs:
       version: ${{ steps.version.outputs.version }}
-    needs: [tests, build-windows, smoke-windows, native-packages]
+    needs: [tests, build-windows, smoke-windows, native-packages, android-smoke]
     if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.version != '')
     runs-on: ubuntu-latest
     permissions:
@@ -241,7 +263,7 @@ jobs:
           body: |
             Проверенный Windows-установщик leksika.exe и экспериментальные автономные C11-ядра.
             Нативные пакеты исполняют только подмножество языка, не заменяют полный runtime.
-            Android проверен под QEMU user-mode, не на устройстве или Termux; macOS не подписана и не нотариально заверена.
+            Android проверен в ARM64-эмуляторе Android, но не на физическом устройстве или в Termux; macOS не подписана и не нотариально заверена.
             SHA-256 архивов: checksums.txt; SHA-256 установщика: SHA256SUMS.txt.
           files: |
             release/leksika.exe
