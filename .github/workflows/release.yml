@@ -152,7 +152,8 @@ jobs:
         env:
           PLATFORM: ${{ matrix.platform }}
         run: |
-          set -euo pipefail
+          set -Eeuo pipefail
+          trap 'echo "::error::Не выполнена команда на строке $LINENO: $BASH_COMMAND"' ERR
           make -C ядро native TARGET=leksus-core CFLAGS='-std=c11 -O3 -Wall -Wextra -Wpedantic -finput-charset=UTF-8 -fexec-charset=UTF-8'
           bash сборка/пакет_ядра.sh "$PLATFORM"
           bash сборка/проверить_пакет_ядра.sh "$PLATFORM"
@@ -165,7 +166,8 @@ jobs:
         if: matrix.platform == 'android-arm64'
         shell: bash
         run: |
-          set -euo pipefail
+          set -Eeuo pipefail
+          trap 'echo "::error::Не выполнена команда на строке $LINENO: $BASH_COMMAND"' ERR
           sudo apt-get update && sudo apt-get install -y qemu-user
           compiler="${ANDROID_NDK_HOME:?NDK не найден}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang"
           test -x "$compiler"
