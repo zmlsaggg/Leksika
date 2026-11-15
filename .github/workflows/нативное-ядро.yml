@@ -120,7 +120,15 @@ jobs:
 
       - name: Проверить C++ API на Windows
         if: runner.os == 'Windows'
-        run: bash cpp/проверить.sh
+        run: |
+          set -o pipefail
+          bash cpp/проверить.sh 2>&1 | tee cpp-output.txt || {
+            while IFS= read -r line; do
+              line=${line//'%'/'%25'}
+              echo "::error::$line"
+            done < <(tail -15 cpp-output.txt)
+            exit 1
+          }
         shell: msys2 {0}
 
       - name: Сохранить индекс и отчёт словаря
