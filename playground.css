@@ -248,12 +248,18 @@ textarea {
 .примеры-шапка h2 { font-size: 17px; }
 @media (max-width: 680px) {
   .страница { padding-top: 8px; }
-  .навигация { flex-wrap: wrap; gap: 6px 12px; margin-bottom: 10px; }
+  /* На узком экране редактор должен попадать в первый взгляд: 15 карточек
+     примеров вместе с подзаголовком отодвигали его ниже 540px, и «Редактор»
+     уезжал под сгиб. Убираем подзаголовок и уплотняем отступы, не трогая
+     размер текста: читаемость важнее пары пикселей. */
+  .навигация { flex-wrap: wrap; gap: 4px 12px; margin-bottom: 8px; }
   .навигация .знак, .навигация .назад { font-size: 12px; }
   .навигация .авторизация { font-size: 12px; }
-  .шапка { gap: 2px 8px; margin-bottom: 10px; }
-  .шапка h1 { font-size: 23px; }
-  .примеры-сетка { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
-  .примеры-сетка button { min-height: 42px; padding: 6px; gap: 5px; font-size: 11px; }
-  .примеры-сетка button b { flex-basis: 24px; width: 24px; height: 24px; }
+  .шапка { gap: 2px 8px; margin-bottom: 8px; }
+  .шапка h1 { font-size: 22px; }
+  /* Подзаголовок «Выберите карточку» на телефоне не нужен: кнопки и так
+     очевидны, а его строка отодвигала редактор под сгиб. */
+  .примеры-шапка p { display: none; }
+  .примеры-сетка { gap: 5px; }
+  .примеры-сетка button { min-height: 40px; }
 }
