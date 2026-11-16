@@ -121,6 +121,9 @@
     сохранить(КЛЮЧ_КОДА, code.value);
     обновитьСчётчик();
     status.textContent = 'Пример загружен';
+    /* Пример мог быть выбран из раскрытой панели, и тогда редактор остался
+       выше экрана. Прокручиваем к коду, иначе кажется, что ничего не вышло. */
+    if (code.scrollIntoView) code.scrollIntoView({ block: 'nearest' });
   }
 
   function finish(message) {

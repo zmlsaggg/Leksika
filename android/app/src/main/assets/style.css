@@ -12,3 +12,13 @@
 .настройки input[type="range"]{width:110px;accent-color:#8ae1c5}
 .настройки .счётчик{margin-left:auto;font-variant-numeric:tabular-nums}
 .осторожно{color:#f4c47f}
+
+/* Примеры сворачиваемые: восемь кнопок в две строки выталкивали редактор и
+   «Запустить» за пределы первого экрана. Теперь содержимое занимает панель
+   шириной в один заголовок, а код и вывод остаются на виду. */
+.примеры-панель{background:#182131;border:1px solid #2b3b50;border-radius:16px;padding:0;margin:14px 0}
+.примеры-панель>summary{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;cursor:pointer;font-weight:700;font-size:14px;list-style:none}
+.примеры-панель>summary::-webkit-details-marker{display:none}
+.примеры-панель>summary::after{content:"▾";color:#8ae1c5}
+.примеры-панель[open]>summary{border-bottom:1px solid #2b3b50}
+.примеры-панель .примеры{padding:12px 16px 16px}

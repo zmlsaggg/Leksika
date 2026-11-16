@@ -3,7 +3,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; worker-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'">
 <title>Лексика — песочница</title><link rel="stylesheet" href="style.css"></head>
 <body><main><header><span class="badge">ЛЕКСИКА · ANDROID</span><h1>Пишите по-русски.</h1><p>Учебная песочница работает без интернета. Она понимает часть языка и не заменяет полный исполнитель Лексики.</p></header>
-<section aria-label="Примеры программ"><div class="примеры" id="примеры" role="group" aria-label="Готовые примеры">
+<section aria-label="Примеры программ"><details class="примеры-панель" id="примеры-панель"><summary>Примеры программ</summary><div class="примеры" id="примеры" role="group" aria-label="Готовые примеры">
 <button type="button" data-пример="знакомство" aria-pressed="true">Знакомство</button>
 <button type="button" data-пример="условие" aria-pressed="false">Условие</button>
 <button type="button" data-пример="выбор" aria-pressed="false">Выбор</button>
@@ -12,7 +12,7 @@
 <button type="button" data-пример="перечень" aria-pressed="false">Перечень</button>
 <button type="button" data-пример="таблица" aria-pressed="false">Таблица умножения</button>
 <button type="button" data-пример="фибоначчи" aria-pressed="false">Фибоначчи</button>
-</div></section>
+</div></details></section>
 <section><label for="code">Код программы</label><textarea id="code" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
 <div class="actions"><button id="run" type="button">▶ Запустить</button><button id="stop" type="button" disabled>Остановить</button><button id="reset" type="button">Сбросить</button></div>
 <div class="настройки"><label for="размер">Шрифт</label><input id="размер" type="range" min="12" max="22" step="1" value="14" aria-label="Размер шрифта редактора"><span class="счётчик" id="счётчик">0 знаков</span></div></section>

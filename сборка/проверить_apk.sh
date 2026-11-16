@@ -4,10 +4,13 @@ trap 'echo "::error::APK smoke: $BASH_COMMAND (строка $LINENO)"; adb logca
 adb install -r release/01-Leksika-Android.apk
 adb shell am start -W -n org.leksika.sandbox/.MainActivity
 # Дожидаемся отображения локального редактора, не полагаясь на координаты экрана.
+# Экран телефона не вмещает всё приложение целиком, поэтому перед поиском
+# кнопки прокручиваем страницу вниз: WebView не держит «Запустить» на виду.
 for attempt in {1..20}; do
   adb shell uiautomator dump /sdcard/window.xml >/dev/null
   adb exec-out cat /sdcard/window.xml > /tmp/leksika-android-ui.xml
   if grep -q 'Запустить' /tmp/leksika-android-ui.xml; then break; fi
+  adb shell input swipe 540 1400 540 500 200 >/dev/null 2>&1 || true
   sleep 2
 done
 python3 - <<'PY'
