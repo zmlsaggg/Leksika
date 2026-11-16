@@ -17,13 +17,19 @@ OPENSSL_LIBS ?= $(shell pkg-config --libs openssl 2>/dev/null || printf '%s' '-l
 SOURCE = лексус.c значения.c словарь_индекс.c байткод.c машина.c компилятор.c морфология.c
 DICT_BUILDER = словарь-сборщик$(EXEEXT)
 DICT_TEST = словарь-тест$(EXEEXT)
+# Внешний CP1251-список — необязательный источник подсказок. Ядро, морфология
+# и все тесты работают без него: цель native его не трогает.
 DICT_SOURCE = ../источники/russian-words/russian.txt
 DICT_INDEX = русские_формы.lxd
 
-.PHONY: all native test sanitize-test dictionary dictionary-test compiler-test contract-test morphology-test tls-tools tls-test clean
+.PHONY: all native core test sanitize-test dictionary dictionary-test compiler-test contract-test morphology-test tls-tools tls-test clean
+# all собирает ещё и словарь подсказок из внешнего источника; core — только ядро.
 all: $(TARGET) $(DICT_INDEX)
 
-native: $(TARGET)
+core: $(TARGET)
+
+# native — старое имя цели core; оставлено, чтобы существующие скрипты работали.
+native: core
 
 $(TARGET): $(SOURCE) значения.h байткод.h машина.h компилятор.h словарь_индекс.h словарь_формы.h морфология_окончания.h морфология_имён.h морфология.h
 	$(CC) $(CFLAGS) -o "$@" $(SOURCE) $(NATIVE_LIBS)
