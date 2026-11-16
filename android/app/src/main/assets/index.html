@@ -3,12 +3,19 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; worker-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'">
 <title>Лексика — песочница</title><link rel="stylesheet" href="style.css"></head>
 <body><main><header><span class="badge">ЛЕКСИКА · ANDROID</span><h1>Пишите по-русски.</h1><p>Учебная песочница работает без интернета. Она понимает часть языка и не заменяет полный исполнитель Лексики.</p></header>
-<section><label for="code">Код программы</label><textarea id="code" spellcheck="false">пусть сумма равно пяти.
-положить пятнадцать в сумму.
-прибавить два к сумме.
-почему сумма равно 17 то речь Ошибка суммы конец речи.
-Сказал сумму.</textarea>
-<div class="actions"><button id="run" type="button">Запустить</button><button id="stop" type="button" disabled>Остановить</button></div></section>
+<section aria-label="Примеры программ"><div class="примеры" id="примеры" role="group" aria-label="Готовые примеры">
+<button type="button" data-пример="знакомство" aria-pressed="true">Знакомство</button>
+<button type="button" data-пример="условие" aria-pressed="false">Условие</button>
+<button type="button" data-пример="выбор" aria-pressed="false">Выбор</button>
+<button type="button" data-пример="циклы" aria-pressed="false">Циклы</button>
+<button type="button" data-пример="правило" aria-pressed="false">Правило</button>
+<button type="button" data-пример="перечень" aria-pressed="false">Перечень</button>
+<button type="button" data-пример="таблица" aria-pressed="false">Таблица умножения</button>
+<button type="button" data-пример="фибоначчи" aria-pressed="false">Фибоначчи</button>
+</div></section>
+<section><label for="code">Код программы</label><textarea id="code" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
+<div class="actions"><button id="run" type="button">▶ Запустить</button><button id="stop" type="button" disabled>Остановить</button><button id="reset" type="button">Сбросить</button></div>
+<div class="настройки"><label for="размер">Шрифт</label><input id="размер" type="range" min="12" max="22" step="1" value="14" aria-label="Размер шрифта редактора"><span class="счётчик" id="счётчик">0 знаков</span></div></section>
 <section aria-live="polite"><div class="line"><label for="output">Вывод</label><span id="status">Готово к запуску</span></div><pre id="output" tabindex="0"></pre></section>
 <details class="help"><summary>Команды и примеры</summary>
 <p>Можно писать команды в разных формах, например <code>сказать</code>, <code>Сказал</code> и <code>что</code>. Имя переменной можно использовать в некоторых падежах: сумма, сумму, сумме.</p>
@@ -18,6 +25,16 @@
 <p><code>почему</code> проверяет условие и сообщает причину ошибки, если оно ложно:</p>
 <pre>почему да то речь Ошибка конец речи.
 сказала 42.</pre>
+<p>Ветвление по нескольким вариантам — <code>выбор</code>, как <code>switch</code> в C. Счётный цикл — <code>для … от … до …</code>, как <code>for</code>.</p>
+<pre>выбор код среди
+    200 то сказать речь Всё хорошо конец речи.
+    вариант 404 то сказать речь Не найдено конец речи.
+    иначе сказать речь Что-то иное конец речи.
+конец выбора.
+
+для счёт от 1 до 5 повторять
+    сказать счёт.
+конец для.</pre>
 <p>Также доступны условия, циклы, правила, перечни, словари и некоторые математические функции. Часть команд настольной Лексики здесь ещё не работает; полное склонение не обещается.</p>
-</details><footer>В приложении нет доступа к сети и файлам. Поддерживаются не все команды .lek.</footer></main>
+</details><footer>В приложении нет доступа к сети и файлам. Поддерживаются не все команды .lek. Написанный код сохраняется на устройстве.</footer></main>
 <script src="editor.js" defer></script></body></html>

@@ -29,10 +29,27 @@ assert.equal(execute('пусть текст равно речь Ёж 🐈 кон
 assert.equal(execute('пусть кошка равно 1. пусть кошку равно 2. что кошке.').error.includes('неоднозначна'), true);
 assert.notEqual(execute('прибавить один к неизвестному.').error, '');
 assert.equal(execute('сказать речь Сказал что почему конец речи.').output, 'Сказал что почему');
+// Примеры живут в editor.js: index.html остаётся статичной разметкой,
+// а стартовый код подставляется скриптом. Раньше пример был прямо в
+// textarea, и проверка ловила только его; теперь проверяем все восемь.
 const html = fs.readFileSync('android/app/src/main/assets/index.html', 'utf8');
-const example = html.match(/<textarea id="code"[^>]*>([\s\S]*?)<\/textarea>/)[1];
-assert.equal(execute(example).output, '17');
-assert.equal(result.error, '');
+const editor = fs.readFileSync('android/app/src/main/assets/editor.js', 'utf8');
+assert(!/<textarea id="code"[^>]*>[^<]/.test(html), 'код примера не должен дублироваться в разметке');
+for (const имя of ['знакомство','условие','выбор','циклы','правило','перечень','таблица','фибоначчи']) {
+  assert(html.includes('data-пример="' + имя + '"'), 'в разметке нет кнопки примера ' + имя);
+  assert(editor.includes(имя + ':'), 'в editor.js нет примера ' + имя);
+}
+/* Запускаем каждый пример из editor.js так, как это сделает кнопка:
+   вырезаем литералы и подставляем в учебную машину. */
+const блок = editor.slice(editor.indexOf('const образцы = {'), editor.indexOf('\n  };', editor.indexOf('const образцы = {')) + 4);
+const образцы = vm.runInNewContext(блок + '\nобразцы;', {});
+assert.equal(Object.keys(образцы).length, 8, 'ожидалось восемь примеров');
+for (const [имя, код] of Object.entries(образцы)) {
+  const r = execute(код);
+  assert.equal(r.error, '', 'пример «' + имя + '» падает: ' + r.error);
+  assert.notEqual(r.output, '', 'пример «' + имя + '» ничего не выводит');
+}
+assert.equal(execute(образцы.знакомство).output, 'Сумма сейчас 22.');
 const manifest = fs.readFileSync('android/app/src/main/AndroidManifest.xml','utf8');
 assert(manifest.includes('@drawable/launcher'));
 assert(fs.statSync('android/app/src/main/res/drawable-nodpi/launcher.png').size > 0);
