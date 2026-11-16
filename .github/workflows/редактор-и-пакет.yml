@@ -50,7 +50,7 @@ jobs:
           build
           check
           package
-          "$pkgdir/usr/bin/leksika" --self-test
+          "$pkgdir/usr/bin/leksika" самопроверка
           "$pkgdir/usr/bin/leksika" слово книга "$pkgdir/usr/share/leksika/русские_формы.lxd"
           test -f "$pkgdir/usr/share/licenses/leksika-git/LICENSE"
           test -f "$pkgdir/usr/share/licenses/leksika-git/DICTIONARY-LICENSE"

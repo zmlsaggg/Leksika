@@ -6,7 +6,7 @@ Python; остальные конструкции не переключаютс�
 Описание: https://github.com/zmlsaggg/Leksika/blob/main/документы/ПЕРВЫЙ_НАТИВНЫЙ_КОМПИЛЯТОР.md
 
 Примеры (на Windows используйте leksus-core.exe):
-  ./leksus-core --self-test
+  ./leksus-core самопроверка
   ./leksus-core выполнить example.lek
   ./leksus-core слово книга dictionary.lxd
 

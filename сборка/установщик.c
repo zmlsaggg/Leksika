@@ -775,7 +775,8 @@ static int выполнить_установку(int argc, char **argv)
     }
     {
         wchar_t body[4096];
-        wcscpy(body, L"if \"%~1\"==\"--нативно\" goto native\r\n");
+        wcscpy(body, L"if \"%~1\"==\"нативно\" goto native\r\n");
+        wcscat(body, L"if \"%~1\"==\"--нативно\" goto native\r\n");
         wcscat(body, L"set \"PYTHONUTF8=\"\r\n");
         wcscat(body, L"set \"PYTHONIOENCODING=utf-8\"\r\n");
         wcscat(body, L"if not exist \"%~dp0питон\\python.exe\" (echo Встроенная среда не найдена.& exit /b 2)\r\n");
@@ -839,7 +840,7 @@ static int выполнить_установку(int argc, char **argv)
         error_box("В установочном пакете отсутствует нативное ядро Лексуса.");
         fclose(g_exe); g_exe = NULL; return 7;
     }
-    if (run_and_wait(нативное, L"--self-test") != 0) {
+    if (run_and_wait(нативное, L"самопроверка") != 0) {
         error_box("Самопроверка нативного ядра не прошла. Установка не считается завершённой.");
         fclose(g_exe); g_exe = NULL; return 7;
     }

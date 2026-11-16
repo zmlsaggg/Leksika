@@ -42,6 +42,12 @@ class Сопоставление(unittest.TestCase):
             ('пусть элементы равно перечень(). пусть копия равно элементы. добавить в копия 9. сказать длина элементы.', '1\n', None),
             ('пусть коллекция равно перечень(). сказать размер коллекция.', '0\n', None),
             ('пусть текст равно речь Ёж 🐈 конец речи. сказать длина текст.', '4\n', None),
+            # Интерполяция речи: оба движка должны давать тот же текст.
+            ('пусть имя равно речь Пётр конец речи. сказать речь Здравствуй, (имя)! конец речи.', 'Здравствуй, Пётр!\n', None),
+            ('пусть счёт равно три. сказать речь Было (счёт), стало (счёт плюс 1). конец речи.', 'Было 3, стало 4.\n', None),
+            ('сказать речь Скобка ((тут)) и ((там)). конец речи.', 'Скобка (тут) и (там).\n', None),
+            ('пусть флаг равно да. сказать речь Ответ: (флаг). конец речи.', 'Ответ: да.\n', None),
+            ('пусть числа равно перечень(1, 2). сказать речь Список: (числа) конец речи.', 'Список: перечень(1, 2)\n', None),
         ]
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / 'программа.lek'
@@ -87,11 +93,11 @@ class Сопоставление(unittest.TestCase):
             script = temp / 'пример.lek'
             script.write_text('скажи 42', encoding='utf-8')
             env = dict(os.environ, PATH=directory)
-            result = subprocess.run([str(ROOT / 'Leksika'), '--нативно', 'запустить', str(script)],
+            result = subprocess.run([str(ROOT / 'Leksika'), 'нативно', 'запустить', str(script)],
                                     env=env, capture_output=True, text=True, encoding='utf-8')
             self.assertEqual((result.returncode, result.stdout), (0, '42\n'), result.stderr)
             script.write_text('когда завтра наступит скажи 42.', encoding='utf-8')
-            result = subprocess.run([str(ROOT / 'Leksika'), '--нативно', 'запустить', str(script)],
+            result = subprocess.run([str(ROOT / 'Leksika'), 'нативно', 'запустить', str(script)],
                                     env=env, capture_output=True, text=True, encoding='utf-8')
             self.assertNotEqual(result.returncode, 0)
             self.assertNotIn('Python', result.stderr)

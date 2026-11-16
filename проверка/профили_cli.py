@@ -20,8 +20,9 @@ class ПрофилиCLI(unittest.TestCase):
                     return subprocess.run([str(CORE), *args], capture_output=True,
                                           text=True, encoding='utf-8')
                 for args in [('выполнить', flag, str(path)),
-                             ('--нативно', 'запустить', str(path), flag),
-                             ('выполнить', '--профиль=18+', '--профиль=зумер', str(path))]:
+                             ('нативно', 'запустить', str(path), flag),
+                             ('выполнить', '--профиль=18+', '--профиль=зумер', str(path)),
+                             ('нативно', 'выполнить', str(path), flag)]:
                     result = run(*args)
                     self.assertEqual((result.returncode, result.stdout), (0, '42\n'), result.stderr)
                 result = run('выполнить', str(path))

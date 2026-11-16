@@ -97,6 +97,7 @@ jobs:
           make clean all test \
             TARGET=leksus-core.exe VALUE_TEST=values-test.exe VM_TEST=vm-test.exe \
             COMPILER_TEST=compiler-test.exe CONTRACT_TEST=contract-test.exe \
+            МОРФОЛОГИЯ_TEST=morphology-test.exe \
             DICT_BUILDER=dictionary-builder.exe DICT_TEST=dictionary-test.exe \
             DICT_SOURCE=russian-words-source.txt DICT_INDEX=russian-forms.lxd \
             2>&1 | tee словарь-сборки.txt
@@ -159,6 +160,8 @@ jobs:
           python3 проверка/загрузка_моделей.py
           python3 проверка/профили_синхронизация.py
           python3 проверка/профили_cli.py
+          python3 проверка/русский_cli.py
+          python3 проверка/словарь_ядра.py
         shell: bash
 
       - name: Проверить браузерный индекс словоформ
@@ -238,16 +241,20 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Не собрался тест VM" }
           & .\vm-test.exe
           if ($LASTEXITCODE -ne 0) { throw "Тест VM завершился с ошибкой" }
-          & $compiler @flags /Fe:compiler-test.exe значения.c байткод.c машина.c компилятор.c компилятор_проверка.c
+          & $compiler @flags /Fe:compiler-test.exe значения.c байткод.c машина.c компилятор.c морфология.c компилятор_проверка.c
           if ($LASTEXITCODE -ne 0) { throw "Не собрался тест компилятора" }
           & .\compiler-test.exe
           if ($LASTEXITCODE -ne 0) { throw "Тест компилятора завершился с ошибкой" }
-          & $compiler @flags /Fe:contract-test.exe значения.c байткод.c машина.c компилятор.c контракт_проверка.c
+          & $compiler @flags /Fe:contract-test.exe значения.c байткод.c машина.c компилятор.c морфология.c контракт_проверка.c
           if ($LASTEXITCODE -ne 0) { throw "Не собрался тест контракта" }
           & .\contract-test.exe
           if ($LASTEXITCODE -ne 0) { throw "Тест контракта завершился с ошибкой" }
-          & $compiler @flags /Fe:leksus-core.exe лексус.c значения.c словарь_индекс.c байткод.c машина.c компилятор.c shell32.lib
+          & $compiler @flags /Fe:morphology-test.exe морфология.c морфология_проверка.c
+          if ($LASTEXITCODE -ne 0) { throw "Не собрался тест морфологии" }
+          & .\morphology-test.exe
+          if ($LASTEXITCODE -ne 0) { throw "Тест морфологии завершился с ошибкой" }
+          & $compiler @flags /Fe:leksus-core.exe лексус.c значения.c словарь_индекс.c байткод.c машина.c компилятор.c морфология.c shell32.lib
           if ($LASTEXITCODE -ne 0) { throw "Не собралось ядро" }
-          & .\leksus-core.exe --self-test
+          & .\leksus-core.exe самопроверка
           if ($LASTEXITCODE -ne 0) { throw "Самопроверка ядра завершилась с ошибкой" }
         working-directory: ядро

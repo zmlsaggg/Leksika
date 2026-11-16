@@ -11,6 +11,6 @@ esac
 cd "$tmp"
 test -s dictionary.lxd && test -s LICENSE.txt && test -s DICTIONARY-LICENSE.txt && test -s README.txt
 run=("./$exe")
-"${run[@]}" --self-test
+"${run[@]}" самопроверка
 "${run[@]}" выполнить example.lek | grep -q 'Готово!'
 "${run[@]}" слово книга dictionary.lxd | grep -q 'Слово есть'
