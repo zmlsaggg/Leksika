@@ -60,3 +60,8 @@
 @media(max-width:520px){.игры-сетка { grid-template-columns:1fr; }.каталог-панель { align-items:start; flex-direction:column; }.раздел-герой h1 { font-size:47px; }.раздел-навигация>div:not(.авторизация) { gap:13px; }.форум .форум-шапка { padding:25px 0 45px; }.раздел-подвал { gap:15px; flex-wrap:wrap; }}
 
 .примеры-страница .примеры-шапка span { color:#e0a080; font-family:Courier New,monospace; }.примеры-страница .примеры-сетка button { background:#1b1e1b; border-color:#484a42; border-radius:2px 12px 2px 2px; color:#e3dfd4; }.примеры-страница .примеры-сетка button b { background:#44352d; color:#edac8d; border-radius:2px; }.примеры-страница .примеры-сетка button:hover,.примеры-страница .примеры-сетка button[aria-pressed=true] { background:#352a23; border-color:#e89167; color:#f2ede2; }
+/* Сохранить быстрый доступ к редактору даже при большом наборе образцов. */
+.примеры-страница .навигация { min-height:45px; margin-bottom:10px; }
+.примеры-страница .шапка { padding:4px 0; margin-bottom:12px; }
+.примеры-страница .шапка h1 { margin:4px 0; font-size:clamp(32px,3vw,42px); }
+.примеры-страница .примеры-сетка button { min-height:43px; }
