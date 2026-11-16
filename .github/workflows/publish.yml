@@ -1,0 +1,340 @@
+name: Публикация на PyPI
+
+# Доверенная публикация (Trusted Publishing / OIDC): GitHub выдаёт
+# короткоживущий токен, PyPI сам проверяет репозиторий, файл процесса и
+# окружение. Паролей и API-токенов в секретах нет — их не нужно заводить.
+#
+# Настроить один раз на https://pypi.org/manage/account/publishing/
+# (для проверки — на https://test.pypi.org/manage/account/publishing/):
+#   PyPI Project Name  leksika
+#   Owner              zmlsaggg
+#   Repository name    Leksika
+#   Workflow name      publish.yml   ← имя этого файла, без каталога
+#   Environment name   pypi          ← для TestPyPI: testpypi
+#
+# Публикация запускается тегом vX.Y.Z[-alpha.N|-beta.N|-rc.N]: тег должен
+# указывать на коммит из main, а проверка релиза (.github/workflows/release.yml)
+# для того же коммита — уже завершиться успешно. Иначе на PyPI попал бы
+# непроверенный выпуск, а версию там нельзя перезаписать.
+
+on:
+  push:
+    tags: ['v*']
+  pull_request:
+    paths:
+      - '.github/workflows/publish.yml'
+      - 'pyproject.toml'
+      - 'leksika_engine/**'
+      - 'packaging/pypi/**'
+      - 'лексус.lek'
+      - 'лексика/**'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Версия без v (0.4.0-beta.1 или 0.4.0b1). Нужен тег v<версия> на вершине main'
+        required: true
+        type: string
+      target:
+        description: 'Куда публиковать'
+        required: true
+        type: choice
+        default: testpypi
+        options: ['testpypi', 'pypi']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pypi-${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Проверить тег, версию и результат проверки релиза
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      actions: read  # чтение списка запусков release.yml для того же коммита
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+      sha: ${{ steps.version.outputs.sha }}
+      target: ${{ steps.target.outputs.target }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Выбрать индекс
+        id: target
+        env:
+          EVENT: ${{ github.event_name }}
+          INPUT_TARGET: ${{ inputs.target }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$EVENT" in
+            workflow_dispatch) target="$INPUT_TARGET" ;;
+            pull_request) target=none ;;
+            *) target=pypi ;;
+          esac
+          case "$target" in
+            pypi|testpypi|none) ;;
+            *) echo "::error::неизвестный индекс: $target"; exit 1 ;;
+          esac
+          echo "target=$target" >> "$GITHUB_OUTPUT"
+
+      - name: Проверить версию, тег и коммит
+        id: version
+        env:
+          EVENT: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = "pull_request" ]; then
+            echo "::notice::запрос из PR: собираем и проверяем, но не публикуем"
+            {
+              echo "version=0.0.0"
+              echo "tag="
+              echo "prerelease=true"
+              echo "sha=$GITHUB_SHA"
+            } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$EVENT" = "workflow_dispatch" ]; then raw="$INPUT_VERSION"; else raw="$REF_NAME"; fi
+          # Принимает и тег v0.4.0-beta.1, и версию PEP 440 0.4.0b1.
+          out=$(python3 packaging/pypi/prepare_version.py "$raw" --dry-run)
+          printf '%s\n' "$out"
+          version=$(sed -n 's/^version=//p' <<<"$out")
+          tag=$(sed -n 's/^tag=//p' <<<"$out")
+          prerelease=$(sed -n 's/^prerelease=//p' <<<"$out")
+          test -n "$version" && test -n "$tag"
+
+          git fetch --tags --force origin >/dev/null 2>&1 || true
+          if ! git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+            echo "::error::нет тега $tag; сначала создайте и отправьте тег" >&2; exit 1
+          fi
+          sha=$(git rev-list -n 1 "refs/tags/$tag")
+          git fetch --no-tags origin main
+          main_sha=$(git rev-parse refs/remotes/origin/main)
+          if [ "$EVENT" = "workflow_dispatch" ] && [ "$sha" != "$main_sha" ]; then
+            echo "::error::тег $tag указывает на $sha, а main — на $main_sha; выпускайте только проверенную вершину main" >&2
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "$sha" refs/remotes/origin/main; then
+            echo "::error::коммит $sha тега $tag не входит в main" >&2; exit 1
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+      - name: Убедиться, что версия ещё не занята в индексе
+        if: steps.target.outputs.target != 'none'
+        env:
+          TARGET: ${{ steps.target.outputs.target }}
+          VERSION: ${{ steps.version.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - "$TARGET" "$VERSION" <<'ПИТОН'
+          import json, sys, urllib.error, urllib.request
+          target, version = sys.argv[1], sys.argv[2]
+          host = "test.pypi.org" if target == "testpypi" else "pypi.org"
+          url = f"https://{host}/pypi/leksika/{version}/json"
+          try:
+              with urllib.request.urlopen(url, timeout=30) as response:
+                  json.load(response)
+          except urllib.error.HTTPError as error:
+              if error.code == 404:
+                  print(f"версия {version} на {host} ещё не публиковалась")
+                  raise SystemExit(0)
+              raise
+          raise SystemExit(f"версия {version} уже есть на {host}: {url} — номер выпуска неизменяем")
+
+      - name: Дождаться успешной проверки релиза того же коммита
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ steps.version.outputs.sha }}
+        shell: bash
+        run: |
+          set -uo pipefail
+          # Автоматический выпуск публикуется только после того, как для этого же
+          # коммита прошли тесты и сборка в release.yml. Ручной запуск
+          # (workflow_dispatch) эту проверку не ждёт: он и есть обходной путь.
+          for attempt in $(seq 1 80); do
+            runs=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$SHA&per_page=100" 2>/dev/null || true)
+            state=$(jq -r '[(.workflow_runs // [])[] | select(.path == ".github/workflows/release.yml")][0]
+              | if . == null then "" else "\(.status) \(.conclusion // "")" end' <<<"${runs:-{}}")
+            case "$state" in
+              "completed success")
+                echo "проверка релиза для $SHA завершилась успешно"
+                exit 0 ;;
+              "completed "*)
+                echo "::error::проверка релиза для $SHA завершилась с итогом ${state#completed }" >&2
+                exit 1 ;;
+            esac
+            echo "ожидание release.yml для $SHA (попытка $attempt, состояние: ${state:-запуск не найден})"
+            sleep 45
+          done
+          echo "::error::release.yml для $SHA не завершился за отведённое время; проверьте сборку и запустите публикацию вручную" >&2
+          exit 1
+
+  build:
+    name: Собрать и проверить пакет
+    needs: prepare
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Подставить версию из тега
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: python3 packaging/pypi/prepare_version.py "$VERSION"
+
+      - name: Собрать sdist и wheel
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check "build>=1.2" "twine>=5"
+          python -m build --outdir dist
+          python -m twine check --strict dist/*
+
+      - name: Проверить состав колеса и метаданные
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'ПИТОН'
+          import glob, os, zipfile
+
+          version = os.environ["VERSION"]
+          wheels = glob.glob("dist/*.whl")
+          assert len(wheels) == 1, wheels
+          with zipfile.ZipFile(wheels[0]) as archive:
+              names = set(archive.namelist())
+              metadata = archive.read(
+                  next(n for n in names if n.endswith(".dist-info/METADATA"))
+              ).decode("utf-8")
+
+          required = {
+              "leksika_engine/cli.py",
+              "leksika_engine/__about__.py",
+              "leksika_engine/runtime/лексус.lek",
+              "leksika_engine/runtime/лексика/загрузка.lek",
+              "leksika_engine/runtime/примеры/факториал.lek",
+              "leksika_engine/runtime/словари/разум.веса",
+              "leksika_engine/runtime/данные/словарь/разговорные_слова.json",
+          }
+          missing = sorted(required - names)
+          assert not missing, "в колесе нет файлов: " + ", ".join(missing)
+
+          # Медиа, кэш, git-служебные файлы и секреты в пакет не попадают.
+          forbidden = [
+              n for n in names
+              if n.endswith((".pyc", ".mp3", ".gif", ".env"))
+              or "__pycache__" in n or "/.git" in n
+          ]
+          assert not forbidden, "лишние файлы: " + ", ".join(sorted(forbidden)[:5])
+
+          assert f"\nVersion: {version}\n" in metadata, "версия в METADATA не совпадает"
+          assert "\nName: leksika\n" in metadata
+          assert "License-Expression: MIT" in metadata or "\nLicense: MIT" in metadata
+          print(f"файлов в колесе: {len(names)}, версия {version}")
+          ПИТОН
+
+      - name: Проверить установку колеса и запуск примеров
+        shell: bash
+        run: |
+          set -euo pipefail
+          wheelhouse="$PWD/dist"
+          python -m venv "$RUNNER_TEMP/проверка"
+          "$RUNNER_TEMP/проверка/bin/pip" install --quiet --disable-pip-version-check \
+            --no-index --no-deps --find-links "$wheelhouse" leksika
+          # Уходим из дерева репозитория: иначе import подхватит исходники, а не
+          # установленный пакет. Переменные оболочки — латиницей: bash не считает
+          # кириллицу допустимой в именах переменных в не-UTF-8 локали.
+          cd "$RUNNER_TEMP"
+          "$RUNNER_TEMP/проверка/bin/leksika" справка > help.txt
+          grep -q 'язык программирования' help.txt
+          example=$("$RUNNER_TEMP/проверка/bin/python" -c \
+            "from leksika_engine.cli import ДВИЖОК; import os; print(os.path.join(ДВИЖОК, 'примеры', 'факториал.lek'))")
+          output=$("$RUNNER_TEMP/проверка/bin/leksika" запустить "$example")
+          printf '%s\n' "$output"
+          grep -q 'Факториал пяти равен 120' <<<"$output"
+          "$RUNNER_TEMP/проверка/bin/leksus" склонять книга | grep -q 'книге'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pypi-dist-${{ needs.prepare.outputs.version }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
+
+  publish-testpypi:
+    name: Опубликовать на TestPyPI
+    needs: [prepare, build]
+    if: needs.prepare.outputs.target == 'testpypi'
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/project/leksika/${{ needs.prepare.outputs.version }}/
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: pypi-dist-${{ needs.prepare.outputs.version }}
+          path: dist
+      - name: Опубликовать (Trusted Publishing)
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          packages-dir: dist
+          print-hash: true
+      - name: Сверить файлы и SHA-256 с TestPyPI
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+          INDEX: test.pypi.org
+        shell: bash
+        run: bash packaging/pypi/verify_index.sh
+
+  publish-pypi:
+    name: Опубликовать на PyPI
+    needs: [prepare, build]
+    if: needs.prepare.outputs.target == 'pypi'
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/leksika/${{ needs.prepare.outputs.version }}/
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: pypi-dist-${{ needs.prepare.outputs.version }}
+          path: dist
+      - name: Опубликовать (Trusted Publishing)
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist
+          print-hash: true
+      - name: Сверить файлы и SHA-256 с PyPI
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+          INDEX: pypi.org
+        shell: bash
+        run: bash packaging/pypi/verify_index.sh
