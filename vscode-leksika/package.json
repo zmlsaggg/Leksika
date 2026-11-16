@@ -1,0 +1,51 @@
+{
+  "name": "leksika-language",
+  "displayName": "Leksika",
+  "description": "Подсветка русского языка программирования Лексика (.lek)",
+  "version": "0.1.0",
+  "publisher": "zmlsaggg",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zmlsaggg/Leksika.git"
+  },
+  "homepage": "https://github.com/zmlsaggg/Leksika",
+  "bugs": {
+    "url": "https://github.com/zmlsaggg/Leksika/issues"
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "leksika",
+        "aliases": [
+          "Leksika",
+          "Лексика"
+        ],
+        "extensions": [
+          ".lek"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "leksika",
+        "scopeName": "source.leksika",
+        "path": "./syntaxes/leksika.tmLanguage.json"
+      }
+    ]
+  },
+  "scripts": {
+    "test": "node tests/grammar.cjs"
+  },
+  "devDependencies": {
+    "vscode-oniguruma": "2.0.1",
+    "vscode-textmate": "9.3.0"
+  }
+}

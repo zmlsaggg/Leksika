@@ -1,0 +1,43 @@
+# Maintainer: Leksika contributors
+# Экспериментальное нативное подмножество, не полный Python-исполнитель.
+pkgname=leksika-git
+pkgver=r1.a92317ef9ade
+pkgrel=1
+pkgdesc='Экспериментальное нативное ядро русского языка Лексика (git)'
+arch=('x86_64' 'aarch64')
+url='https://github.com/zmlsaggg/Leksika'
+license=('MIT')
+depends=('glibc')
+makedepends=('git' 'gzip')
+source=('Leksika::git+https://github.com/zmlsaggg/Leksika.git#branch=main')
+sha256sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/Leksika"
+  printf 'r%s.%s' "$(git rev-list --count HEAD)" "$(git rev-parse --short=12 HEAD)"
+}
+
+build() {
+  cd "$srcdir/Leksika"
+  make -C ядро native TARGET=leksika \
+    CFLAGS="${CFLAGS:-} -std=c11 -finput-charset=UTF-8 -fexec-charset=UTF-8 ${LDFLAGS:-}"
+}
+
+check() {
+  cd "$srcdir/Leksika"
+  ядро/leksika --self-test
+  test "$(ядро/leksika выполнить примеры/нативная_vm.lek)" = 'Готово!'
+}
+
+package() {
+  cd "$srcdir/Leksika"
+  install -Dm755 ядро/leksika "$pkgdir/usr/bin/leksika"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm644 источники/russian-words/LICENSE "$pkgdir/usr/share/licenses/$pkgname/DICTIONARY-LICENSE"
+  install -Dm644 packaging/README-native.txt "$pkgdir/usr/share/doc/$pkgname/README-native.txt"
+  install -Dm644 примеры/нативная_vm.lek "$pkgdir/usr/share/doc/$pkgname/examples/нативная_vm.lek"
+  install -Dm644 примеры/перечень_нативно.lek "$pkgdir/usr/share/doc/$pkgname/examples/перечень_нативно.lek"
+  install -d "$pkgdir/usr/share/leksika"
+  gzip -dc ядро/русские_формы.lxd.gz > "$pkgdir/usr/share/leksika/русские_формы.lxd"
+  chmod 644 "$pkgdir/usr/share/leksika/русские_формы.lxd"
+}

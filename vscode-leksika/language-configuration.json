@@ -1,0 +1,14 @@
+{
+  "comments": {"lineComment": "заметка"},
+  "brackets": [["(", ")"], ["[", "]"], ["{", "}"]],
+  "autoClosingPairs": [
+    {"open": "(", "close": ")", "notIn": ["string", "comment"]},
+    {"open": "[", "close": "]", "notIn": ["string", "comment"]},
+    {"open": "{", "close": "}", "notIn": ["string", "comment"]}
+  ],
+  "surroundingPairs": [["(", ")"], ["[", "]"], ["{", "}"]],
+  "indentationRules": {
+    "increaseIndentPattern": "^\\s*(?:[Ее]сли|[Кк]огда|[Ии]наче|[Пп]ока|[Пп]овторить|[Дд]ля|[Гг]де|[Пп]равило)(?=\\s|\\().*(?:\\{|:|[Тт]о|[Тт]огда|[Пп]овторять|[Рр]аз|[Рр]аза)\\s*$|^.*\\{\\s*$",
+    "decreaseIndentPattern": "^\\s*(?:[Кк]онец(?=\\s|[.!?]|$)|[Ии]наче(?=\\s|[{:])|\\})"
+  }
+}

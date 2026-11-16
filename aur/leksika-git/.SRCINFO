@@ -1,0 +1,15 @@
+pkgbase = leksika-git
+	pkgdesc = Экспериментальное нативное ядро русского языка Лексика (git)
+	pkgver = r1.a92317ef9ade
+	pkgrel = 1
+	url = https://github.com/zmlsaggg/Leksika
+	arch = x86_64
+	arch = aarch64
+	license = MIT
+	makedepends = git
+	makedepends = gzip
+	depends = glibc
+	source = Leksika::git+https://github.com/zmlsaggg/Leksika.git#branch=main
+	sha256sums = SKIP
+
+pkgname = leksika-git
