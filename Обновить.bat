@@ -1,3 +1,4 @@
 @echo off
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0update_public.ps1"
-pause
+rem Обновление публичной ветки из основного репозитория.
+rem Сам скрипт лежит в инструменты\публикация, чтобы корень не разрастался.
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0инструменты\публикация\update_public.ps1"
