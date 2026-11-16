@@ -1,0 +1,93 @@
+# Сборка пакета для PyPI: https://pypi.org/project/leksika/
+#
+# Публикация идёт только из GitHub Actions по доверенной публикации (Trusted
+# Publishing) — постоянных токенов в репозитории и секретах нет.
+# Рабочий процесс: .github/workflows/publish.yml
+# Имя проекта, владелец, репозиторий, файл процесса и окружение должны совпадать
+# с настройками на https://pypi.org/manage/account/publishing/.
+#
+# Движок Лексики состоит из файлов .lek — это исходники Python с русскими
+# именами. Поэтому пакет кладёт их как данные рядом с тонким запускатором
+# leksika_engine/cli.py и не выдаёт себя за обычный Python-модуль.
+
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "leksika"
+dynamic = ["version"]
+description = "Лексика — экспериментальный язык программирования с русскими командами и именами (движок Лексус)"
+# Для страницы проекта на PyPI: относительные ссылки README.md там не работают.
+readme = "packaging/pypi/README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [{ name = "zmlsaggg", url = "https://github.com/zmlsaggg" }]
+keywords = [
+    "leksika",
+    "лексус",
+    "russian",
+    "programming-language",
+    "interpreter",
+    "cyrillic",
+    "education",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Operating System :: OS Independent",
+    "Natural Language :: Russian",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Education",
+    "Topic :: Software Development :: Interpreters",
+]
+
+[project.urls]
+Homepage = "https://leksika.gleeze.com/"
+Repository = "https://github.com/zmlsaggg/Leksika"
+Issues = "https://github.com/zmlsaggg/Leksika/issues"
+Changelog = "https://github.com/zmlsaggg/Leksika/blob/main/CHANGELOG.md"
+Documentation = "https://github.com/zmlsaggg/Leksika/blob/main/документы/РУКОВОДСТВО.md"
+
+[project.scripts]
+leksika = "leksika_engine.cli:main"
+leksus = "leksika_engine.cli:main"
+lek = "leksika_engine.cli:main"
+
+# Версию подставляет CI из тега vX.Y.Z(-alpha.N|-beta.N|-rc.N) в формате PEP 440.
+[tool.hatch.version]
+path = "leksika_engine/__about__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["leksika_engine"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"лексус.lek" = "leksika_engine/runtime/лексус.lek"
+"читай.lek" = "leksika_engine/runtime/читай.lek"
+"лексика" = "leksika_engine/runtime/лексика"
+"примеры" = "leksika_engine/runtime/примеры"
+"словари" = "leksika_engine/runtime/словари"
+"документы" = "leksika_engine/runtime/документы"
+"данные/словарь" = "leksika_engine/runtime/данные/словарь"
+
+# Из sdist собирается тот же wheel, поэтому исходники движка нужны и здесь.
+[tool.hatch.build.targets.sdist]
+include = [
+    "pyproject.toml",
+    "packaging/pypi/README.md",
+    "leksika_engine",
+    "лексус.lek",
+    "читай.lek",
+    "лексика",
+    "примеры",
+    "словари",
+    "документы",
+    "данные/словарь",
+    "README.md",
+    "README.en.md",
+    "CHANGELOG.md",
+    "LICENSE",
+]
