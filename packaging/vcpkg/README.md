@@ -40,6 +40,9 @@ vcpkg и тот же triplet. В `CMakeLists.txt`:
 ```cmake
 find_package(leksika CONFIG REQUIRED)
 target_link_libraries(my_app PRIVATE leksika::leksika)
+if(MSVC)
+  target_compile_options(my_app PRIVATE /utf-8)
+endif()
 ```
 
 C: `#include <leksika/ядро/компилятор.h>` и
