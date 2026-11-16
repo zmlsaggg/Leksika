@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Песочница Лексики: что она умеет и чего не умеет</title>
+<meta name="description" content="Границы браузерной песочницы Лексики: какое подмножество языка исполняется локально, как работает ИИ-помощник, что отправляется провайдеру модели и как проверяются примеры.">
+<meta name="author" content="zmlsaggg">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#0d0f13">
+<link rel="canonical" href="https://leksika.gleeze.com/статьи/песочница-что-умеет-и-чего-не-умеет.html">
+<link rel="icon" href="../значки/Лексика.ico" sizes="any">
+<link rel="apple-touch-icon" href="../значки/знак.png">
+
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Лексика">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:title" content="Песочница Лексики: что она умеет и чего не умеет">
+<meta property="og:description" content="Какое подмножество языка исполняется в браузере, как устроен ИИ-помощник и почему песочница не заменяет настольный движок.">
+<meta property="og:url" content="https://leksika.gleeze.com/статьи/песочница-что-умеет-и-чего-не-умеет.html">
+<meta property="og:image" content="https://leksika.gleeze.com/значки/Лексика.png">
+<meta property="og:image:alt" content="Эмблема проекта Лексика">
+<meta property="article:published_time" content="2026-11-16">
+<meta property="article:author" content="zmlsaggg">
+<meta property="article:section" content="Песочница">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Песочница Лексики: границы учебной машины">
+<meta name="twitter:description" content="Что реально исполняется в браузере, а что требует настольного движка.">
+<meta name="twitter:image" content="https://leksika.gleeze.com/значки/Лексика.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "@id": "https://leksika.gleeze.com/статьи/песочница-что-умеет-и-чего-не-умеет.html#статья",
+      "headline": "Песочница Лексики: что она умеет и чего не умеет",
+      "description": "Границы браузерной песочницы Лексики: какое подмножество языка исполняется локально, как работает ИИ-помощник и что отправляется провайдеру модели.",
+      "inLanguage": "ru",
+      "datePublished": "2026-11-16",
+      "dateModified": "2026-11-16",
+      "author": { "@type": "Person", "name": "zmlsaggg", "url": "https://github.com/zmlsaggg" },
+      "publisher": { "@id": "https://leksika.gleeze.com/#организация" },
+      "isPartOf": { "@id": "https://leksika.gleeze.com/#сайт" },
+      "mainEntityOfPage": "https://leksika.gleeze.com/статьи/песочница-что-умеет-и-чего-не-умеет.html",
+      "image": "https://leksika.gleeze.com/значки/Лексика.png",
+      "articleSection": "Песочница",
+      "keywords": ["песочница", "браузер", "JavaScript", "ИИ-помощник", "WebGPU"],
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Главная", "item": "https://leksika.gleeze.com/" },
+          { "@type": "ListItem", "position": 2, "name": "Статьи", "item": "https://leksika.gleeze.com/статьи.html" },
+          { "@type": "ListItem", "position": 3, "name": "Песочница: границы", "item": "https://leksika.gleeze.com/статьи/песочница-что-умеет-и-чего-не-умеет.html" }
+        ]
+      }
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://leksika.gleeze.com/#организация",
+      "name": "Проект Лексика",
+      "url": "https://leksika.gleeze.com/",
+      "logo": "https://leksika.gleeze.com/значки/Лексика.png",
+      "sameAs": ["https://github.com/zmlsaggg/Leksika", "https://github.com/zmlsaggg"]
+    }
+  ]
+}
+</script>
+
+<link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="../сообщество.css">
+<link rel="stylesheet" href="../разделы.css?v=1">
+<link rel="stylesheet" href="../статьи.css?v=1">
+<script src="../сообщество-сборка.js" defer></script>
+</head>
+<body class="раздел-страница статья-страница">
+<a class="пропуск-раздела" href="#основное">Перейти к содержимому</a>
+<div class="фон-сайта" aria-hidden="true"><picture><source media="(prefers-reduced-motion: reduce)" srcset="../фон-сайта-статичный.webp"><img src="../фон-анимация.gif" alt="" width="360" height="360"></picture></div>
+
+<main class="полотно" id="основное">
+  <nav class="раздел-навигация" aria-label="Главная навигация">
+    <a class="раздел-логотип" href="../index.html"><span>Л</span> Лексика<i>.</i></a>
+    <div><a href="../index.html">Главная</a><a href="../playground.html">Песочница</a><a href="../игры.html">Игры</a><a href="../статьи.html">Статьи</a><a href="../контакты.html">Контакты</a></div>
+    <div id="авторизация" class="авторизация" aria-label="Учётная запись"></div>
+  </nav>
+
+  <article class="страница-текст">
+    <p class="статья-метка"><a href="../статьи.html">СТАТЬИ</a> <span>/</span> ПЕСОЧНИЦА <span>/</span> 03</p>
+    <h1>Песочница:<br><em>что она умеет</em></h1>
+    <p class="статья-лид">Песочница — самая заметная часть сайта и самая ограниченная. Она исполняет учебное подмножество языка прямо в браузере, без сервера и без установки. Здесь перечислено, где именно проходит граница и почему она там.</p>
+
+    <div class="статья-сведения">
+      <span>Автор: <a href="https://github.com/zmlsaggg" rel="noopener noreferrer">zmlsaggg</a></span>
+      <span class="точка-разделитель">·</span>
+      <span><time datetime="2026-11-16">16 ноября 2026</time></span>
+      <span class="точка-разделитель">·</span>
+      <span>Чтение: 6 минут</span>
+      <span class="точка-разделитель">·</span>
+      <span>Русский / Песочница</span>
+    </div>
+
+    <div class="статья-тело">
+      <p>Код, написанный в песочнице, не уходит на сервер: его исполняет JavaScript-машина в вашей вкладке. Это же объясняет и ограничения: всё, чего браузерная машина не умеет, она не умеет принципиально, а не «пока».</p>
+
+      <h2>Что поддерживается</h2>
+      <ul>
+        <li>переменные, числа, логика и речь с подстановкой значений;</li>
+        <li>арифметика, сравнения, скобки и вызовы встроенных действий;</li>
+        <li>условия, циклы, перебор перечней и собственные правила с возвратом;</li>
+        <li>перечни в квадратных скобках и вызовы вида <code>сказать(значение)</code>;</li>
+        <li>разговорные профили — но только как синонимы команд, которые есть в учебной машине.</li>
+      </ul>
+      <p>Пятнадцати примерам на странице песочницы соответствует столько же проверок: исходник, ожидаемый вывод и сообщения об ошибках сверяются в GitHub Actions при каждом изменении. Пример на главной странице проверяется отдельно и не исполняется в браузере посетителя — там показан заранее известный результат.</p>
+
+      <h2>Чего не поддерживается</h2>
+      <ul>
+        <li>файловая система и системные команды;</li>
+        <li>подключение модулей и пакетов;</li>
+        <li>словари и часть старых падежных команд;</li>
+        <li>полная морфология: падежное разрешение в песочнице приближённое, неоднозначные формы требуют точного имени.</li>
+      </ul>
+      <p>Это не список багов, а сознательная граница. Полный исполнитель живёт в настольной версии, и именно там стоит проверять программы, которые должны работать по-настоящему.</p>
+
+      <h2>ИИ-помощник и приватность</h2>
+      <p>Помощник включён по умолчанию, но у него два принципиально разных режима.</p>
+      <ul>
+        <li><strong>Модель в браузере.</strong> Вы указываете публичный ID модели, её веса скачиваются напрямую в браузер и кэшируются. Исходный текст программы не отправляется на сервер модели: скачиваются только файлы модели и runtime. Первое скачивание может занимать сотни мегабайт, и это нужно учитывать на мобильном трафике.</li>
+        <li><strong>Внешний API.</strong> Поддерживаются OpenAI-совместимый API, Anthropic и Gemini. Адрес, модель и ключ вводит пользователь. Запрос и код отправляются провайдеру только после нажатия кнопки. Ключ не сохраняется в localStorage и очищается при выключении помощника.</li>
+      </ul>
+      <p>Стиль ответа — строгий, баланс или креатив — влияет только на формулировки. Ни один стиль не меняет грамматику и правила исполнения: ответ модели не является решением компилятора, синтаксис проверяет сама песочница. Исходный код считается данными, а не инструкциями для модели.</p>
+
+      <div class="статья-вывод">
+        <b>ПРАВИЛО, КОТОРОЕ СТОИТ ЗАПОМНИТЬ</b>
+        <p>Если программа работает в песочнице, это значит, что она корректна в учебном подмножестве. Это не значит, что она корректна в полном языке. Для серьёзной проверки нужен настольный исполнитель и его тесты.</p>
+      </div>
+
+      <h2>Почему бы не сделать песочницу полной</h2>
+      <p>Полный язык требует файловой системы, модулей, словарей, полной морфологии и слоя системных вызовов. Дать всё это в браузере — значит либо тащить интерпретатор целиком в JavaScript, либо открыть доступ к среде, который в браузере опасен. Оба пути противоречат правилу «никакой утечки устройства машины в язык» и заметно усложняют проверки.</p>
+      <p>Выбранный компромисс: браузер показывает язык быстрее всего, а всю глубину оставляет настольной версии. Ограничения при этом написаны прямо на странице песочницы, а не спрятаны в FAQ.</p>
+
+      <h2>Что попробовать</h2>
+      <ul>
+        <li><a href="../playground.html">Открыть песочницу</a> и запустить пример «Первый запуск».</li>
+        <li>Взять пример «99 Bottles» и заменить число на своё — ошибки вывода видно сразу.</li>
+        <li>Включить внешний API только на тестовом ключе с ограниченным лимитом.</li>
+        <li>Сравнить поведение с <a href="../документы/РУКОВОДСТВО.md">руководством языка</a>: расхождения — это и есть граница учебной машины.</li>
+      </ul>
+
+      <div class="статья-дальше">
+        <b>ЧИТАТЬ ДАЛЬШЕ</b>
+        <ul>
+          <li><a href="../документы/ОНЛАЙН_ПЕСОЧНИЦА.md"><span>Техническое описание песочницы и моделей</span> ДОКУМЕНТАЦИЯ ↗</a></li>
+          <li><a href="перенос-движка-с-python-на-c11.html"><span>Где проходит граница нативного ядра</span> ДВИЖОК ↗</a></li>
+          <li><a href="падежи-вместо-операторов.html"><span>Как язык понимает падежи</span> ЯЗЫК ↗</a></li>
+        </ul>
+      </div>
+    </div>
+  </article>
+  <footer class="подвал-сайта">
+    <div class="подвал-сайта-знак"><a class="раздел-логотип" href="../index.html"><span>Л</span> Лексика<i>.</i></a><p>Открытый проект одного разработчика.<br>Русский язык программирования и движок Лексус. MIT.</p></div>
+    <nav aria-label="Ссылки в подвале"><a href="../статьи.html">Статьи</a><a href="../о-проекте.html">О проекте</a><a href="../контакты.html">Контакты</a><a href="../playground.html">Песочница</a><a href="https://github.com/zmlsaggg/Leksika" rel="noopener noreferrer">GitHub ↗</a><a href="https://github.com/zmlsaggg/Leksika/issues" rel="noopener noreferrer">Задачи ↗</a><a href="https://github.com/zmlsaggg/Leksika/blob/main/SECURITY.md" rel="noopener noreferrer">Безопасность ↗</a></nav>
+    <span>ЛЕКСИКА / ЛЕКСУС</span>
+  </footer>
+</main>
+</body>
+</html>

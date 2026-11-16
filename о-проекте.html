@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>О проекте Лексика — кто и зачем делает русский язык программирования</title>
+<meta name="description" content="О проекте Лексика: кто развивает русский язык программирования и движок Лексус, зачем он нужен, как устроена разработка и что из заявленного пока не работает.">
+<meta name="author" content="Проект Лексика">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#0d0f13">
+<link rel="canonical" href="https://leksika.gleeze.com/о-проекте.html">
+<link rel="icon" href="значки/Лексика.ico" sizes="any">
+<link rel="apple-touch-icon" href="значки/знак.png">
+
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Лексика">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:title" content="О проекте Лексика — кто и зачем делает русский язык программирования">
+<meta property="og:description" content="Открытый проект одного автора: зачем нужен язык с русскими командами и падежами, что уже работает, а что ещё в разработке.">
+<meta property="og:url" content="https://leksika.gleeze.com/о-проекте.html">
+<meta property="og:image" content="https://leksika.gleeze.com/значки/Лексика.png">
+<meta property="og:image:alt" content="Эмблема проекта Лексика">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="О проекте Лексика">
+<meta name="twitter:description" content="Кто делает русский язык программирования Лексика, зачем он нужен и что пока не работает.">
+<meta name="twitter:image" content="https://leksika.gleeze.com/значки/Лексика.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://leksika.gleeze.com/#организация",
+      "name": "Проект Лексика",
+      "alternateName": "Leksika",
+      "url": "https://leksika.gleeze.com/",
+      "description": "Открытый проект одного разработчика: русский язык программирования Лексика и движок Лексус.",
+      "foundingDate": "2026-11-10",
+      "logo": "https://leksika.gleeze.com/значки/Лексика.png",
+      "founder": { "@id": "https://leksika.gleeze.com/о-проекте.html#автор" },
+      "knowsAbout": ["языки программирования", "русская морфология", "компиляторы", "виртуальные машины"],
+      "sameAs": [
+        "https://github.com/zmlsaggg/Leksika",
+        "https://github.com/zmlsaggg"
+      ],
+      "contactPoint": [
+        {
+          "@type": "ContactPoint",
+          "contactType": "technical support",
+          "url": "https://github.com/zmlsaggg/Leksika/issues",
+          "availableLanguage": "ru"
+        },
+        {
+          "@type": "ContactPoint",
+          "contactType": "security",
+          "url": "https://github.com/zmlsaggg/Leksika/blob/main/SECURITY.md",
+          "availableLanguage": "ru"
+        }
+      ]
+    },
+    {
+      "@type": "Person",
+      "@id": "https://leksika.gleeze.com/о-проекте.html#автор",
+      "name": "zmlsaggg",
+      "url": "https://github.com/zmlsaggg",
+      "jobTitle": "Автор и сопровождающий проекта",
+      "knowsAbout": ["языки программирования", "русская морфология", "C11", "Python"],
+      "worksFor": { "@id": "https://leksika.gleeze.com/#организация" }
+    },
+    {
+      "@type": "AboutPage",
+      "name": "О проекте Лексика",
+      "url": "https://leksika.gleeze.com/о-проекте.html",
+      "inLanguage": "ru",
+      "isPartOf": { "@id": "https://leksika.gleeze.com/#сайт" },
+      "about": { "@id": "https://leksika.gleeze.com/#организация" },
+      "primaryImageOfPage": "https://leksika.gleeze.com/значки/Лексика.png",
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Главная", "item": "https://leksika.gleeze.com/" },
+          { "@type": "ListItem", "position": 2, "name": "О проекте", "item": "https://leksika.gleeze.com/о-проекте.html" }
+        ]
+      }
+    }
+  ]
+}
+</script>
+
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="сообщество.css">
+<link rel="stylesheet" href="разделы.css?v=1">
+<link rel="stylesheet" href="статьи.css?v=1">
+<script src="сообщество-сборка.js" defer></script>
+</head>
+<body class="раздел-страница статья-страница">
+<a class="пропуск-раздела" href="#основное">Перейти к содержимому</a>
+<div class="фон-сайта" aria-hidden="true"><picture><source media="(prefers-reduced-motion: reduce)" srcset="фон-сайта-статичный.webp"><img src="фон-анимация.gif" alt="" width="360" height="360"></picture></div>
+
+<main class="полотно" id="основное">
+  <nav class="раздел-навигация" aria-label="Главная навигация">
+    <a class="раздел-логотип" href="index.html"><span>Л</span> Лексика<i>.</i></a>
+    <div><a href="index.html">Главная</a><a href="playground.html">Песочница</a><a href="игры.html">Игры</a><a href="статьи.html">Статьи</a><a href="контакты.html">Контакты</a></div>
+    <div id="авторизация" class="авторизация" aria-label="Учётная запись"></div>
+  </nav>
+
+  <article class="страница-текст">
+    <p class="статья-метка"><a href="index.html">ГЛАВНАЯ</a> <span>/</span> О ПРОЕКТЕ <span>/</span> 01</p>
+    <h1>Один автор, один язык<br><em>и много честных оговорок</em></h1>
+    <p class="статья-лид">Лексика — не продукт компании и не стартап с инвесторами. Это открытый проект одного разработчика из России, который пробует построить язык программирования на русской морфологии: падеж вместо символов, слово вместо ключевого слова.</p>
+
+    <div class="статья-сведения">
+      <span>Автор: <a href="https://github.com/zmlsaggg" rel="noopener noreferrer">zmlsaggg</a></span>
+      <span class="точка-разделитель">·</span>
+      <span>Репозиторий открыт с ноября 2026 года</span>
+      <span class="точка-разделитель">·</span>
+      <span>Лицензия MIT</span>
+      <span class="точка-разделитель">·</span>
+      <span>Обновлено <time datetime="2026-11-16">16 ноября 2026</time></span>
+    </div>
+
+    <div class="страница-абзацы">
+      <h2>Кто это делает</h2>
+      <p>Проект ведёт один человек под ником <strong>zmlsaggg</strong>. Под этим же именем ведутся репозиторий, обсуждения, приём отчётов об ошибках и выпуски. Отдельного юридического лица, офиса и штата нет: «Проект Лексика» — это название работы, а не организация с сотрудниками.</p>
+      <p>Никакого персонального email или телефона автор публично не оставляет. Связаться можно только через GitHub — <a href="https://github.com/zmlsaggg/Leksika/issues" rel="noopener noreferrer">задачи</a>, <a href="https://github.com/zmlsaggg/Leksika/discussions" rel="noopener noreferrer">обсуждения</a>, приватные сообщения об уязвимостях и <a href="форум.html">форум на этом сайте</a>. Все каналы перечислены на странице <a href="контакты.html">«Контакты»</a>.</p>
+
+      <h2>Зачем нужен ещё один язык программирования</h2>
+      <p>Не для того, чтобы заменить Python или C++. Лексика проверяет узкую гипотезу: <em>русская морфология несёт информацию, которую в обычных языках передают знаки и порядок слов</em>. Если движок умеет склонять имя, то <code>положить десять в сумму</code>, <code>прибавить два к сумме</code> и <code>сказать длина суммы</code> могут означать три разные операции без единого оператора присваивания.</p>
+      <p>Из этой гипотезы вытекает всё остальное: собственный лексер, словарь словоформ, падежное управление командами, разбор с «деревом смысла» и постепенный перенос исполнения с Python на нативное ядро на C11.</p>
+
+      <div class="статья-вывод">
+        <b>ЧЕСТНО О ЦЕЛИ</b>
+        <p>Лексика — исследовательский и учебный проект. Он не обещает производительность C++, промышленную стандартную библиотеку или готовность к рабочим задачам. Обещание скромнее: язык, на котором код читается по-русски, и движок, который развивается открыто, по шагам, с видимой историей изменений.</p>
+      </div>
+
+      <h2>Что работает, а что нет</h2>
+      <p>Это самая важная таблица на странице. Если какой-то текст на сайте расходится с ней — верьте таблице, а не тексту.</p>
+      <table class="таблица-статуса">
+        <thead><tr><th>Часть проекта</th><th>Состояние</th><th>Что это значит на практике</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Браузерная песочница</td>
+            <td><span class="метка-статуса работает">РАБОТАЕТ</span></td>
+            <td>Учебное подмножество языка: переменные, числа, условия, циклы, правила, перечни. Открывается без установки.</td>
+          </tr>
+          <tr>
+            <td>Настольный исполнитель</td>
+            <td><span class="метка-статуса работает">РАБОТАЕТ</span></td>
+            <td>Полный язык сегодня исполняется переходным runtime на Python 3.8+. Есть установщик для Windows и скрипт для Linux и macOS.</td>
+          </tr>
+          <tr>
+            <td>Нативное ядро на C11</td>
+            <td><span class="метка-статуса частично">ЧАСТИЧНО</span></td>
+            <td>Свой лексер, компилятор подмножества, проверка байткода и регистровая VM. Не весь язык, и это не защищённая песочница.</td>
+          </tr>
+          <tr>
+            <td>Полный отказ от Python</td>
+            <td><span class="метка-статуса нет">НЕТ</span></td>
+            <td>План переноса описан, но цель «движок без Python» пока не достигнута.</td>
+          </tr>
+          <tr>
+            <td>Самохостинг</td>
+            <td><span class="метка-статуса нет">НЕТ</span></td>
+            <td>Компилятор ещё не написан на самой Лексике. Это дальняя цель, а не текущее состояние.</td>
+          </tr>
+          <tr>
+            <td>Формальные релизы и поддержка версий</td>
+            <td><span class="метка-статуса частично">В РАБОТЕ</span></td>
+            <td>Сборки обновляются автоматически и не подписаны; политика поддержки версий будет объявлена отдельно.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>Подробности — в <a href="документы/АРХИТЕКТУРА.md">архитектуре движка</a>, <a href="документы/АРХИТЕКТУРА_НАТИВНОГО_ДВИЖКА.md">архитектуре нативного ядра</a> и <a href="https://github.com/zmlsaggg/Leksika/blob/main/ПЛАН_ПЕРЕНОСА_РАНТАЙМА.md" rel="noopener noreferrer">плане переноса runtime</a>.</p>
+
+      <h2>Как устроена разработка</h2>
+      <ul>
+        <li><strong>Всё в открытом репозитории.</strong> Код языка, документация, установщики, сайт и проверки лежат в <a href="https://github.com/zmlsaggg/Leksika" rel="noopener noreferrer">github.com/zmlsaggg/Leksika</a>.</li>
+        <li><strong>Проверки вместо обещаний.</strong> Язык проверяется набором тестов, нативное ядро — отдельными тестами C11, сайт — браузерными проверками в GitHub Actions. Сборка, не прошедшая проверки, не попадает в выпуск.</li>
+        <li><strong>Честные оговорки в текстах.</strong> Если возможность не готова, это написано прямо — в README, в документации и на этом сайте.</li>
+        <li><strong>Один сопровождающий.</strong> Время ответа не гарантируется, поддержка добровольная. Это ограничение, а не маркетинговая формулировка.</li>
+      </ul>
+
+      <h2>Что можно сделать прямо сейчас</h2>
+      <ul>
+        <li><a href="playground.html">Написать первую программу в песочнице</a> — 15 примеров, без установки и регистрации.</li>
+        <li>Прочитать <a href="документы/РУКОВОДСТВО.md">руководство языка</a> и <a href="документы/СЛОВАРЬ.md">словарь команд</a>.</li>
+        <li>Скачать сборку для Windows из <a href="https://github.com/zmlsaggg/Leksika/releases/tag/nightly" rel="noopener noreferrer">актуального выпуска</a>.</li>
+        <li><a href="https://github.com/zmlsaggg/Leksika/issues" rel="noopener noreferrer">Сообщить об ошибке</a>, если что-то не работает: минимальный пример и версия сильно ускоряют разбор.</li>
+      </ul>
+
+      <div class="статья-дальше">
+        <b>ДАЛЬШЕ</b>
+        <ul>
+          <li><a href="контакты.html"><span>Как связаться с автором и куда сообщать об ошибках</span> КОНТАКТЫ ↗</a></li>
+          <li><a href="статьи.html"><span>Разборы языка, движка и решений в проекте</span> СТАТЬИ ↗</a></li>
+          <li><a href="https://github.com/zmlsaggg/Leksika" rel="noopener noreferrer"><span>Исходный код, задачи и история изменений</span> GITHUB ↗</a></li>
+        </ul>
+      </div>
+    </div>
+  </article>
+  <footer class="подвал-сайта">
+    <div class="подвал-сайта-знак"><a class="раздел-логотип" href="index.html"><span>Л</span> Лексика<i>.</i></a><p>Открытый проект одного разработчика.<br>Русский язык программирования и движок Лексус. MIT.</p></div>
+    <nav aria-label="Ссылки в подвале"><a href="статьи.html">Статьи</a><a href="о-проекте.html">О проекте</a><a href="контакты.html">Контакты</a><a href="playground.html">Песочница</a><a href="https://github.com/zmlsaggg/Leksika" rel="noopener noreferrer">GitHub ↗</a><a href="https://github.com/zmlsaggg/Leksika/issues" rel="noopener noreferrer">Задачи ↗</a><a href="https://github.com/zmlsaggg/Leksika/blob/main/SECURITY.md" rel="noopener noreferrer">Безопасность ↗</a></nav>
+    <span>ЛЕКСИКА / ЛЕКСУС</span>
+  </footer>
+</main>
+</body>
+</html>

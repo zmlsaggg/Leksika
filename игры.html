@@ -1,8 +1,33 @@
 <!doctype html>
-<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Игры и программы — Лексика</title><link rel="icon" href="значки/Лексика.ico"><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="сообщество.css?v=3"><link rel="stylesheet" href="разделы.css?v=1"><script src="учебная-машина.js" defer></script><script src="игры.js?v=3" defer></script></head>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Игры и программы — Лексика</title><link rel="icon" href="значки/Лексика.ico"><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="сообщество.css?v=3"><link rel="stylesheet" href="разделы.css?v=1"><script src="учебная-машина.js" defer></script><script src="игры.js?v=3" defer></script><script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "@id": "https://leksika.gleeze.com/#организация",
+  "name": "Проект Лексика",
+  "alternateName": "Leksika",
+  "url": "https://leksika.gleeze.com/",
+  "description": "Открытый проект одного разработчика: русский язык программирования Лексика и движок Лексус.",
+  "foundingDate": "2026-11-10",
+  "logo": "https://leksika.gleeze.com/значки/Лексика.png",
+  "founder": {
+    "@type": "Person",
+    "@id": "https://leksika.gleeze.com/о-проекте.html#автор",
+    "name": "zmlsaggg",
+    "url": "https://github.com/zmlsaggg",
+    "jobTitle": "Автор и сопровождающий проекта"
+  },
+  "sameAs": ["https://github.com/zmlsaggg/Leksika", "https://github.com/zmlsaggg"],
+  "contactPoint": [
+    { "@type": "ContactPoint", "contactType": "technical support", "url": "https://github.com/zmlsaggg/Leksika/issues", "availableLanguage": "ru" },
+    { "@type": "ContactPoint", "contactType": "security", "url": "https://github.com/zmlsaggg/Leksika/blob/main/SECURITY.md", "availableLanguage": "ru" }
+  ]
+}
+</script>
+</head>
 <body class="раздел-страница"><a class="пропуск-раздела" href="#основное">Перейти к содержимому</a><div class="фон-сайта" aria-hidden="true"><picture><source media="(prefers-reduced-motion: reduce)" srcset="фон-сайта-статичный.webp"><img src="фон-анимация.gif" alt="" width="360" height="360"></picture></div>
 <main class="полотно сообщество каталог" id="основное" data-сообщество="программы">
-<nav class="раздел-навигация"><a class="раздел-логотип" href="index.html"><span>Л</span> Лексика<i>.</i></a><div><a href="index.html">Главная</a><a href="playground.html">Примеры и песочница</a><a href="форум.html">Форум</a></div><div id="авторизация" class="авторизация" aria-label="Учётная запись"></div></nav>
+<nav class="раздел-навигация"><a class="раздел-логотип" href="index.html"><span>Л</span> Лексика<i>.</i></a><div><a href="index.html">Главная</a><a href="playground.html">Примеры и песочница</a><a href="статьи.html">Статьи</a><a href="форум.html">Форум</a><a href="о-проекте.html">О проекте</a><a href="контакты.html">Контакты</a></div><div id="авторизация" class="авторизация" aria-label="Учётная запись"></div></nav>
 <header class="раздел-герой"><div><p class="раздел-метка"><span>01 / КАТАЛОГ</span> &nbsp; ИГРЫ И ПРОГРАММЫ</p><h1>Играть. Изучать.<br><em>Создавать.</em></h1><p>Здесь код становится игрой. Попробуйте оригинальные проекты на Лексике или познакомьтесь с работами сообщества.</p><a class="раздел-cta" href="#каталог">Открыть каталог <span>↘</span></a></div><div class="каталог-арт" aria-hidden="true"><span>Л</span><b>ИГРА НАЧИНАЕТСЯ<br>СО СЛОВА.</b><small>PLAY / LEK / 01</small></div></header>
 <section class="каталог-вступление" id="каталог"><div><p class="раздел-метка"><span>02 / ВЫБИРАЙТЕ</span> &nbsp; КАТАЛОГ</p><h2>Во что <em>сыграем?</em></h2></div><p>Оригинальные игры работают в браузере. Пользовательские работы можно изучить и скачать как текст — они не запускаются автоматически.</p></section>
 <div class="каталог-панель"><div class="каталог-фильтры" role="group" aria-label="Фильтр каталога"><button type="button" data-фильтр="все" aria-pressed="true">Все проекты</button><button type="button" data-фильтр="оригинальные" aria-pressed="false">Оригинальные</button><button type="button" data-фильтр="пользовательские" aria-pressed="false">От сообщества</button></div><span>.LEK / БРАУЗЕР</span></div>
@@ -24,4 +49,4 @@
 
 
 <section class="публикация-приглашение" id="опубликовать"><div><p class="раздел-метка"><span>03 / СООБЩЕСТВО</span></p><h2>Есть своя <em>идея?</em></h2><p>Поделитесь игрой или программой на Лексике. Файл .lek или текст до 32 КБ; исходник будет доступен всем для изучения.</p></div><details class="загрузка-проекта"><summary>Поделиться проектом <span>↗</span></summary><p>Для публикации войдите через GitHub.</p><form id="форма-публикации"><label>Название<input id="название-публикации" maxlength="100" placeholder="Название проекта" required></label><label>Файл .lek (необязательно)<input type="file" id="файл-программы" accept=".lek,text/plain"></label><label>Или исходный код<textarea id="текст-публикации" rows="5" placeholder="Напишите или вставьте код"></textarea></label><button type="submit">Опубликовать ↗</button></form><p id="статус-сообщества" role="status" aria-live="polite"></p></details></section>
-<footer class="раздел-подвал"><span>ЛЕКСИКА / ОТКРЫТЫЙ ПРОЕКТ</span><a href="playground.html">Продолжить в песочнице ↗</a></footer></main><script src="сообщество-сборка.js?v=3" defer></script></body></html>
+<footer class="раздел-подвал"><span>ЛЕКСИКА / ОТКРЫТЫЙ ПРОЕКТ</span><div class="подвал-ссылки"><a href="playground.html">Продолжить в песочнице ↗</a><a href="статьи.html">Статьи ↗</a><a href="о-проекте.html">О проекте ↗</a><a href="контакты.html">Контакты ↗</a></div></footer></main><script src="сообщество-сборка.js?v=3" defer></script></body></html>

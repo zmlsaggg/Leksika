@@ -26,6 +26,15 @@ on:
       - 'разделы.css'
       - 'данные/bad-apple/**'
       - 'styles.css'
+      - 'статьи.css'
+      - 'статьи.html'
+      - 'статьи/**'
+      - 'о-проекте.html'
+      - 'контакты.html'
+      - 'sitemap.xml'
+      - 'llms.txt'
+      - 'документы/АВТОР_И_КОНТАКТЫ.md'
+      - 'проверка/сайт_контакты.cjs'
       - 'playground.html'
       - 'playground.css'
       - 'playground.js'
@@ -61,6 +70,15 @@ on:
       - 'разделы.css'
       - 'данные/bad-apple/**'
       - 'styles.css'
+      - 'статьи.css'
+      - 'статьи.html'
+      - 'статьи/**'
+      - 'о-проекте.html'
+      - 'контакты.html'
+      - 'sitemap.xml'
+      - 'llms.txt'
+      - 'документы/АВТОР_И_КОНТАКТЫ.md'
+      - 'проверка/сайт_контакты.cjs'
       - 'playground.html'
       - 'playground.css'
       - 'playground.js'
@@ -89,6 +107,8 @@ jobs:
           npm ci
           npm run build:community
           git diff --exit-code -- сообщество-сборка.js
+      - name: Проверить контакты, автора и разметку страниц
+        run: node проверка/сайт_контакты.cjs
       - name: Проверить программы на Лексике
         run: node проверка/игры.cjs
       - name: Проверить образцы главной

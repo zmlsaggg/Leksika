@@ -21,9 +21,20 @@
   <a href="https://leksika.gleeze.com/">Сайт</a> ·
   <a href="https://leksika.gleeze.com/playground.html">Песочница</a> ·
   <a href="https://leksika.gleeze.com/игры.html">Игры</a> ·
+  <a href="https://leksika.gleeze.com/статьи.html">Статьи</a> ·
+  <a href="https://leksika.gleeze.com/о-проекте.html">О проекте</a> ·
+  <a href="https://leksika.gleeze.com/контакты.html">Контакты</a> ·
   <a href="README.en.md">English</a> ·
   <a href="CONTRIBUTING.md">Участие в разработке</a> ·
   <a href="SECURITY.md">Сообщить об уязвимости</a>
+</p>
+
+<p align="center">
+  Автор и сопровождающий — <a href="https://github.com/zmlsaggg">zmlsaggg</a>.
+  Это открытый проект одного разработчика: без компании, офиса и публичной почты.
+  Связаться можно через <a href="https://github.com/zmlsaggg/Leksika/issues">задачи</a>,
+  <a href="https://github.com/zmlsaggg/Leksika/discussions">обсуждения</a> и
+  <a href="https://leksika.gleeze.com/форум.html">форум сайта</a>.
 </p>
 
 ---

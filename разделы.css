@@ -66,3 +66,4 @@
 .примеры-страница .шапка h1 { margin:4px 0; font-size:clamp(32px,3vw,42px); }
 .примеры-страница .примеры-сетка button { min-height:43px; }
 .примеры-страница .выбор-примеров { margin-bottom:4px; }
+.подвал-ссылки { display:flex; flex-wrap:wrap; gap:10px 18px; align-items:center; }

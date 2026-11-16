@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Статьи о Лексике — язык, движок, песочница и история проекта</title>
+<meta name="description" content="Статьи о русском языке программирования Лексика: падежный разбор, перенос движка с Python на C11, границы браузерной песочницы, примеры программ и история русских языков программирования.">
+<meta name="author" content="zmlsaggg">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#0d0f13">
+<link rel="canonical" href="https://leksika.gleeze.com/статьи.html">
+<link rel="icon" href="значки/Лексика.ico" sizes="any">
+<link rel="apple-touch-icon" href="значки/знак.png">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Лексика">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:title" content="Статьи о Лексике — язык, движок и история проекта">
+<meta property="og:description" content="Разборы устройства языка, движка и решений в проекте. С примерами кода и честным статусом.">
+<meta property="og:url" content="https://leksika.gleeze.com/статьи.html">
+<meta property="og:image" content="https://leksika.gleeze.com/значки/Лексика.png">
+<meta property="og:image:alt" content="Эмблема проекта Лексика">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Статьи о Лексике">
+<meta name="twitter:description" content="Падежи, движок, песочница, примеры и история русских языков программирования.">
+<meta name="twitter:image" content="https://leksika.gleeze.com/значки/Лексика.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "CollectionPage",
+      "@id": "https://leksika.gleeze.com/статьи.html#страница",
+      "name": "Статьи о Лексике",
+      "url": "https://leksika.gleeze.com/статьи.html",
+      "inLanguage": "ru",
+      "description": "Разборы языка, движка и решений в проекте Лексика.",
+      "isPartOf": { "@id": "https://leksika.gleeze.com/#сайт" },
+      "publisher": { "@id": "https://leksika.gleeze.com/#организация" },
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Главная", "item": "https://leksika.gleeze.com/" },
+          { "@type": "ListItem", "position": 2, "name": "Статьи", "item": "https://leksika.gleeze.com/статьи.html" }
+        ]
+      },
+      "mainEntity": {
+        "@type": "ItemList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "url": "https://leksika.gleeze.com/статьи/падежи-вместо-операторов.html", "name": "Падежи вместо операторов: как Лексика понимает программу" },
+          { "@type": "ListItem", "position": 2, "url": "https://leksika.gleeze.com/статьи/перенос-движка-с-python-на-c11.html", "name": "Дорога с Python на C11: состояние движка Лексус" },
+          { "@type": "ListItem", "position": 3, "url": "https://leksika.gleeze.com/статьи/песочница-что-умеет-и-чего-не-умеет.html", "name": "Песочница: что она умеет и чего не умеет" },
+          { "@type": "ListItem", "position": 4, "url": "https://leksika.gleeze.com/статьи/почему-проект-пишет-о-своих-недостатках.html", "name": "Зачем проект пишет о своих недостатках" },
+          { "@type": "ListItem", "position": 5, "url": "https://leksika.gleeze.com/статьи/три-задачи-на-лексике.html", "name": "Три задачи на Лексике" },
+          { "@type": "ListItem", "position": 6, "url": "https://leksika.gleeze.com/статьи/русские-языки-программирования-до-лексики.html", "name": "Русские языки программирования до Лексики" }
+        ]
+      }
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://leksika.gleeze.com/#организация",
+      "name": "Проект Лексика",
+      "alternateName": "Leksika",
+      "url": "https://leksika.gleeze.com/",
+      "logo": "https://leksika.gleeze.com/значки/Лексика.png",
+      "founder": { "@id": "https://leksika.gleeze.com/о-проекте.html#автор" },
+      "sameAs": ["https://github.com/zmlsaggg/Leksika", "https://github.com/zmlsaggg"],
+      "contactPoint": [
+        { "@type": "ContactPoint", "contactType": "technical support", "url": "https://github.com/zmlsaggg/Leksika/issues", "availableLanguage": "ru" },
+        { "@type": "ContactPoint", "contactType": "security", "url": "https://github.com/zmlsaggg/Leksika/blob/main/SECURITY.md", "availableLanguage": "ru" }
+      ]
+    }
+  ]
+}
+</script>
+
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="сообщество.css">
+<link rel="stylesheet" href="разделы.css?v=1">
+<link rel="stylesheet" href="статьи.css?v=1">
+<script src="сообщество-сборка.js" defer></script>
+</head>
+<body class="раздел-страница статья-страница">
+<a class="пропуск-раздела" href="#основное">Перейти к содержимому</a>
+<div class="фон-сайта" aria-hidden="true"><picture><source media="(prefers-reduced-motion: reduce)" srcset="фон-сайта-статичный.webp"><img src="фон-анимация.gif" alt="" width="360" height="360"></picture></div>
+
+<main class="полотно" id="основное">
+  <nav class="раздел-навигация" aria-label="Главная навигация">
+    <a class="раздел-логотип" href="index.html"><span>Л</span> Лексика<i>.</i></a>
+    <div><a href="index.html">Главная</a><a href="playground.html">Песочница</a><a href="игры.html">Игры</a><a href="о-проекте.html">О проекте</a><a href="контакты.html">Контакты</a></div>
+    <div id="авторизация" class="авторизация" aria-label="Учётная запись"></div>
+  </nav>
+
+  <section class="статьи-герой">
+    <p class="статья-метка">СТАТЬИ <span>/</span> 06 МАТЕРИАЛОВ</p>
+    <h1>Разборы,<br><em>а не обещания</em></h1>
+    <p>Как устроен падежный разбор, где проходит граница между Python-runtime и нативным ядром, что реально исполняет браузер и почему в документации так много оговорок. Все материалы пишет автор проекта, у каждого есть дата и ссылка на проверяемые документы.</p>
+  </section>
+
+  <ul class="статьи-сетка">
+    <li class="карточка-статьи">
+      <div class="карточка-статьи-метка"><span>01 / ЯЗЫК</span><span>8 МИН</span></div>
+      <h2><a href="статьи/падежи-вместо-операторов.html">Падежи вместо операторов</a></h2>
+      <p>Как падеж имени заменяет операторы присваивания, почему таблицы словоформ строятся с беглыми гласными и где падежный разбор предсказуемо ломается.</p>
+      <div class="карточка-статьи-низ"><time datetime="2026-11-16">16 ноября 2026</time><a href="статьи/падежи-вместо-операторов.html">Читать ↗</a></div>
+    </li>
+    <li class="карточка-статьи">
+      <div class="карточка-статьи-метка"><span>02 / ДВИЖОК</span><span>7 МИН</span></div>
+      <h2><a href="статьи/перенос-движка-с-python-на-c11.html">Дорога с Python на C11</a></h2>
+      <p>Две реализации одного языка: переходный runtime, который работает целиком, и нативное ядро, которое исполняет подмножество. Где именно проходит граница.</p>
+      <div class="карточка-статьи-низ"><time datetime="2026-11-16">16 ноября 2026</time><a href="статьи/перенос-движка-с-python-на-c11.html">Читать ↗</a></div>
+    </li>
+    <li class="карточка-статьи">
+      <div class="карточка-статьи-метка"><span>03 / ПЕСОЧНИЦА</span><span>6 МИН</span></div>
+      <h2><a href="статьи/песочница-что-умеет-и-чего-не-умеет.html">Песочница: границы учебной машины</a></h2>
+      <p>Что исполняется в браузере, чего там не будет принципиально, как работает ИИ-помощник и что именно уходит провайдеру модели.</p>
+      <div class="карточка-статьи-низ"><time datetime="2026-11-16">16 ноября 2026</time><a href="статьи/песочница-что-умеет-и-чего-не-умеет.html">Читать ↗</a></div>
+    </li>
+    <li class="карточка-статьи">
+      <div class="карточка-статьи-метка"><span>04 / ПРОЕКТ</span><span>5 МИН</span></div>
+      <h2><a href="статьи/почему-проект-пишет-о-своих-недостатках.html">Зачем писать о недостатках</a></h2>
+      <p>Политика честного статуса: почему ограничения стоят на видном месте, как утверждения прикрываются тестами и как читать проект в разработке.</p>
+      <div class="карточка-статьи-низ"><time datetime="2026-11-16">16 ноября 2026</time><a href="статьи/почему-проект-пишет-о-своих-недостатках.html">Читать ↗</a></div>
+    </li>
+    <li class="карточка-статьи">
+      <div class="карточка-статьи-метка"><span>05 / ПРАКТИКА</span><span>9 МИН</span></div>
+      <h2><a href="статьи/три-задачи-на-лексике.html">Три задачи на Лексике</a></h2>
+      <p>Перечень покупок, цены в словаре, цикл с накоплением и собственное правило — разбор законченной программы и границ между средами исполнения.</p>
+      <div class="карточка-статьи-низ"><time datetime="2026-11-16">16 ноября 2026</time><a href="статьи/три-задачи-на-лексике.html">Читать ↗</a></div>
+    </li>
+    <li class="карточка-статьи">
+      <div class="карточка-статьи-метка"><span>06 / КОНТЕКСТ</span><span>6 МИН</span></div>
+      <h2><a href="статьи/русские-языки-программирования-до-лексики.html">Русские языки до Лексики</a></h2>
+      <p>КуМир, Рапира, РАЯ, Эль-76 и 1С: что уже было, чем эти языки отличались от падежной ставки и почему Лексика не заявляет первенства.</p>
+      <div class="карточка-статьи-низ"><time datetime="2026-11-16">16 ноября 2026</time><a href="статьи/русские-языки-программирования-до-лексики.html">Читать ↗</a></div>
+    </li>
+  </ul>
+
+  <section class="статьи-о-материалах">
+    <h2>Как устроены эти материалы</h2>
+    <p>Статьи пишет автор проекта, а не приглашённые авторы и не редакция. Каждый текст опирается на файлы в открытом репозитории: документацию, исходники движка и проверки. Если утверждение в статье расходится с кодом, это ошибка статьи — и её стоит прислать в задачи проекта со ссылкой на строку.</p>
+    <p>У материалов нет цели убедить читателя, что Лексика лучше других языков. У них три задачи: объяснить, как устроена падежная модель; честно показать границы текущей реализации; дать достаточно контекста, чтобы читатель мог решить, интересен ли ему проект. Тексты со временем уточняются — дата изменения указана в метаданных каждой статьи, а история правок видна в репозитории.</p>
+    <p>Что здесь не появится: обещаний сроков, сравнений с промышленными языками в пользу Лексики и заявлений о готовности возможностей, которых ещё нет. Такие формулировки противоречат правилам проекта и были бы неправдой.</p>
+  </section>
+
+  <div class="статья-дальше">
+    <b>ЧЕМ ЕЩЁ ЗАНЯТЬСЯ</b>
+    <ul>
+      <li><a href="playground.html"><span>Пятнадцать примеров и редактор без установки</span> ПЕСОЧНИЦА ↗</a></li>
+      <li><a href="документы/РУКОВОДСТВО.md"><span>Полное руководство языка: письмо, падежи, команды</span> ДОКУМЕНТАЦИЯ ↗</a></li>
+      <li><a href="о-проекте.html"><span>Кто делает проект и что уже работает</span> О ПРОЕКТЕ ↗</a></li>
+    </ul>
+  </div>
+  <footer class="подвал-сайта">
+    <div class="подвал-сайта-знак"><a class="раздел-логотип" href="index.html"><span>Л</span> Лексика<i>.</i></a><p>Открытый проект одного разработчика.<br>Русский язык программирования и движок Лексус. MIT.</p></div>
+    <nav aria-label="Ссылки в подвале"><a href="статьи.html">Статьи</a><a href="о-проекте.html">О проекте</a><a href="контакты.html">Контакты</a><a href="playground.html">Песочница</a><a href="https://github.com/zmlsaggg/Leksika" rel="noopener noreferrer">GitHub ↗</a><a href="https://github.com/zmlsaggg/Leksika/issues" rel="noopener noreferrer">Задачи ↗</a><a href="https://github.com/zmlsaggg/Leksika/blob/main/SECURITY.md" rel="noopener noreferrer">Безопасность ↗</a></nav>
+    <span>ЛЕКСИКА / ЛЕКСУС</span>
+  </footer>
+</main>
+</body>
+</html>
