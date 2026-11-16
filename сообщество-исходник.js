@@ -23,6 +23,67 @@ function showAuth() {
   auth.append(label, button);
   if (user) { const profile = element("a", "Профиль"); profile.href = "профиль.html"; auth.append(profile); }
 }
+// Каждая тема имеет независимую оценку и список ответов.
+function topicActions(card, row, initial) {
+  let mine = initial?.моя || 0;
+  const actions = element('div', ''); actions.className = 'форум-действия';
+  const up = element('button', '♡ Нравится'); const down = element('button', '↓ Не нравится');
+  const score = element('strong', String(initial?.счёт ?? '—')); score.className = 'форум-оценка';
+  score.setAttribute('aria-label', 'Оценка темы');
+  const replies = element('button', 'Комментарии ↘');
+  for (const button of [up, down, replies]) button.type = 'button';
+  const errors = element('p', ''); errors.className = 'форум-ошибка'; errors.setAttribute('role', 'status');
+  function paint() { up.setAttribute('aria-pressed', String(mine === 1)); down.setAttribute('aria-pressed', String(mine === -1)); }
+  paint();
+  async function vote(value) {
+    if (!user) { errors.textContent = 'Чтобы оценить тему, войдите через GitHub.'; return; }
+    up.disabled = down.disabled = true; errors.textContent = '';
+    try {
+      const result = await db.rpc('оценить_тему', {тема: row.id, значение: value});
+      if (result.error) throw result.error;
+      const updated = await db.rpc('оценки_тем', {темы: [row.id]});
+      if (updated.error || !updated.data?.length) throw updated.error || new Error('Нет оценки');
+      mine = updated.data[0].моя; score.textContent = String(updated.data[0].счёт); paint();
+    } catch (_) { errors.textContent = 'Не удалось обновить оценку. Попробуйте ещё раз.'; }
+    finally { up.disabled = down.disabled = false; }
+  }
+  up.addEventListener('click', () => vote(1)); down.addEventListener('click', () => vote(-1));
+  const area = element('div', ''); area.className = 'форум-ответы'; area.hidden = true;
+  const items = element('div', ''); const replyStatus = element('p', ''); replyStatus.setAttribute('role', 'status');
+  const form = document.createElement('form');
+  const label = element('label', 'Ваш комментарий');
+  const input = document.createElement('textarea'); input.rows = 3; input.maxLength = 2000; input.required = true; input.placeholder = 'Поделитесь мыслью…'; label.append(input);
+  const submit = element('button', 'Отправить комментарий ↗'); submit.type = 'submit'; form.append(label, submit);
+  area.append(items, form, replyStatus);
+  async function loadReplies() {
+    replyStatus.textContent = 'Загружаем комментарии…';
+    const result = await db.from('ответы_темы').select('автор,текст,создано').eq('тема', row.id).order('создано', {ascending:false}).limit(100);
+    if (result.error) { replyStatus.textContent = 'Не удалось загрузить комментарии. Откройте их снова, чтобы повторить.'; return; }
+    items.replaceChildren();
+    if (!result.data.length) items.append(element('p', 'Пока нет комментариев. Начните разговор.'));
+    for (const reply of [...result.data].reverse()) {
+      const entry = element('div', ''); entry.className = 'форум-ответ';
+      entry.append(element('small', 'Участник ' + reply.автор.slice(0, 8) + ' · ' + new Date(reply.создано).toLocaleDateString('ru-RU')), element('p', reply.текст));
+      items.append(entry);
+    }
+    replyStatus.textContent = result.data.length === 100 ? 'Показаны последние 100 комментариев.' : '';
+  }
+  replies.setAttribute('aria-expanded', 'false');
+  replies.addEventListener('click', () => { area.hidden = !area.hidden; replies.setAttribute('aria-expanded', String(!area.hidden)); if (!area.hidden) loadReplies().catch(() => { replyStatus.textContent = 'Не удалось связаться с сервером.'; }); });
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!user) { replyStatus.textContent = 'Чтобы комментировать, войдите через GitHub.'; return; }
+    const text = input.value.trim(); if (!text) { replyStatus.textContent = 'Напишите комментарий.'; return; }
+    submit.disabled = true;
+    try {
+      const result = await db.from('ответы_темы').insert({тема: row.id, автор: user.id, текст: text});
+      if (result.error) throw result.error;
+      input.value = ''; await loadReplies();
+    } catch (_) { replyStatus.textContent = 'Не удалось отправить комментарий.'; }
+    finally { submit.disabled = false; }
+  });
+  actions.append(up, score, down, replies); card.append(actions, errors, area);
+}
 async function load() {
   if (!page) return;
   if (page.dataset.сообщество === 'профиль') {
@@ -51,20 +112,33 @@ async function load() {
     }
     return;
   }
-  if (status) status.textContent = '';
+  let ratings = new Map();
+  if (!program && data.length) {
+    const result = await db.rpc('оценки_тем', {темы:data.map(row => row.id)});
+    if (current !== номерЗагрузки) return;
+    if (result.error) { if (status) status.textContent = 'Оценки временно недоступны. Обновите страницу.'; }
+    else { ratings = new Map(result.data.map(value => [value.тема, value])); if (status) status.textContent = ''; }
+  } else if (status) status.textContent = '';
   objectUrls.forEach(url => URL.revokeObjectURL(url)); objectUrls = [];
   list.replaceChildren();
   if (!data.length) list.append(element('p', 'Пока нет публикаций.'));
   for (const row of data) {
-    const card = element('article', ''); card.className = 'публикация';
+    const card = element('article', ''); card.className = program ? 'публикация карточка-игры' : 'публикация';
+    if (program) {
+      card.dataset.категория = 'пользовательские';
+      const active = document.querySelector('[data-фильтр][aria-pressed="true"]');
+      card.hidden = active?.dataset.фильтр === 'оригинальные';
+      const tag = element('div', 'ОТ СООБЩЕСТВА / .LEK'); tag.className = 'карточка-игры-верх'; card.append(tag);
+      const icon = element('div', '⌘'); icon.className = 'игровой-символ'; icon.setAttribute('aria-hidden', 'true'); card.append(icon);
+    }
     card.append(element('h3', row.название));
     const meta = element('p', 'Автор: ' + row.автор.slice(0, 8) + ' · ' + new Date(row.создано).toLocaleDateString('ru-RU'));
     card.append(meta);
     if (program) {
-      const pre = element('pre', row.исходник); card.append(pre);
-      const link = element('a', 'Скачать .lek');
+      const details = document.createElement('details'); const summary = element('summary', 'Посмотреть исходник'); const pre = element('pre', row.исходник); details.append(summary, pre); card.append(details);
+      const link = element('a', 'Скачать .lek ↓');
       link.href = URL.createObjectURL(new Blob([row.исходник], {type:'text/plain;charset=utf-8'})); objectUrls.push(link.href); link.download = 'program.lek'; card.append(link);
-    } else card.append(element('p', row.текст));
+    } else { card.append(element('p', row.текст)); topicActions(card, row, ratings.get(row.id)); }
     if (user && row.автор !== user.id) {
       const button = element('button', 'Пожаловаться'); button.type = 'button';
       button.addEventListener('click', async () => {

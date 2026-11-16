@@ -3,12 +3,11 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Форум — Лексика</title>
-  <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="сообщество.css?v=2">
+  <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="сообщество.css?v=3"><link rel="stylesheet" href="разделы.css?v=1">
 </head>
-<body class="форум-страница">
-<div id="авторизация" class="авторизация" aria-label="Учётная запись"></div>
+<body class="форум-страница раздел-страница"><div class="фон-сайта" aria-hidden="true"><picture><source media="(prefers-reduced-motion: reduce)" srcset="фон-сайта-статичный.webp"><img src="фон-анимация.gif" alt="" width="360" height="360"></picture></div>
 <main class="полотно сообщество форум" data-сообщество="темы">
-  <nav class="форум-навигация"><a href="index.html">← Главная</a><a href="игры.html">Игры и программы</a><a href="playground.html">Песочница</a></nav>
+  <nav class="раздел-навигация"><a class="раздел-логотип" href="index.html"><span>Л</span> Лексика<i>.</i></a><div><a href="index.html">Главная</a><a href="игры.html">Игры и программы</a><a href="playground.html">Примеры и песочница</a></div><div id="авторизация" class="авторизация" aria-label="Учётная запись"></div></nav>
   <header class="форум-шапка"><div><span class="форум-метка">СООБЩЕСТВО ЛЕКСИКИ</span><h1>Место для идей<br><em>и разговоров.</em></h1><p>Делитесь находками, задавайте вопросы и обсуждайте язык вместе.</p><a class="форум-к-примеру" href="#новая-тема">＋ Создать тему</a></div><div class="форум-символ" aria-hidden="true"><span>«</span><span>»</span></div></header>
   <div class="форум-сетка">
     <section class="форум-лента" aria-labelledby="темы-заголовок"><div class="форум-секция-шапка"><div><span class="форум-метка">ОБСУЖДЕНИЯ</span><h2 id="темы-заголовок">Свежие темы</h2></div><span class="форум-бейдж">Сообщество</span></div><div id="результат-загрузки" role="status" aria-live="polite"></div><div id="публикации"></div></section>
@@ -17,4 +16,4 @@
       <p id="статус-сообщества" role="status" aria-live="polite"></p><small>Для публикации нужен вход через GitHub.</small>
     </section><section class="форум-подсказка"><b>✦ &nbsp;Давайте общаться</b><p>Будьте доброжелательны, делитесь опытом и не бойтесь задавать вопросы.</p></section></aside>
   </div>
-</main><script src="сообщество-сборка.js?v=2" defer></script></body></html>
+</main><script src="сообщество-сборка.js?v=3" defer></script></body></html>
