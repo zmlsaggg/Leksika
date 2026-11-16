@@ -1,0 +1,62 @@
+/* Общий визуальный язык разделов: бумага, графит и медный акцент главной. */
+.раздел-страница, .примеры-страница { --бумага:#f2ede2; --медь:#e89167; --приглушённый:#b8b7ad; --контур:rgba(223,216,198,.2); color:var(--бумага); font-family:"Segoe UI",sans-serif; background:#111615; }
+.раздел-страница .фон-сайта::after { background:linear-gradient(110deg,rgba(13,18,20,.94),rgba(17,19,19,.91) 58%,rgba(19,22,21,.94)); }
+.раздел-страница .полотно { max-width:1512px; padding:0 clamp(22px,5vw,76px) 45px; }
+.раздел-страница a { color:inherit; text-decoration:none; }
+.раздел-страница a:hover { color:var(--медь); }
+.раздел-страница :focus-visible,.примеры-страница :focus-visible { outline:2px solid #ffb18c; outline-offset:3px; }
+.пропуск-раздела { position:fixed; z-index:10; top:0; left:0; transform:translateY(-150%); background:#f2ede2; color:#111!important; padding:10px; }
+.пропуск-раздела:focus { transform:none; }
+.раздел-навигация { min-height:86px; display:flex; gap:36px; align-items:center; border-bottom:1px solid var(--контур); }
+.раздел-логотип { display:inline-flex; align-items:center; gap:7px; font:700 23px Georgia,serif; white-space:nowrap; }
+.раздел-логотип span { width:31px; height:31px; border:1px solid var(--медь); border-radius:50%; display:grid; place-items:center; color:var(--медь); font-size:19px; }
+.раздел-логотип i { color:var(--медь); font-style:normal; margin-left:-7px; }
+.раздел-навигация>div:not(.авторизация) { display:flex; flex-wrap:wrap; gap:25px; font-size:13px; color:#cbc9bf; }
+.раздел-навигация .авторизация { margin-left:auto; padding:0; font-size:12px; color:#b6b5ad; }
+.раздел-навигация .авторизация button { background:transparent; color:var(--бумага); border:1px solid #777d78; border-radius:2px; }
+.раздел-страница h1,.раздел-страница h2,.раздел-страница h3,.примеры-страница h1,.примеры-страница h2 { font-family:Georgia,serif; font-weight:400; letter-spacing:-.04em; }
+.раздел-страница h1 em,.раздел-страница h2 em,.примеры-страница h1 em { color:var(--медь); font-weight:400; }
+.раздел-метка,.карточка-игры-верх,.каталог-панель>span,.раздел-подвал,.форум-метка { font:600 10px/1.5 'Courier New',monospace; letter-spacing:.12em; color:#b9b4a9; }
+.раздел-метка span { color:var(--медь); }
+.раздел-герой { display:grid; grid-template-columns:1fr minmax(250px,.55fr); gap:50px; align-items:center; padding:75px 0 80px; text-align:left; }
+.раздел-герой h1 { font-size:clamp(48px,6vw,86px); line-height:1.03; margin:25px 0; }
+.раздел-герой p:not(.раздел-метка) { color:#c0c0b8; max-width:510px; line-height:1.75; }
+.раздел-cta { display:inline-flex; gap:50px; background:var(--медь); color:#211715!important; border-radius:2px 15px 2px 2px; padding:14px 19px; margin-top:16px; font-size:13px; font-weight:700; }
+.каталог-арт { border:1px solid #625c50; border-radius:48% 48% 3px 3px; min-height:295px; background:linear-gradient(155deg,rgba(226,180,146,.13),rgba(15,17,16,.92) 62%); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; }
+.каталог-арт span { font:italic 140px/.8 Georgia,serif; color:var(--медь); }
+.каталог-арт b,.каталог-арт small { font:10px/1.5 'Courier New',monospace; letter-spacing:.14em; text-align:center; color:#c6bdb0; }
+.сообщество .каталог-вступление { margin:0; padding:48px 0 30px; background:none; border:0; border-top:1px solid var(--контур); border-radius:0; display:flex; align-items:end; justify-content:space-between; gap:25px; }
+.каталог-вступление h2,.публикация-приглашение h2 { font-size:clamp(37px,4.5vw,60px); margin:12px 0 0!important; line-height:1.05; }
+.каталог-вступление>p { max-width:400px; color:#bcbcb3; margin:0; font-size:14px; }
+.каталог-панель { display:flex; align-items:center; justify-content:space-between; gap:15px; margin-bottom:20px; }
+.каталог-фильтры { display:flex; gap:8px; flex-wrap:wrap; }
+.сообщество .каталог-фильтры button { background:transparent; border:1px solid #5a5d56; color:#d3d1c8; border-radius:2px; padding:9px 14px; font-size:12px; }
+.сообщество .каталог-фильтры button[aria-pressed=true] { background:#e89167; color:#211715; border-color:#e89167; }
+.игры-сетка { grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+.пользовательские-карточки { display:contents; }
+.карточка-игры { min-width:0; min-height:300px; display:flex; flex-direction:column; padding:22px; border:1px solid #4c4c44; border-radius:2px 24px 2px 2px; background:rgba(25,28,26,.94); }
+.карточка-игры-верх { display:flex; justify-content:space-between; }
+.игровой-символ { display:grid; place-items:center; align-self:center; height:110px; color:#e2a587; font:68px Georgia,serif; }
+.карточка-игры h3 { font-size:28px; margin:0; }
+.карточка-игры p { font-size:14px; color:#bcbcb3; margin:9px 0 22px; }
+.карточка-действия { margin-top:auto; display:flex; gap:18px; align-items:center; flex-wrap:wrap; }
+.сообщество .карточка-действия button,.сообщество .публикация-приглашение button,.сообщество #игра button { background:#e89167; color:#211715; border:1px solid #e89167; border-radius:2px 10px 2px 2px; font-weight:700; font-size:13px; padding:10px 14px; margin:0; }
+.карточка-действия button span { margin-left:12px; }
+.карточка-действия a { font-size:12px; color:#cfb9a9; }
+.сообщество #игра { grid-column:1/-1; margin:0; padding:24px; border:1px solid #8d6b58; background:#181c1a; border-radius:2px 24px 2px 2px; }
+#игра h2 { font-size:30px; } #поле-игры { border-color:#625c50; background:#101716; }
+.сообщество .публикация-приглашение { margin:70px 0 0; display:grid; grid-template-columns:1fr 1fr; gap:50px; padding:clamp(25px,4vw,55px); border:0; border-radius:3px 38px 3px 3px; background:#e6e0d2; color:#252824; }
+.публикация-приглашение h2 em { color:#a74c32; }.публикация-приглашение p { color:#595e58; }.загрузка-проекта { background:transparent; border:1px solid #aca99b; border-radius:3px; padding:18px; margin:0; }.загрузка-проекта summary { display:flex; justify-content:space-between; color:#30312b; }.загрузка-проекта form { margin-top:18px; }.загрузка-проекта label { color:#55584f; font-size:13px; }
+.раздел-подвал { display:flex; justify-content:space-between; margin-top:55px; padding-top:20px; border-top:1px solid var(--контур); }
+/* Форум использует ту же сетку и контраст, что и каталог. */
+.форум .форум-шапка { margin:45px 0 0; background:transparent; border:0; border-radius:0; padding:40px 0 70px; }
+.форум .форум-шапка h1 { font-size:clamp(48px,6vw,86px); line-height:1.03; }.форум .форум-шапка h1 em,.форум-символ { color:var(--медь); }.форум-шапка p { color:#c0c0b8; }.форум-к-примеру { background:var(--медь); color:#211715!important; border-radius:2px 15px 2px 2px; }
+.форум .форум-лента,.форум .форум-создание,.форум .форум-подсказка { border-color:#4c4c44; background:#191c1a; border-radius:3px 24px 3px 3px; }.форум .форум-создание form button { background:var(--медь); border-color:var(--медь); color:#211715; border-radius:2px 12px 2px 2px; }.форум-бейдж { color:#d6b29f; border-color:#70594b; }.форум-метка { color:var(--медь); }.форум .публикация h3 { color:var(--бумага); }.форум .публикация p,.форум-создание p,.форум-подсказка p { color:#bdbcb2; }
+.форум-действия { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }.форум .публикация .форум-действия button { margin:8px 0; background:transparent; color:#e0d8c9; border-color:#655c50; }.форум .публикация .форум-действия button[aria-pressed=true] { background:#e89167; border-color:#e89167; color:#211715; }.форум-оценка { min-width:2em; text-align:center; font-variant-numeric:tabular-nums; }.форум-ответы { border-top:1px solid #46463e; padding:12px 0 0; }.форум-ответ { padding:9px 0; border-bottom:1px solid #393a34; }.форум-ответ small { color:#a6a59b; }.форум-ответы textarea { min-height:70px; resize:vertical; }.форум .публикация .форум-ответы button { margin:0; }.форум-ошибка { color:#f4a59e!important; font-size:13px; }
+/* Песочница и блок примеров. */
+.примеры-страница { background:radial-gradient(ellipse at 80% 0%,#28251f 0,transparent 45%),#111615; --акцент:#e89167; --свет:#f2ede2; --серый:#aaa9a2; --серебро:#d5d0c4; --рамка:#484a42; --панель:#191c1a; --панель-2:#111615; }
+.примеры-страница .страница { width:min(1370px,calc(100% - 44px)); }.примеры-страница .навигация { min-height:64px; border-bottom:1px solid var(--контур); }.примеры-страница .знак { font:700 22px Georgia,serif; letter-spacing:0; }.примеры-страница .шапка { text-align:left; max-width:none; padding:8px 0; }.примеры-страница .шапка h1 { font-size:clamp(36px,4vw,54px); }.примеры-страница .метка { color:var(--медь); font:600 10px 'Courier New',monospace; letter-spacing:.12em; }.примеры-страница .карточка,.примеры-страница .безопасность,.примеры-страница .ограничения,.примеры-страница .ии-блок { border-radius:3px 26px 3px 3px; }.примеры-страница .кнопка.главная { background:var(--медь); border-color:var(--медь); color:#211715; }.примеры-страница #примеры button[aria-pressed=true] { border-color:var(--медь); color:var(--медь); }
+@media(max-width:800px){.раздел-навигация { flex-wrap:wrap; gap:12px 20px; padding:16px 0; }.раздел-навигация .авторизация { margin-left:0; }.раздел-герой { grid-template-columns:1fr; padding:50px 0; }.каталог-арт { min-height:210px; }.игры-сетка { grid-template-columns:repeat(2,minmax(0,1fr)); }.сообщество .каталог-вступление,.сообщество .публикация-приглашение { display:block; }.загрузка-проекта { margin-top:25px; }}
+@media(max-width:520px){.игры-сетка { grid-template-columns:1fr; }.каталог-панель { align-items:start; flex-direction:column; }.раздел-герой h1 { font-size:47px; }.раздел-навигация>div:not(.авторизация) { gap:13px; }.форум .форум-шапка { padding:25px 0 45px; }.раздел-подвал { gap:15px; flex-wrap:wrap; }}
+
+.примеры-страница .примеры-шапка span { color:#e0a080; font-family:Courier New,monospace; }.примеры-страница .примеры-сетка button { background:#1b1e1b; border-color:#484a42; border-radius:2px 12px 2px 2px; color:#e3dfd4; }.примеры-страница .примеры-сетка button b { background:#44352d; color:#edac8d; border-radius:2px; }.примеры-страница .примеры-сетка button:hover,.примеры-страница .примеры-сетка button[aria-pressed=true] { background:#352a23; border-color:#e89167; color:#f2ede2; }

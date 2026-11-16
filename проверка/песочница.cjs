@@ -97,6 +97,7 @@ const assert = require('node:assert/strict');
       await page.goto('http://127.0.0.1:8766/игры.html', {waitUntil: 'load'});
       await page.click('#змейка');
       assert(await page.locator('#поле-игры').isVisible());
+      assert.equal(await page.locator('#змейка').evaluate(el => el.closest('.карточка-игры').nextElementSibling.id), 'игра', 'Плеер должен быть сразу после карточки');
       await page.waitForFunction(() => /Счёт: 0/.test(document.getElementById('счёт-игры').textContent));
       await page.waitForSelector('#итог-игры[open]', {timeout: 7000});
       assert.equal(await page.locator('#итог-счёт').innerText(), '0');
@@ -137,6 +138,19 @@ const assert = require('node:assert/strict');
       await page.click('#перезапустить-игру');
       await page.waitForFunction(() => /Счёт: 0/.test(document.getElementById('счёт-игры').textContent));
       await page.click('#стоп-игры'); await page.click('#закрыть-итог');
+      for (const id of ['динозаврик','марио']) {
+        await page.click('#' + id);
+        await page.waitForFunction(() => /Счёт: 0/.test(document.getElementById('счёт-игры').textContent));
+        assert.equal(await page.locator('#' + id).evaluate(el => el.closest('.карточка-игры').nextElementSibling.id), 'игра');
+        await page.keyboard.press('Space');
+        assert(!/Ошибка/.test(await page.locator('#счёт-игры').innerText()));
+        await page.click('#стоп-игры'); await page.click('#закрыть-итог');
+      }
+      await page.locator('[data-фильтр="пользовательские"]').click();
+      assert.equal(await page.locator('[data-категория="оригинальные"]:visible').count(), 0);
+      await page.locator('[data-фильтр="все"]').click();
+      assert.equal(await page.locator('[data-категория="оригинальные"]:visible').count(), 8);
+      assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'Каталог: горизонтальная прокрутка');
       await page.goto('http://127.0.0.1:8766/форум.html', {waitUntil: 'load'});
       assert(await page.locator('#форма-публикации').isVisible());
       assert(await page.locator('#авторизация').isVisible());
