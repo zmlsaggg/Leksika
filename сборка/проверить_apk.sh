@@ -21,7 +21,11 @@ for n in root.iter('node'):
         x1,y1,x2,y2=map(int,re.findall(r'\d+',n.get('bounds','')))
         subprocess.run(['adb','shell','input','tap',str((x1+x2)//2),str((y1+y2)//2)],check=True)
         break
-else: raise SystemExit('Кнопка запуска в WebView не найдена')
+else:
+    # Разные коды возврата различимы в аннотации GitHub, а полный лог лежит
+    # в Azure и из некоторых окружений недоступен. Код 2 — кнопки нет на
+    # экране, код 3 — разметка WebView вообще не разобралась.
+    raise SystemExit(3 if root.tag == 'hierarchy' else 2)
 PY
 for attempt in {1..15}; do
   adb shell uiautomator dump /sdcard/window.xml >/dev/null
