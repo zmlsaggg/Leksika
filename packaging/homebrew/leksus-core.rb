@@ -31,6 +31,6 @@ class LeksusCore < Formula
   end
 
   test do
-    system bin/"leksus-core", "--self-test"
+    system bin/"leksus-core", "самопроверка"
   end
 end

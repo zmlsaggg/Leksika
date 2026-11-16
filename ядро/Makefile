@@ -69,7 +69,7 @@ dictionary-test: $(DICT_TEST)
 	./$(DICT_TEST)
 
 test: $(TARGET) $(VALUE_TEST) $(DICT_TEST) $(VM_TEST) $(COMPILER_TEST) $(CONTRACT_TEST) $(МОРФОЛОГИЯ_TEST)
-	./$(TARGET) --self-test
+	./$(TARGET) самопроверка
 	./$(VALUE_TEST)
 	./$(DICT_TEST)
 	./$(VM_TEST)

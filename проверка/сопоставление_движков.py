@@ -87,11 +87,11 @@ class Сопоставление(unittest.TestCase):
             script = temp / 'пример.lek'
             script.write_text('скажи 42', encoding='utf-8')
             env = dict(os.environ, PATH=directory)
-            result = subprocess.run([str(ROOT / 'Leksika'), '--нативно', 'запустить', str(script)],
+            result = subprocess.run([str(ROOT / 'Leksika'), 'нативно', 'запустить', str(script)],
                                     env=env, capture_output=True, text=True, encoding='utf-8')
             self.assertEqual((result.returncode, result.stdout), (0, '42\n'), result.stderr)
             script.write_text('когда завтра наступит скажи 42.', encoding='utf-8')
-            result = subprocess.run([str(ROOT / 'Leksika'), '--нативно', 'запустить', str(script)],
+            result = subprocess.run([str(ROOT / 'Leksika'), 'нативно', 'запустить', str(script)],
                                     env=env, capture_output=True, text=True, encoding='utf-8')
             self.assertNotEqual(result.returncode, 0)
             self.assertNotIn('Python', result.stderr)

@@ -97,6 +97,7 @@ jobs:
           make clean all test \
             TARGET=leksus-core.exe VALUE_TEST=values-test.exe VM_TEST=vm-test.exe \
             COMPILER_TEST=compiler-test.exe CONTRACT_TEST=contract-test.exe \
+            МОРФОЛОГИЯ_TEST=morphology-test.exe \
             DICT_BUILDER=dictionary-builder.exe DICT_TEST=dictionary-test.exe \
             DICT_SOURCE=russian-words-source.txt DICT_INDEX=russian-forms.lxd \
             2>&1 | tee словарь-сборки.txt
@@ -248,6 +249,6 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Тест контракта завершился с ошибкой" }
           & $compiler @flags /Fe:leksus-core.exe лексус.c значения.c словарь_индекс.c байткод.c машина.c компилятор.c shell32.lib
           if ($LASTEXITCODE -ne 0) { throw "Не собралось ядро" }
-          & .\leksus-core.exe --self-test
+          & .\leksus-core.exe самопроверка
           if ($LASTEXITCODE -ne 0) { throw "Самопроверка ядра завершилась с ошибкой" }
         working-directory: ядро

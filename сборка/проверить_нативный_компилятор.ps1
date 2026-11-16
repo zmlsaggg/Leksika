@@ -79,7 +79,7 @@ Invoke-Gcc ($Common + @("-o", $CompilerTest,
     (Join-Path $Kernel "компилятор.c"),
     (Join-Path $Kernel "компилятор_проверка.c")))
 
-Invoke-Test -Path $Native -Arguments @("--self-test")
+Invoke-Test -Path $Native -Arguments @("самопроверка")
 Invoke-Test -Path $ValuesTest
 Invoke-Test -Path $DictionaryTest
 Invoke-Test -Path $VmTest

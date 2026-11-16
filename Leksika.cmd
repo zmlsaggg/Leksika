@@ -1,6 +1,7 @@
 @echo off
 setlocal
 set "LEK_ROOT=%~dp0"
+if "%~1"=="нативно" goto native
 if "%~1"=="--нативно" goto native
 set "PYTHONUTF8="
 set "PYTHONIOENCODING=utf-8"
