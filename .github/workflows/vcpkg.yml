@@ -1,0 +1,66 @@
+name: Библиотека и vcpkg
+on:
+  push:
+    branches: [main]
+    paths: ['CMakeLists.txt', 'packaging/vcpkg/**', 'ядро/**', 'cpp/**', 'проверка/vcpkg/**', '.github/workflows/vcpkg.yml']
+  pull_request:
+    branches: [main]
+    paths: ['CMakeLists.txt', 'packaging/vcpkg/**', 'ядро/**', 'cpp/**', 'проверка/vcpkg/**', '.github/workflows/vcpkg.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  library:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Собрать и проверить ядро
+        run: |
+          cmake -S . -B build-core -DCMAKE_BUILD_TYPE=Release
+          cmake --build build-core --config Release --parallel 2
+          ctest --test-dir build-core -C Release --output-on-failure
+          cmake --install build-core --config Release --prefix "${{ runner.temp }}/leksika-install"
+      - name: Проверить установленные C и C++ API
+        run: |
+          cmake -S проверка/vcpkg -B build-consumer -DCMAKE_PREFIX_PATH="${{ runner.temp }}/leksika-install"
+          cmake --build build-consumer --config Release --parallel 2
+          ctest --test-dir build-consumer -C Release --output-on-failure
+  port:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            triplet: x64-linux
+          - os: windows-latest
+            triplet: x64-windows-static
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: microsoft/vcpkg
+          ref: 8f363bdc11359ede4bc51e5eb32a2617538049c8
+          path: vcpkg-tool
+      - name: Подготовить vcpkg (Linux)
+        if: runner.os == 'Linux'
+        run: ./vcpkg-tool/bootstrap-vcpkg.sh -disableMetrics
+      - name: Подготовить vcpkg (Windows)
+        if: runner.os == 'Windows'
+        run: ./vcpkg-tool/bootstrap-vcpkg.bat -disableMetrics
+        shell: cmd
+      - name: Установить overlay-порт
+        shell: bash
+        run: ./vcpkg-tool/vcpkg install leksika --overlay-ports="$GITHUB_WORKSPACE/packaging/vcpkg/ports" --triplet=${{ matrix.triplet }}
+      - name: Собрать и запустить потребителей через vcpkg
+        shell: bash
+        run: |
+          cmake -S проверка/vcpkg -B build-consumer -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_TOOLCHAIN_FILE="$GITHUB_WORKSPACE/vcpkg-tool/scripts/buildsystems/vcpkg.cmake" \
+            -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }}
+          cmake --build build-consumer --config Release --parallel 2
+          ctest --test-dir build-consumer -C Release --output-on-failure
