@@ -260,6 +260,9 @@ textarea {
   /* Подзаголовок «Выберите карточку» на телефоне не нужен: кнопки и так
      очевидны, а его строка отодвигала редактор под сгиб. */
   .примеры-шапка p { display: none; }
-  .примеры-сетка { gap: 5px; }
-  .примеры-сетка button { min-height: 40px; }
+  /* Метка «НАЧНИТЕ С ПРИМЕРА» на телефоне тоже лишняя строка. */
+  .примеры-шапка span { display: none; }
+  .примеры-сетка { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .примеры-сетка button { min-height: 42px; padding: 6px; gap: 5px; font-size: 11px; }
+  .примеры-сетка button b { flex-basis: 24px; width: 24px; height: 24px; }
 }
