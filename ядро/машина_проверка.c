@@ -1,7 +1,7 @@
 #include "машина.h"
 #include <stdio.h>
 #include <string.h>
-static int check(const char*n,int ok){printf("%s: %s\n",ok?"OK":"FAIL",n);return ok?0:1;}
+static int check(const char*n,int ok){printf("%s: %s\n",ok ? "OK":"FAIL",n);return ok ? 0:1;}
 int main(void){
  int failed=0;char err[256]={0};ЛексусЗначение constants[3]={лексус_ничто(),лексус_ничто(),лексус_ничто()};
  (void)лексус_число_создать("2",&constants[0]);(void)лексус_число_создать("3",&constants[1]);(void)лексус_число_создать("5",&constants[2]);
@@ -79,5 +79,5 @@ int main(void){
  лексус_значение_освободить(&result);
  for(int i=0;i<3;++i)лексус_значение_освободить(&constants[i]);
  for(int i=0;i<3;++i)лексус_значение_освободить(&branch_constants[i]);
- printf("Итого: %s\n",failed?"есть ошибки":"все проверки пройдены");return failed?1:0;
+ printf("Итого: %s\n",failed ? "есть ошибки":"все проверки пройдены");return failed ? 1:0;
 }
