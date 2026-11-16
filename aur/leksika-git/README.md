@@ -8,7 +8,7 @@ VM, а не полный настольный Python-исполнитель. К�
 
 ```sh
 makepkg -si
-leksika --self-test
+leksika самопроверка
 leksika выполнить /usr/share/doc/leksika-git/examples/нативная_vm.lek
 leksika слово книга /usr/share/leksika/русские_формы.lxd
 ```

@@ -266,6 +266,11 @@ int лексус_машина_исполнить_со_средой(const Лек�
     if(!store_result(r,x->назначение,e,value,err,errn)){ok=0;done=1;}else ++ip;
     break;
    }
+   case ЛЕКСУС_ОП_В_РЕЧЬ: {
+    e=лексус_речь_вставить(r[x->а],&value);
+    if(!store_result(r,x->назначение,e,value,err,errn)){ok=0;done=1;}else ++ip;
+    break;
+   }
    case ЛЕКСУС_ОП_ПЕРЕЧЕНЬ_СОЗДАТЬ: {
     value=лексус_ничто(); e=лексус_перечень_создать(&value);
     if(!store_result(r,x->назначение,e,value,err,errn)){ok=0;done=1;}else ++ip;

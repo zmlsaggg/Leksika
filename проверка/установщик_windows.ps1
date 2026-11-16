@@ -58,13 +58,13 @@ try {
     }
     & $launcher 'проверить' $example
     if ($LASTEXITCODE -ne 0) { throw "Проверка исходника не прошла: $LASTEXITCODE" }
-    & $launcher '--нативно' 'запустить' $example
+    & $launcher 'нативно' 'запустить' $example
     if ($LASTEXITCODE -ne 0) { throw "Нативный запуск не прошёл: $LASTEXITCODE" }
     $profileProgram = Join-Path $env:LOCALAPPDATA 'profile.lek'
     [System.IO.File]::WriteAllText($profileProgram, 'вкинуть 42.', [System.Text.UTF8Encoding]::new($false))
-    & $launcher '--нативно' 'запустить' $profileProgram
+    & $launcher 'нативно' 'запустить' $profileProgram
     if ($LASTEXITCODE -eq 0) { throw 'Профиль зумер активен без разрешающего флага' }
-    $profileOutput = & $launcher '--нативно' 'запустить' $profileProgram '--профиль=зумер'
+    $profileOutput = & $launcher 'нативно' 'запустить' $profileProgram '--профиль=зумер'
     if ($LASTEXITCODE -ne 0 -or ($profileOutput -join "`n") -notmatch '(^|\s)42($|\s)') {
         throw 'Не прошёл запуск с профилем зумер'
     }
