@@ -2,8 +2,9 @@ include(GNUInstallDirs)
 include(CTest)
 
 # CLI (лексус.c) намеренно не входит в библиотеку и не изменяется этой сборкой.
+# Компилятор использует падежную морфологию, поэтому она часть библиотеки.
 add_library(leksika STATIC
-  ядро/значения.c ядро/байткод.c ядро/машина.c ядро/компилятор.c)
+  ядро/значения.c ядро/байткод.c ядро/машина.c ядро/компилятор.c ядро/морфология.c)
 add_library(leksika::leksika ALIAS leksika)
 set_target_properties(leksika PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES C_EXTENSIONS NO)
 target_include_directories(leksika INTERFACE "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
@@ -12,7 +13,7 @@ if(MSVC)
 endif()
 
 install(TARGETS leksika EXPORT leksika-targets ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}")
-install(FILES ядро/значения.h ядро/байткод.h ядро/машина.h ядро/компилятор.h
+install(FILES ядро/значения.h ядро/байткод.h ядро/машина.h ядро/компилятор.h ядро/морфология.h
   DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/leksika/ядро")
 install(FILES cpp/лексус.hpp DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/leksika/cpp")
 install(EXPORT leksika-targets NAMESPACE leksika:: DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/leksika")
@@ -23,7 +24,7 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/leksika-config.cmake"
 
 if(BUILD_TESTING)
   set(test_number 0)
-  foreach(test IN ITEMS значения машина компилятор контракт)
+  foreach(test IN ITEMS значения машина компилятор контракт морфология)
     math(EXPR test_number "${test_number} + 1")
     add_executable(test_${test_number} "ядро/${test}_проверка.c")
     set_target_properties(test_${test_number} PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES C_EXTENSIONS NO)

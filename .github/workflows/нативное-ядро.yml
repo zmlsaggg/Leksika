@@ -240,15 +240,19 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Не собрался тест VM" }
           & .\vm-test.exe
           if ($LASTEXITCODE -ne 0) { throw "Тест VM завершился с ошибкой" }
-          & $compiler @flags /Fe:compiler-test.exe значения.c байткод.c машина.c компилятор.c компилятор_проверка.c
+          & $compiler @flags /Fe:compiler-test.exe значения.c байткод.c машина.c компилятор.c морфология.c компилятор_проверка.c
           if ($LASTEXITCODE -ne 0) { throw "Не собрался тест компилятора" }
           & .\compiler-test.exe
           if ($LASTEXITCODE -ne 0) { throw "Тест компилятора завершился с ошибкой" }
-          & $compiler @flags /Fe:contract-test.exe значения.c байткод.c машина.c компилятор.c контракт_проверка.c
+          & $compiler @flags /Fe:contract-test.exe значения.c байткод.c машина.c компилятор.c морфология.c контракт_проверка.c
           if ($LASTEXITCODE -ne 0) { throw "Не собрался тест контракта" }
           & .\contract-test.exe
           if ($LASTEXITCODE -ne 0) { throw "Тест контракта завершился с ошибкой" }
-          & $compiler @flags /Fe:leksus-core.exe лексус.c значения.c словарь_индекс.c байткод.c машина.c компилятор.c shell32.lib
+          & $compiler @flags /Fe:morphology-test.exe морфология.c морфология_проверка.c
+          if ($LASTEXITCODE -ne 0) { throw "Не собрался тест морфологии" }
+          & .\morphology-test.exe
+          if ($LASTEXITCODE -ne 0) { throw "Тест морфологии завершился с ошибкой" }
+          & $compiler @flags /Fe:leksus-core.exe лексус.c значения.c словарь_индекс.c байткод.c машина.c компилятор.c морфология.c shell32.lib
           if ($LASTEXITCODE -ne 0) { throw "Не собралось ядро" }
           & .\leksus-core.exe самопроверка
           if ($LASTEXITCODE -ne 0) { throw "Самопроверка ядра завершилась с ошибкой" }

@@ -46,6 +46,7 @@ $ValuesTest = Join-Path $Kernel "значения-тест.exe"
 $DictionaryTest = Join-Path $Kernel "словарь-тест.exe"
 $VmTest = Join-Path $Kernel "машина-тест.exe"
 $CompilerTest = Join-Path $Kernel "компилятор-тест.exe"
+$MorphologyTest = Join-Path $Kernel "морфология-тест.exe"
 
 Write-Host "Компилятор: $Gcc"
 Write-Host "Сборка нативного ядра..."
@@ -56,7 +57,8 @@ $NativeSources = @(
     (Join-Path $Kernel "словарь_индекс.c"),
     (Join-Path $Kernel "байткод.c"),
     (Join-Path $Kernel "машина.c"),
-    (Join-Path $Kernel "компилятор.c")
+    (Join-Path $Kernel "компилятор.c"),
+    (Join-Path $Kernel "морфология.c")
 )
 Invoke-Gcc ($Common + @("-o", $Native) + $NativeSources + @("-lshell32"))
 
@@ -77,13 +79,18 @@ Invoke-Gcc ($Common + @("-o", $CompilerTest,
     (Join-Path $Kernel "байткод.c"),
     (Join-Path $Kernel "машина.c"),
     (Join-Path $Kernel "компилятор.c"),
+    (Join-Path $Kernel "морфология.c"),
     (Join-Path $Kernel "компилятор_проверка.c")))
+Invoke-Gcc ($Common + @("-o", $MorphologyTest,
+    (Join-Path $Kernel "морфология.c"),
+    (Join-Path $Kernel "морфология_проверка.c")))
 
 Invoke-Test -Path $Native -Arguments @("самопроверка")
 Invoke-Test -Path $ValuesTest
 Invoke-Test -Path $DictionaryTest
 Invoke-Test -Path $VmTest
 Invoke-Test -Path $CompilerTest
+Invoke-Test -Path $MorphologyTest
 
 Write-Host "Выполнение примера .lek"
 $Example = Join-Path $Root "примеры\нативная_vm.lek"
