@@ -28,7 +28,8 @@ const assert = require('node:assert/strict');
       assert(await page.locator('.ниже-редактора').evaluate((el) => el.offsetTop) > await page.locator('.карточка').evaluate((el) => el.offsetTop));
       const select = name => page.locator(`button[data-пример="${name}"]`).click();
       assert.equal(await page.locator('#примеры button').count(), 15);
-      assert(await page.locator('.карточка').evaluate(el => el.getBoundingClientRect().top < (innerWidth > 850 ? 340 : 520)), 'Редактор расположен слишком низко');
+      const top = await page.locator('.карточка').evaluate(el => el.getBoundingClientRect().top);
+      assert(top < (viewport.width > 850 ? 340 : 520), `Редактор расположен слишком низко: ${top} (${viewport.width}px)`);
       if (viewport.width > 850) assert(await page.locator('.страница').evaluate(el => el.getBoundingClientRect().width > 1120), 'Редактор на ПК недостаточно широк');
       const run = async (name) => {
         await select(name);
