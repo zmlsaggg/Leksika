@@ -49,7 +49,10 @@ for (const [имя, код] of Object.entries(образцы)) {
   assert.equal(r.error, '', 'пример «' + имя + '» падает: ' + r.error);
   assert.notEqual(r.output, '', 'пример «' + имя + '» ничего не выводит');
 }
-assert.equal(execute(образцы.знакомство).output, 'Сумма сейчас 22.');
+/* Значение первого примера — часть контракта с APK-проверкой в CI
+   (сборка/проверить_apk.sh ищет в интерфейсе именно 17). Меняя пример,
+   меняйте и её, иначе релизная сборка упадёт уже на устройстве. */
+assert.equal(execute(образцы.знакомство).output, 'Сумма сейчас 17.');
 const manifest = fs.readFileSync('android/app/src/main/AndroidManifest.xml','utf8');
 assert(manifest.includes('@drawable/launcher'));
 assert(fs.statSync('android/app/src/main/res/drawable-nodpi/launcher.png').size > 0);
