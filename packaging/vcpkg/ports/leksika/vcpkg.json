@@ -1,0 +1,11 @@
+{
+  "name": "leksika",
+  "version-string": "0.6.0-native",
+  "description": "Experimental C11 compiler and virtual machine for a subset of Leksika, with an optional C++17 wrapper",
+  "homepage": "https://github.com/zmlsaggg/Leksika",
+  "license": "MIT",
+  "dependencies": [
+    { "name": "vcpkg-cmake", "host": true },
+    { "name": "vcpkg-cmake-config", "host": true }
+  ]
+}

@@ -5,8 +5,8 @@
 
 static int проверить(const char *name,int ok)
 {
-    printf("%s: %s\n",ok?"OK":"FAIL",name);
-    return ok?0:1;
+    printf("%s: %s\n",ok ? "OK":"FAIL",name);
+    return ok ? 0:1;
 }
 
 typedef struct {
@@ -883,6 +883,6 @@ int main(void)
         failed+=проверить("нативный компилятор проверяет количество аргументов",!ok&&strstr(error,"число аргументов")!=NULL);
     }
 
-    printf("Итого: %s\n",failed?"есть ошибки":"все проверки пройдены");
-    return failed?1:0;
+    printf("Итого: %s\n",failed ? "есть ошибки":"все проверки пройдены");
+    return failed ? 1:0;
 }
