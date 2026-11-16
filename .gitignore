@@ -35,3 +35,8 @@ node_modules/
 .env.local
 ядро/контракт-тест*
 ядро/морфология-тест*
+
+# сборка Python-пакета для PyPI
+dist/
+build/
+*.egg-info/
