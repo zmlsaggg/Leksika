@@ -1,13 +1,29 @@
+/* Исполнитель песочницы. Работает в отдельном Worker, чтобы зависшая
+   программа не подвешивала интерфейс: главный поток может её прервать
+   по таймеру. Сеть и файлы недоступны — CSP приложения это запрещает. */
 'use strict';
 importScripts('machine.js');
-onmessage = event => {
-  let output = '', error = '';
+
+const ПРЕДЕЛ_ВЫВОДА = 50000;   /* знаков текста */
+const ПРЕДЕЛ_СТРОК = 2000;     /* строк: защита от бесконечной печати */
+
+onmessage = (event) => {
+  let output = '', error = '', строк = 0, обрезано = false;
   try {
-    ЛексикаУчебная.создать(event.data, {}, line => {
+    ЛексикаУчебная.создать(event.data, {}, (line) => {
       const text = String(line);
-      if (output.length + text.length > 50000) throw new Error('Превышен предел вывода');
+      if (обрезано) return;
+      if (output.length + text.length > ПРЕДЕЛ_ВЫВОДА || ++строк > ПРЕДЕЛ_СТРОК) {
+        обрезано = true;
+        /* Превышение вывода — это тоже ошибка программы: обычно так
+           выглядит бесконечная печать в цикле. Молча обрезать нельзя,
+           иначе человек решит, что программа завершилась сама. */
+        throw new Error('Слишком длинный вывод: похоже, программа печатает бесконечно');
+      }
       output += (output ? '\n' : '') + text;
     });
-  } catch (e) { error = String(e && e.message || 'Ошибка программы').slice(0, 500); }
-  postMessage({output, error});
+  } catch (e) {
+    error = String((e && e.message) || 'Ошибка программы').slice(0, 500);
+  }
+  postMessage({ output, error, обрезано });
 };

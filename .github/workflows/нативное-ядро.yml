@@ -162,6 +162,7 @@ jobs:
           python3 проверка/профили_cli.py
           python3 проверка/русский_cli.py
           python3 проверка/словарь_ядра.py
+          python3 проверка/virustotal.py самотест
         shell: bash
 
       - name: Проверить браузерный индекс словоформ

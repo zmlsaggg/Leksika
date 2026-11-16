@@ -40,3 +40,8 @@ node_modules/
 dist/
 build/
 *.egg-info/
+
+# мусор из домашнего каталога, попадавший в корень
+.sudo_as_admin_successful
+.config/
+.руна/

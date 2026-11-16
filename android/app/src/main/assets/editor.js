@@ -1,25 +1,203 @@
 (() => {
   'use strict';
-  const code = document.getElementById('code'), output = document.getElementById('output');
-  const run = document.getElementById('run'), stop = document.getElementById('stop'), status = document.getElementById('status');
+  const $ = (id) => document.getElementById(id);
+  const code = $('code'), output = $('output');
+  const run = $('run'), stop = $('stop'), reset = $('reset'), status = $('status');
+  const counter = $('счётчик'), size = $('размер'), примеры = $('примеры');
+
+  /* Ключи локального хранения. Код остаётся на устройстве: сеть в приложении
+     запрещена политикой CSP, поэтому всё, что сохраняется, лежит только здесь. */
+  const КЛЮЧ_КОДА = 'лексика.код';
+  const КЛЮЧ_ШРИФТА = 'лексика.шрифт';
+
+  const образцы = {
+    /* Первый пример — витрина приложения, и проверка APK ищет в ней именно
+       17: объявление, два прибавления и условие, которое при верной сумме
+       молчит. Ошибка здесь видна сразу, потому что пример открывается первым. */
+    знакомство: [
+      "пусть сумма равно 5.",
+      "прибавить 10 к сумме.",
+      "прибавить 2 к сумме.",
+      "почему сумма равно 17 то речь Сумма посчитана верно конец речи.",
+      "сказать речь Сумма сейчас (сумма). конец речи.",
+    ].join('\n'),
+    условие: [
+      "пусть температура равно 18.",
+      "",
+      "если температура больше 20 то",
+      "    сказать речь На улице тепло. конец речи.",
+      "иначе",
+      "    сказать речь Стоит взять куртку. конец речи.",
+      "конец если.",
+    ].join('\n'),
+    выбор: [
+      "пусть код равно 404.",
+      "",
+      "выбор код среди",
+      "    200 то сказать речь Всё хорошо конец речи.",
+      "    вариант 404 то сказать речь Не найдено конец речи.",
+      "    вариант 500 то сказать речь Ошибка сервера конец речи.",
+      "    иначе сказать речь Что-то иное конец речи.",
+      "конец выбора.",
+    ].join('\n'),
+    циклы: [
+      "пусть счёт равно 0.",
+      "",
+      "пока счёт меньше 3 повторять",
+      "    увеличить счёт на 1.",
+      "    сказать счёт.",
+      "конец пока.",
+      "",
+      "для шаг от 1 до 3 повторять",
+      "    сказать речь Виток (шаг). конец речи.",
+      "конец для.",
+    ].join('\n'),
+    правило: [
+      "правило приветствие принимает имя повторять",
+      "    сказать речь Привет, (имя)! конец речи.",
+      "конец правила.",
+      "",
+      "приветствие(речь Мир конец речи).",
+    ].join('\n'),
+    перечень: [
+      "пусть покупки равно [речь хлеб конец речи, речь молоко конец речи, речь сыр конец речи].",
+      "",
+      "для каждого предмет из покупки повторять",
+      "    сказать предмет.",
+      "конец для.",
+      "",
+      "сказать длина(покупки).",
+    ].join('\n'),
+    таблица: [
+      "для строка от 1 до 5 повторять",
+      "    пусть ряд равно речь  конец речи.",
+      "    для столбец от 1 до 5 повторять",
+      "        если столбец больше 1 то прибавить речь | конец речи к ряд. конец если.",
+      "        прибавить строка умножить на столбец к ряд.",
+      "    конец для.",
+      "    сказать ряд.",
+      "конец для.",
+    ].join('\n'),
+    фибоначчи: [
+      "правило фибоначчи принимает номер повторять",
+      "    если номер не больше 1 то вернуть номер. конец если.",
+      "    вернуть фибоначчи(номер минус 1) плюс фибоначчи(номер минус 2).",
+      "конец правила.",
+      "",
+      "для шаг от 1 до 10 повторять",
+      "    сказать фибоначчи(шаг).",
+      "конец для.",
+    ].join('\n'),
+  };;
+
   let worker = null, timer = null;
+
+  function сохранить(ключ, значение) {
+    try { localStorage.setItem(ключ, значение); } catch (_) { /* приватный режим */ }
+  }
+  function прочитать(ключ) {
+    try { return localStorage.getItem(ключ); } catch (_) { return null; }
+  }
+
+  function обновитьСчётчик() {
+    const знаков = code.value.length;
+    const строк = code.value ? code.value.split('\n').length : 0;
+    counter.textContent = знаков + ' ' + склонение(знаков, 'знак', 'знака', 'знаков')
+      + ' · ' + строк + ' ' + склонение(строк, 'строка', 'строки', 'строк');
+  }
+  function склонение(число, один, два, много) {
+    const остаток = Math.abs(число) % 100, младший = остаток % 10;
+    if (остаток > 10 && остаток < 20) return много;
+    if (младший === 1) return один;
+    if (младший >= 2 && младший <= 4) return два;
+    return много;
+  }
+
+  function выбратьПример(имя) {
+    code.value = образцы[имя] || образцы.знакомство;
+    for (const кнопка of примеры.querySelectorAll('button')) {
+      кнопка.setAttribute('aria-pressed', String(кнопка.dataset.пример === имя));
+    }
+    сохранить(КЛЮЧ_КОДА, code.value);
+    обновитьСчётчик();
+    status.textContent = 'Пример загружен';
+    /* Пример мог быть выбран из раскрытой панели, и тогда редактор остался
+       выше экрана. Прокручиваем к коду, иначе кажется, что ничего не вышло. */
+    if (code.scrollIntoView) code.scrollIntoView({ block: 'nearest' });
+  }
+
   function finish(message) {
     if (worker) worker.terminate();
-    worker = null; clearTimeout(timer); timer = null;
-    run.disabled = false; stop.disabled = true; status.textContent = message;
+    worker = null;
+    clearTimeout(timer);
+    timer = null;
+    run.disabled = false;
+    stop.disabled = true;
+    reset.disabled = false;
+    status.textContent = message;
   }
+
   run.addEventListener('click', () => {
     if (worker) return;
     output.textContent = '';
-    if (code.value.length > 20000) { status.textContent = 'Код слишком длинный (максимум 20 000 символов)'; return; }
+    if (!code.value.trim()) { status.textContent = 'Сначала напишите программу'; return; }
+    if (code.value.length > 20000) {
+      status.textContent = 'Код слишком длинный (максимум 20 000 символов)';
+      return;
+    }
     try {
       worker = new Worker('worker.js');
-      run.disabled = true; stop.disabled = false; status.textContent = 'Выполняется…';
-      worker.onmessage = event => { output.textContent = event.data.output; finish(event.data.error ? 'Ошибка: ' + event.data.error : 'Выполнено'); };
+      run.disabled = true;
+      stop.disabled = false;
+      reset.disabled = true;
+      status.textContent = 'Выполняется…';
+      worker.onmessage = (event) => {
+        output.textContent = event.data.output || 'Программа ничего не вывела';
+        if (event.data.обрезано) status.textContent = 'Вывод обрезан: слишком много строк';
+        finish(event.data.error ? 'Ошибка: ' + event.data.error : 'Выполнено');
+      };
       worker.onerror = () => finish('Не удалось запустить учебную машину');
-      timer = setTimeout(() => finish('Превышено время выполнения'), 5000);
+      timer = setTimeout(() => finish('Превышено время выполнения (5 секунд)'), 5000);
       worker.postMessage(code.value);
-    } catch (_) { finish('Не удалось запустить учебную машину'); }
+    } catch (_) {
+      finish('Не удалось запустить учебную машину');
+    }
   });
+
   stop.addEventListener('click', () => finish('Остановлено'));
+  reset.addEventListener('click', () => {
+    if (!confirm('Вернуть пример и стереть изменения?')) return;
+    выбратьПример('знакомство');
+    output.textContent = '';
+  });
+
+  примеры.addEventListener('click', (event) => {
+    const кнопка = event.target.closest('button[data-пример]');
+    if (!кнопка) return;
+    выбратьПример(кнопка.dataset.пример);
+  });
+
+  code.addEventListener('input', () => {
+    обновитьСчётчик();
+    сохранить(КЛЮЧ_КОДА, code.value);
+  });
+
+  size.addEventListener('input', () => {
+    const размер = Number(size.value) || 14;
+    code.style.fontSize = размер + 'px';
+    output.style.fontSize = размер + 'px';
+    сохранить(КЛЮЧ_ШРИФТА, String(размер));
+  });
+
+  /* Восстановление состояния: сначала сохранённый код, затем шрифт. */
+  const сохранённый = прочитать(КЛЮЧ_КОДА);
+  code.value = сохранённый !== null && сохранённый !== '' ? сохранённый : образцы.знакомство;
+  if (сохранённый !== null && сохранённый !== '') {
+    for (const кнопка of примеры.querySelectorAll('button')) кнопка.setAttribute('aria-pressed', 'false');
+  }
+  const сохранённый_шрифт = Number(прочитать(КЛЮЧ_ШРИФТА)) || 14;
+  size.value = String(Math.min(22, Math.max(12, сохранённый_шрифт)));
+  code.style.fontSize = size.value + 'px';
+  output.style.fontSize = size.value + 'px';
+  обновитьСчётчик();
 })();
