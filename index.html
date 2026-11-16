@@ -34,19 +34,56 @@
   "@context": "https://schema.org",
   "@graph": [
     {
+      "@type": "Organization",
+      "@id": "https://leksika.gleeze.com/#организация",
+      "name": "Проект Лексика",
+      "alternateName": "Leksika",
+      "url": "https://leksika.gleeze.com/",
+      "description": "Открытый проект одного разработчика: русский язык программирования Лексика и движок Лексус.",
+      "foundingDate": "2026-11-10",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://leksika.gleeze.com/значки/Лексика.png"
+      },
+      "founder": {
+        "@type": "Person",
+        "@id": "https://leksika.gleeze.com/о-проекте.html#автор",
+        "name": "zmlsaggg",
+        "url": "https://github.com/zmlsaggg",
+        "jobTitle": "Автор и сопровождающий проекта"
+      },
+      "knowsAbout": ["языки программирования", "русская морфология", "компиляторы", "виртуальные машины"],
+      "sameAs": [
+        "https://github.com/zmlsaggg/Leksika",
+        "https://github.com/zmlsaggg"
+      ],
+      "contactPoint": [
+        {
+          "@type": "ContactPoint",
+          "contactType": "technical support",
+          "url": "https://github.com/zmlsaggg/Leksika/issues",
+          "availableLanguage": "ru"
+        },
+        {
+          "@type": "ContactPoint",
+          "contactType": "security",
+          "url": "https://github.com/zmlsaggg/Leksika/blob/main/SECURITY.md",
+          "availableLanguage": "ru"
+        }
+      ]
+    },
+    {
       "@type": "WebSite",
+      "@id": "https://leksika.gleeze.com/#сайт",
       "name": "Лексика",
       "alternateName": "Leksika",
       "url": "https://leksika.gleeze.com/",
       "inLanguage": "ru",
-      "publisher": {
-        "@type": "Organization",
-        "name": "Проект Лексика",
-        "url": "https://github.com/zmlsaggg/Leksika"
-      }
+      "publisher": { "@id": "https://leksika.gleeze.com/#организация" }
     },
     {
       "@type": "SoftwareApplication",
+      "@id": "https://leksika.gleeze.com/#язык",
       "name": "Лексика",
       "alternateName": ["Leksika", "Лексус"],
       "applicationCategory": "DeveloperApplication",
@@ -59,7 +96,64 @@
       "isAccessibleForFree": true,
       "image": "https://leksika.gleeze.com/значки/Лексика.png",
       "url": "https://leksika.gleeze.com/",
-      "sameAs": "https://github.com/zmlsaggg/Leksika"
+      "sameAs": "https://github.com/zmlsaggg/Leksika",
+      "publisher": { "@id": "https://leksika.gleeze.com/#организация" }
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://leksika.gleeze.com/#вопросы",
+      "inLanguage": "ru",
+      "isPartOf": { "@id": "https://leksika.gleeze.com/#сайт" },
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Что нужно для запуска Лексики?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Песочница работает в браузере. Для настольной версии нужен Python 3.8 или новее; в установщик Windows он включён."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Почему исходники Лексики заканчиваются на .lek?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Сейчас используется расширение .lek, совместимое с переходным загрузчиком. Поддержка .лек запланирована после отказа от Python."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Нужен ли интернет для Лексики?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Для настольного исполнения обычных программ интернет не нужен. В браузере сеть нужна для загрузки сайта; внешние модели и API подключаются отдельно."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Можно ли присоединиться к разработке Лексики?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Да. Правила участия и задачи проекта доступны на GitHub в репозитории zmlsaggg/Leksika."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Лексика — это готовый язык для рабочих задач?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Нет. Это исследовательский и учебный проект. Полный язык сегодня исполняется переходным runtime на Python, а нативное ядро на C11 поддерживает подмножество языка."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Кто делает Лексику и как связаться с автором?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Проект ведёт один разработчик под ником zmlsaggg. Связь — через задачи и обсуждения на GitHub и форум сайта; отдельной публичной почты у проекта нет."
+          }
+        }
+      ]
     }
   ]
 }
@@ -87,7 +181,7 @@
 <div class="полотно">
   <nav class="главная-навигация" aria-label="Главная навигация">
     <a class="слово-знак" href="./" aria-label="Лексика — главная"><span>Л</span> Лексика<span class="точка">.</span></a>
-    <div class="навигация-ссылки"><a href="#что-такое-лексика">О языке</a><a href="игры.html">Игры и программы</a><a href="форум.html">Форум</a><a href="#документация">Документация</a></div>
+    <div class="навигация-ссылки"><a href="#что-такое-лексика">О языке</a><a href="игры.html">Игры и программы</a><a href="статьи.html">Статьи</a><a href="форум.html">Форум</a><a href="#документация">Документация</a><a href="контакты.html">Контакты</a></div>
     <div id="авторизация" class="авторизация" aria-label="Учётная запись"></div>
   </nav>
 
@@ -113,7 +207,7 @@
     </section>
 
     <section class="образцы" id="язык-за-пять-минут" aria-labelledby="образцы-заголовок">
-      <div class="образцы-вступление"><div class="метка-раздела"><span>02</span> ЯЗЫК НА ДЕЛЕ</div><h2 id="образцы-заголовок">Лучше один раз<br><em>написать.</em></h2><p>Один язык — разные задачи. Выберите образец, посмотрите на результат и продолжите в песочнице.</p><a class="стрелочная-ссылка" href="playground.html">Открыть песочницу <span aria-hidden="true">↗</span></a><div class="образцы-пометка">ПРИМЕРЫ УЧЕБНОЙ БРАУЗЕРНОЙ ВЕРСИИ<br>КОД НЕ ЗАПУСКАЕТСЯ НА ЭТОЙ СТРАНИЦЕ</div></div>
+      <div class="образцы-вступление"><div class="метка-раздела"><span>02</span> ЯЗЫК НА ДЕЛЕ</div><h2 id="образцы-заголовок">Лучше один раз<br><em>написать.</em></h2><p>Один язык — разные задачи. Выберите образец, посмотрите на результат и продолжите в песочнице.</p><a class="стрелочная-ссылка" href="playground.html">Открыть песочницу <span aria-hidden="true">↗</span></a><div class="образцы-пометка">ОБРАЗЦЫ ПРОВЕРЕНЫ УЧЕБНОЙ МАШИНОЙ<br>ЗАПУСТИТЬ СВОЙ КОД МОЖНО В ПЕСОЧНИЦЕ</div></div>
       <div class="образцы-окно">
         <div class="окно-заголовок"><span><i></i> ПРИМЕРЫ / .LEK</span><span>ЛЕКСИКА</span></div>
         <div class="переключатель-образцов" role="group" aria-label="Выберите образец кода" hidden><button type="button" data-образец="сумма" aria-pressed="true">01 &nbsp; Сумма</button><button type="button" data-образец="цикл" aria-pressed="false">02 &nbsp; Цикл</button><button type="button" data-образец="правило" aria-pressed="false">03 &nbsp; Правило</button></div>
@@ -139,11 +233,11 @@ python3 лексус.lek запустить примеры/привет.lek</cod
 
     <section class="закулисье" id="архитектура" aria-labelledby="закулисье-заголовок"><span id="экосистема-и-разработка"></span><div class="метка-раздела"><span>05</span> ПОД КАПОТОМ</div><div class="закулисье-сетка"><h2 id="закулисье-заголовок">Язык растёт.<br><em>И его движок тоже.</em></h2><div><p>Полный настольный исполнитель пока работает на Python 3.8+. Параллельно создаётся нативное ядро на C11: в нём уже есть собственные значения, компилятор подмножества языка и виртуальная машина. Полной заменой переходного runtime оно ещё не стало.</p><a href="https://github.com/zmlsaggg/Leksika/blob/main/ПЛАН_ПЕРЕНОСА_РАНТАЙМА.md">Посмотреть план переноса ↗</a></div></div><div class="архитектура-полосы"><span>СЕГОДНЯ <b>Python runtime</b></span><span>В РАЗРАБОТКЕ <b>Нативное ядро C11</b></span><span>ОТКРЫТО <b>MIT · GitHub</b></span></div></section>
 
-    <section class="справка" id="документация" aria-labelledby="справка-заголовок"><div><span id="прозрачность-проекта"></span><div class="метка-раздела"><span>06</span> ДАЛЬШЕ — БОЛЬШЕ</div><h2 id="справка-заголовок">Заглянуть <em>глубже.</em></h2><p>Словарь, примеры, устройство языка — всё открыто для изучения и участия.</p><a class="кнопка главная" href="документы/РУКОВОДСТВО.md">Читать руководство ↗</a></div><div class="ссылки-справки"><a href="документы/СЛОВАРЬ.md"><span>01</span><b>Словарь языка</b><span>↗</span></a><a href="документы/АРХИТЕКТУРА.md"><span>02</span><b>Архитектура</b><span>↗</span></a><a href="https://github.com/zmlsaggg/Leksika"><span>03</span><b>Исходный код на GitHub</b><span>↗</span></a><a href="игры.html"><span>04</span><b>Игры и программы</b><span>↗</span></a><a href="форум.html"><span>05</span><b>Форум</b><span>↗</span></a></div></section>
+    <section class="справка" id="документация" aria-labelledby="справка-заголовок"><div><span id="прозрачность-проекта"></span><div class="метка-раздела"><span>06</span> ДАЛЬШЕ — БОЛЬШЕ</div><h2 id="справка-заголовок">Заглянуть <em>глубже.</em></h2><p>Словарь, примеры, устройство языка — всё открыто для изучения и участия.</p><a class="кнопка главная" href="документы/РУКОВОДСТВО.md">Читать руководство ↗</a></div><div class="ссылки-справки"><a href="документы/СЛОВАРЬ.md"><span>01</span><b>Словарь языка</b><span>↗</span></a><a href="документы/АРХИТЕКТУРА.md"><span>02</span><b>Архитектура</b><span>↗</span></a><a href="https://github.com/zmlsaggg/Leksika"><span>03</span><b>Исходный код на GitHub</b><span>↗</span></a><a href="игры.html"><span>04</span><b>Игры и программы</b><span>↗</span></a><a href="форум.html"><span>05</span><b>Форум</b><span>↗</span></a><a href="статьи.html"><span>06</span><b>Статьи о языке и движке</b><span>↗</span></a><a href="о-проекте.html"><span>07</span><b>О проекте и авторе</b><span>↗</span></a></div></section>
 
     <section class="вопросы" id="частые-вопросы" aria-labelledby="вопросы-заголовок"><div><div class="метка-раздела"><span>07</span> ВОПРОСЫ</div><h2 id="вопросы-заголовок">Коротко<br><em>о главном.</em></h2></div><div class="вопросы-список"><details><summary>Что нужно для запуска?</summary><p>Песочница работает в браузере. Для настольной версии нужен Python 3.8 или новее; в установщик Windows он включён.</p></details><details id="русские-расширения-файлов"><summary>Почему исходники заканчиваются на .lek?</summary><p>Сейчас используется расширение <code>.lek</code>, совместимое с переходным загрузчиком. Поддержка <code>.лек</code> запланирована после отказа от Python.</p></details><details><summary>Нужен ли интернет?</summary><p>Для настольного исполнения обычных программ интернет не нужен. В браузере сеть нужна для загрузки сайта; внешние модели и API подключаются отдельно.</p></details><details><summary>Можно ли присоединиться к разработке?</summary><p>Да. <a href="https://github.com/zmlsaggg/Leksika/blob/main/CONTRIBUTING.md">Правила участия</a> и <a href="https://github.com/zmlsaggg/Leksika/issues">задачи проекта</a> доступны на GitHub.</p></details></div></section>
   </main>
-  <footer class="главный-подвал"><div><a class="слово-знак" href="./"><span>Л</span> Лексика<span class="точка">.</span></a><p>Свой язык для своих мыслей.<br>Открытый проект · MIT</p></div><div><a href="https://github.com/zmlsaggg/Leksika">GitHub ↗</a><a href="https://github.com/zmlsaggg/Leksika/blob/main/SECURITY.md">Безопасность ↗</a><a href="документы/РУКОВОДСТВО.md">Руководство ↗</a></div><span>ЛЕКСИКА / ЛЕКСУС</span></footer>
+  <footer class="главный-подвал"><div><a class="слово-знак" href="./"><span>Л</span> Лексика<span class="точка">.</span></a><p>Свой язык для своих мыслей.<br>Открытый проект одного разработчика · MIT<br>Автор: <a href="https://github.com/zmlsaggg">zmlsaggg</a></p></div><div class="подвал-ссылки"><a href="https://github.com/zmlsaggg/Leksika">GitHub ↗</a><a href="https://github.com/zmlsaggg/Leksika/blob/main/SECURITY.md">Безопасность ↗</a><a href="документы/РУКОВОДСТВО.md">Руководство ↗</a><a href="статьи.html">Статьи ↗</a><a href="о-проекте.html">О проекте ↗</a><a href="контакты.html">Контакты ↗</a></div><span>ЛЕКСИКА / ЛЕКСУС</span></footer>
 </div>
 <script src="сообщество-сборка.js" defer></script>
 </body></html>

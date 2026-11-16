@@ -1,0 +1,129 @@
+/* Статьи и страницы о проекте: длинный текст, тот же бумажно-медный язык. */
+.статья-страница { background: radial-gradient(ellipse at 78% 0%, #26231e 0, transparent 42%), #111615; }
+.статья-страница .фон-сайта { opacity: .42; }
+.статья-страница .полотно { padding-bottom: 70px; }
+
+.страница-текст { max-width: 820px; margin: 0 auto; }
+.страница-текст.широкая { max-width: 1120px; }
+
+.статья-метка { display: flex; flex-wrap: wrap; gap: 8px 12px; font: 600 10px/1.6 "Courier New", monospace; letter-spacing: .12em; color: #a9a496; margin: 42px 0 0; }
+.статья-метка a { color: #e89167; }
+.статья-метка span { color: #6f6d64; }
+
+.статья-страница h1 { font-family: Georgia, serif; font-weight: 400; letter-spacing: -.045em; font-size: clamp(36px, 5vw, 62px); line-height: 1.04; margin: 18px 0 18px; }
+.статья-страница h1 em { color: #e89167; font-style: normal; }
+.статья-лид { font-size: clamp(17px, 1.6vw, 20px); line-height: 1.7; color: #d9d4c7; margin: 0 0 22px; max-width: 700px; }
+
+.статья-сведения { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; padding: 16px 0; border-top: 1px solid rgba(223, 216, 198, .2); border-bottom: 1px solid rgba(223, 216, 198, .2); color: #a8a69c; font-size: 13px; }
+.статья-сведения a { color: #f0aa88; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.статья-сведения .точка-разделитель { color: #63655e; }
+
+.статья-тело { margin-top: 34px; }
+.статья-тело p, .статья-тело li, .страница-абзацы p, .страница-абзацы li { color: #c6c4ba; font-size: 17px; line-height: 1.8; }
+.статья-тело p { margin: 0 0 20px; }
+.статья-тело h2 { font-family: Georgia, serif; font-weight: 400; letter-spacing: -.03em; font-size: clamp(26px, 3vw, 34px); line-height: 1.15; margin: 52px 0 16px; }
+.статья-тело h3 { font-family: Georgia, serif; font-weight: 400; font-size: 22px; margin: 34px 0 10px; color: #efeade; }
+.статья-тело ul, .статья-тело ol, .страница-абзацы ul { margin: 0 0 22px; padding-left: 22px; }
+.статья-тело li { margin: 8px 0; }
+.статья-тело li::marker { color: #e89167; }
+.статья-тело strong { color: #f2ede2; font-weight: 650; }
+.статья-тело a { color: #f0aa88; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.статья-тело a:hover { color: #ffd0b6; }
+
+.статья-тело code, .страница-абзацы code { font-family: "JetBrains Mono", Consolas, "Courier New", monospace; font-size: .9em; background: rgba(229, 148, 111, .12); color: #f4c3a9; border-radius: 2px; padding: 1px 5px; }
+.статья-тело pre { background: #191d1b; border: 1px solid #3f403a; border-radius: 2px 16px 2px 2px; padding: 18px 20px; overflow-x: auto; margin: 0 0 24px; }
+.статья-тело pre code { background: none; padding: 0; color: #ede7d6; font-size: 13px; line-height: 1.75; }
+.статья-тело pre .подпись-кода { display: block; color: #8f938a; font: 600 10px/1.6 "Courier New", monospace; letter-spacing: .12em; margin-bottom: 10px; }
+
+.статья-тело blockquote { margin: 26px 0; padding: 4px 0 4px 20px; border-left: 2px solid #e89167; color: #cfcabc; }
+.статья-тело blockquote p { margin: 0 0 10px; }
+
+.статья-вывод { margin: 28px 0; padding: 20px 22px; background: rgba(232, 145, 103, .08); border: 1px solid rgba(232, 145, 103, .32); border-radius: 3px 20px 3px 3px; }
+.статья-вывод p:last-child { margin: 0; }
+.статья-вывод b { display: block; font: 600 10px/1.6 "Courier New", monospace; letter-spacing: .12em; color: #e89167; margin-bottom: 8px; }
+
+.статья-тело table { width: 100%; border-collapse: collapse; margin: 8px 0 26px; font-size: 15px; }
+.статья-тело th, .статья-тело td { text-align: left; padding: 11px 12px; border-bottom: 1px solid #3a3b35; vertical-align: top; color: #c6c4ba; }
+.статья-тело th { color: #e7e1d3; font-weight: 650; font-size: 13px; letter-spacing: .02em; }
+.статья-тело tbody tr:hover { background: rgba(232, 145, 103, .05); }
+
+.статья-дальше { margin-top: 56px; padding-top: 26px; border-top: 1px solid rgba(223, 216, 198, .2); }
+.статья-дальше b { display: block; font: 600 10px/1.6 "Courier New", monospace; letter-spacing: .12em; color: #b9b4a9; margin-bottom: 14px; }
+.статья-дальше ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.статья-дальше a { display: flex; justify-content: space-between; gap: 18px; padding: 14px 16px; border: 1px solid #43443d; border-radius: 2px 14px 2px 2px; background: rgba(25, 28, 26, .9); color: #ece6d8; text-decoration: none; font-size: 15px; }
+.статья-дальше a:hover { border-color: #e89167; color: #ffd0b6; }
+.статья-дальше a span { color: #a09b8f; font-size: 12px; white-space: nowrap; }
+
+/* Список статей */
+.статьи-герой { padding: 58px 0 34px; border-bottom: 1px solid rgba(223, 216, 198, .2); }
+.статьи-герой h1 { margin-bottom: 16px; }
+.статьи-герой p { max-width: 640px; color: #c0c0b8; font-size: 17px; line-height: 1.75; margin: 0; }
+.статьи-сетка { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 16px; margin: 34px 0 0; padding: 0; list-style: none; }
+.карточка-статьи { display: flex; flex-direction: column; height: 100%; padding: 24px; border: 1px solid #4c4c44; border-radius: 2px 22px 2px 2px; background: rgba(25, 28, 26, .94); }
+.карточка-статьи-метка { display: flex; justify-content: space-between; gap: 10px; font: 600 10px/1.6 "Courier New", monospace; letter-spacing: .12em; color: #a9a496; }
+.карточка-статьи-метка span:first-child { color: #e89167; }
+.карточка-статьи h2 { font-family: Georgia, serif; font-weight: 400; letter-spacing: -.02em; font-size: 25px; line-height: 1.2; margin: 16px 0 10px; }
+.карточка-статьи h2 a { color: #f2ede2; text-decoration: none; }
+.карточка-статьи h2 a:hover { color: #ffd0b6; }
+.карточка-статьи p { flex: 1; margin: 0 0 20px; color: #bcbcb3; font-size: 14px; line-height: 1.7; }
+.карточка-статьи-низ { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-top: 14px; border-top: 1px solid #3c3d37; font-size: 12px; color: #a29e92; }
+.карточка-статьи-низ a { color: #e89167; font-weight: 700; }
+
+/* Страницы «О проекте» и «Контакты» */
+.страница-абзацы { margin-top: 34px; }
+.страница-абзацы p { margin: 0 0 20px; }
+.страница-абзацы h2 { font-family: Georgia, serif; font-weight: 400; font-size: clamp(26px, 3vw, 34px); letter-spacing: -.03em; margin: 50px 0 16px; }
+.страница-абзацы h3 { font-family: Georgia, serif; font-weight: 400; font-size: 22px; margin: 30px 0 10px; color: #efeade; }
+.страница-абзацы a { color: #f0aa88; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+
+.карточки-фактов { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 14px; margin: 26px 0 8px; padding: 0; list-style: none; }
+.факт { padding: 18px 20px; border: 1px solid #47473f; border-radius: 2px 16px 2px 2px; background: rgba(24, 27, 25, .9); }
+.факт b { display: block; font: 600 10px/1.6 "Courier New", monospace; letter-spacing: .12em; color: #b9b4a9; margin-bottom: 6px; }
+.факт span { display: block; color: #ecE6d8; font-size: 16px; line-height: 1.5; }
+.факт small { display: block; margin-top: 6px; color: #a3a094; font-size: 12.5px; line-height: 1.6; }
+.факт.честно { border-color: #6d5748; background: rgba(232, 145, 103, .07); }
+
+.таблица-статуса { width: 100%; border-collapse: collapse; margin: 20px 0 10px; font-size: 15px; }
+.таблица-статуса th, .таблица-статуса td { text-align: left; padding: 12px 12px 12px 0; border-bottom: 1px solid #3a3b35; vertical-align: top; color: #c6c4ba; }
+.таблица-статуса th { color: #e7e1d3; font-size: 13px; }
+.таблица-статуса td:first-child { color: #efeade; width: 34%; }
+.метка-статуса { display: inline-block; font: 600 10px/1.6 "Courier New", monospace; letter-spacing: .1em; padding: 2px 8px; border-radius: 20px; border: 1px solid #5c5f57; color: #cfc9b9; }
+.метка-статуса.работает { border-color: #5f7d63; color: #a9d3ae; }
+.метка-статуса.частично { border-color: #8a7550; color: #e3c391; }
+.метка-статуса.нет { border-color: #7d5a52; color: #e5aaa0; }
+
+.связь-список { display: grid; gap: 12px; margin: 24px 0 0; padding: 0; list-style: none; }
+.связь-карточка { padding: 20px 22px; border: 1px solid #4a4a42; border-radius: 2px 18px 2px 2px; background: rgba(24, 27, 25, .94); }
+.связь-карточка h2, .связь-карточка h3 { font-family: Georgia, serif; font-weight: 400; font-size: 22px; margin: 0 0 8px; color: #f2ede2; }
+.связь-карточка p { margin: 0 0 12px; color: #bcbcb3; font-size: 14.5px; line-height: 1.7; }
+.связь-карточка a.связь-ссылка { display: inline-flex; gap: 10px; align-items: center; padding: 10px 15px; border: 1px solid #e89167; border-radius: 2px 10px 2px 2px; color: #211715 !important; background: #e89167; font-size: 13px; font-weight: 700; text-decoration: none; }
+.связь-карточка a.связь-ссылка:hover { background: #f3a97e; border-color: #f3a97e; }
+.связь-карточка .связь-примечание { display: block; margin-top: 12px; color: #9c988c; font-size: 12.5px; }
+
+.страница-заметка { margin: 30px 0 0; padding: 20px 22px; border: 1px solid rgba(232, 145, 103, .3); border-radius: 3px 18px 3px 3px; background: rgba(232, 145, 103, .07); }
+.страница-заметка b { display: block; font: 600 10px/1.6 "Courier New", monospace; letter-spacing: .12em; color: #e89167; margin-bottom: 8px; }
+.страница-заметка p { margin: 0; color: #c9c5b8; font-size: 14.5px; line-height: 1.75; }
+
+.подвал-ссылки { display: flex; flex-wrap: wrap; gap: 10px 18px; }
+
+@media (max-width: 700px) {
+  .статья-сведения { font-size: 12px; }
+  .статья-тело p, .статья-тело li, .страница-абзацы p, .страница-абзацы li { font-size: 16px; }
+  .статья-тело h2 { margin-top: 40px; }
+  .статья-дальше a { flex-direction: column; gap: 6px; }
+  .статья-вывод { padding: 16px 18px; }
+  .факт span { font-size: 15px; }
+}
+
+/* Пояснительный блок списка статей и общий подвал раздела. */
+.статьи-о-материалах { margin-top: 54px; padding-top: 26px; border-top: 1px solid rgba(223, 216, 198, .2); }
+.статьи-о-материалах h2 { font-family: Georgia, serif; font-weight: 400; letter-spacing: -.03em; font-size: clamp(24px, 3vw, 32px); margin: 0 0 16px; }
+.статьи-о-материалах p { max-width: 760px; margin: 0 0 16px; color: #c0beb4; font-size: 16px; line-height: 1.8; }
+
+.подвал-сайта { display: grid; grid-template-columns: minmax(220px, 1fr) auto auto; gap: 20px 40px; align-items: end; margin-top: 64px; padding: 26px 0 34px; border-top: 1px solid rgba(223, 216, 198, .2); }
+.подвал-сайта-знак p { margin: 10px 0 0; color: #a2a59d; font-size: 13px; line-height: 1.7; }
+.подвал-сайта nav { display: flex; flex-wrap: wrap; gap: 10px 18px; font-size: 13px; color: #c3c6bc; }
+.подвал-сайта nav a { color: #c3c6bc; }
+.подвал-сайта nav a:hover { color: #e89167; }
+.подвал-сайта > span { color: #8c8c83; font: 10px/1.6 "Courier New", monospace; letter-spacing: .1em; white-space: nowrap; }
+@media (max-width: 820px) { .подвал-сайта { grid-template-columns: 1fr; align-items: start; } }

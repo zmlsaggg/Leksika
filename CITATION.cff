@@ -4,8 +4,10 @@ title: "Лексика (Leksika) — Russian-language programming language"
 type: software
 authors:
   - name: "Проект Лексика"
-repository-code: "https://github.com/zmlsaggg/Leksikadev"
-url: "https://zmlsaggg.github.io/Leksika/"
+    alias: "zmlsaggg"
+    website: "https://github.com/zmlsaggg"
+repository-code: "https://github.com/zmlsaggg/Leksika"
+url: "https://leksika.gleeze.com/"
 license: MIT
 keywords:
   - programming language

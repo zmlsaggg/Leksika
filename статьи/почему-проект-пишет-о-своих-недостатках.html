@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Зачем проект пишет о своих недостатках</title>
+<meta name="description" content="Почему в документации Лексики столько оговорок: политика честного статуса, проверки вместо обещаний и как читать проект, у которого половина возможностей ещё в разработке.">
+<meta name="author" content="zmlsaggg">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#0d0f13">
+<link rel="canonical" href="https://leksika.gleeze.com/статьи/почему-проект-пишет-о-своих-недостатках.html">
+<link rel="icon" href="../значки/Лексика.ico" sizes="any">
+<link rel="apple-touch-icon" href="../значки/знак.png">
+
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Лексика">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:title" content="Зачем проект пишет о своих недостатках">
+<meta property="og:description" content="Политика честного статуса в Лексике: почему ограничения описаны на видном месте и как это связано с доверием.">
+<meta property="og:url" content="https://leksika.gleeze.com/статьи/почему-проект-пишет-о-своих-недостатках.html">
+<meta property="og:image" content="https://leksika.gleeze.com/значки/Лексика.png">
+<meta property="og:image:alt" content="Эмблема проекта Лексика">
+<meta property="article:published_time" content="2026-11-16">
+<meta property="article:author" content="zmlsaggg">
+<meta property="article:section" content="Проект">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Зачем проект пишет о своих недостатках">
+<meta name="twitter:description" content="Честный статус вместо маркетинга: как и зачем Лексика описывает свои ограничения.">
+<meta name="twitter:image" content="https://leksika.gleeze.com/значки/Лексика.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "@id": "https://leksika.gleeze.com/статьи/почему-проект-пишет-о-своих-недостатках.html#статья",
+      "headline": "Зачем проект пишет о своих недостатках",
+      "description": "Политика честного статуса в Лексике: почему ограничения описаны на видном месте, как проверяются утверждения и как читать проект в разработке.",
+      "inLanguage": "ru",
+      "datePublished": "2026-11-16",
+      "dateModified": "2026-11-16",
+      "author": { "@type": "Person", "name": "zmlsaggg", "url": "https://github.com/zmlsaggg" },
+      "publisher": { "@id": "https://leksika.gleeze.com/#организация" },
+      "isPartOf": { "@id": "https://leksika.gleeze.com/#сайт" },
+      "mainEntityOfPage": "https://leksika.gleeze.com/статьи/почему-проект-пишет-о-своих-недостатках.html",
+      "image": "https://leksika.gleeze.com/значки/Лексика.png",
+      "articleSection": "Проект",
+      "keywords": ["открытый исходный код", "документация", "честность", "проверки", "Лексика"],
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Главная", "item": "https://leksika.gleeze.com/" },
+          { "@type": "ListItem", "position": 2, "name": "Статьи", "item": "https://leksika.gleeze.com/статьи.html" },
+          { "@type": "ListItem", "position": 3, "name": "Зачем писать о недостатках", "item": "https://leksika.gleeze.com/статьи/почему-проект-пишет-о-своих-недостатках.html" }
+        ]
+      }
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://leksika.gleeze.com/#организация",
+      "name": "Проект Лексика",
+      "url": "https://leksika.gleeze.com/",
+      "logo": "https://leksika.gleeze.com/значки/Лексика.png",
+      "sameAs": ["https://github.com/zmlsaggg/Leksika", "https://github.com/zmlsaggg"]
+    }
+  ]
+}
+</script>
+
+<link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="../сообщество.css">
+<link rel="stylesheet" href="../разделы.css?v=1">
+<link rel="stylesheet" href="../статьи.css?v=1">
+<script src="../сообщество-сборка.js" defer></script>
+</head>
+<body class="раздел-страница статья-страница">
+<a class="пропуск-раздела" href="#основное">Перейти к содержимому</a>
+<div class="фон-сайта" aria-hidden="true"><picture><source media="(prefers-reduced-motion: reduce)" srcset="../фон-сайта-статичный.webp"><img src="../фон-анимация.gif" alt="" width="360" height="360"></picture></div>
+
+<main class="полотно" id="основное">
+  <nav class="раздел-навигация" aria-label="Главная навигация">
+    <a class="раздел-логотип" href="../index.html"><span>Л</span> Лексика<i>.</i></a>
+    <div><a href="../index.html">Главная</a><a href="../playground.html">Песочница</a><a href="../игры.html">Игры</a><a href="../статьи.html">Статьи</a><a href="../контакты.html">Контакты</a></div>
+    <div id="авторизация" class="авторизация" aria-label="Учётная запись"></div>
+  </nav>
+
+  <article class="страница-текст">
+    <p class="статья-метка"><a href="../статьи.html">СТАТЬИ</a> <span>/</span> ПРОЕКТ <span>/</span> 04</p>
+    <h1>Зачем писать<br><em>о недостатках</em></h1>
+    <p class="статья-лид">Описание Лексики пестрит оговорками: «ещё не весь язык», «пока не самостоятельная VM», «проект спецификации, а не заявление о готовности». Это не кокетство. Ниже — зачем это сделано и как этим пользоваться читателю.</p>
+
+    <div class="статья-сведения">
+      <span>Автор: <a href="https://github.com/zmlsaggg" rel="noopener noreferrer">zmlsaggg</a></span>
+      <span class="точка-разделитель">·</span>
+      <span><time datetime="2026-11-16">16 ноября 2026</time></span>
+      <span class="точка-разделитель">·</span>
+      <span>Чтение: 5 минут</span>
+      <span class="точка-разделитель">·</span>
+      <span>Русский / Проект</span>
+    </div>
+
+    <div class="статья-тело">
+      <h2>Проблема языка, который существует наполовину</h2>
+      <p>Язык программирования — это не только синтаксис. Это ещё и обещание: «написанное будет исполняться так, а не иначе, сегодня и в следующей версии». У проекта в разработке обещать легко и опасно: половина возможностей выглядит готовой, пока не попробуешь их в деле. Отсюда два типа лжи, в которые легко скатиться.</p>
+      <ul>
+        <li><strong>Ложь оптимизма.</strong> «Свой нативный движок» — вместо «переходный runtime на Python плюс развивающееся ядро на C11».</li>
+        <li><strong>Ложь умолчания.</strong> Не упоминать ограничения и позволить читателю решить, что их нет.</li>
+      </ul>
+      <p>Обе лжи экономят время автору на старте и дорого стоят потом: читатель, поверивший в готовность, уходит с ощущением обмана, а не с ощущением незавершённости. Второе — нормальное состояние живого проекта, первое — репутационная потеря.</p>
+
+      <h2>Правило честного статуса</h2>
+      <p>В документации Лексики действует простое правило: <strong>каждое утверждение о возможностях сопровождается статусом</strong> — работает, частично или нет. Формулировки вроде «уже есть» и «поддерживается» не используются для того, что не проверяется тестом.</p>
+      <table>
+        <thead><tr><th>Вместо этого</th><th>Пишется так</th></tr></thead>
+        <tbody>
+          <tr><td>«Лексика работает без Python»</td><td>«Основной исполнитель использует Python 3.8+; нативное ядро исполняет подмножество языка»</td></tr>
+          <tr><td>«Собственная виртуальная машина»</td><td>«`лексика/машина.lek` — переходный исполнитель: часть выражений считает старый исполнитель»</td></tr>
+          <tr><td>«Песочница исполняет Лексику»</td><td>«Песочница исполняет учебное подмножество и не заменяет настольный исполнитель»</td></tr>
+          <tr><td>«Готов к использованию в продакшене»</td><td>Такой фразы в проекте нет и не будет, пока она не станет правдой.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Проверки вместо обещаний</h2>
+      <p>Оговорка работает, только если её можно проверить. Поэтому в проекте всё, что заявлено, прикрыто проверкой:</p>
+      <ul>
+        <li>язык — набором тестов на <code>.lek</code>, включая примеры из документации;</li>
+        <li>нативное ядро — тестами C11 на байткод, значения и границы VM;</li>
+        <li>сайт и песочница — браузерными проверками в Chromium: анимация фона, примеры кода, интерфейс сообщества;</li>
+        <li>база данных сообщества — прогоном схемы и политик доступа на чистом PostgreSQL.</li>
+      </ul>
+      <p>Сборка, не прошедшая проверки, не попадает в выпуск. Это не идеальная гарантия качества, но она лучше, чем заверение автора в комментариях.</p>
+
+      <div class="статья-вывод">
+        <b>КАК ЧИТАТЬ ТАКОЙ ПРОЕКТ</b>
+        <p>Смотрите не на описание, а на таблицу состояния и на историю коммитов. Если возможность объявлена готовой, у неё должен быть тест и след в истории изменений. Если теста нет — считайте её заявленной, но не подтверждённой.</p>
+      </div>
+
+      <h2>Что это даёт читателю и участнику</h2>
+      <p>Читателю — возможность принять решение за минуту: язык подходит для эксперимента и учёбы и не подходит как рабочая платформа. Участнику — точку входа: список «чего нет» и есть список задач, за которые можно взяться, не рискуя сломать готовое.</p>
+      <p>Есть и обратная сторона. Честный статус делает проект менее привлекательным на первый взгляд: конкуренты в описаниях звучат увереннее. Это осознанный выбор — Лексика рассчитывает на читателя, который проверяет, а не на того, кто читает только первый абзац.</p>
+
+      <h2>Где смотреть статус</h2>
+      <ul>
+        <li><a href="../о-проекте.html">«О проекте»</a> — таблица состояния частей проекта.</li>
+        <li><a href="../документы/АРХИТЕКТУРА.md">Архитектура движка</a> — где именно проходит граница между старым и новым исполнением.</li>
+        <li><a href="https://github.com/zmlsaggg/Leksika/blob/main/CHANGELOG.md" rel="noopener noreferrer">История изменений</a> — что менялось и в какую сторону.</li>
+        <li><a href="../контакты.html">Контакты</a> — куда сообщить, если текст на сайте расходится с кодом.</li>
+      </ul>
+
+      <div class="статья-дальше">
+        <b>ЧИТАТЬ ДАЛЬШЕ</b>
+        <ul>
+          <li><a href="перенос-движка-с-python-на-c11.html"><span>Что реально перенесено в нативное ядро</span> ДВИЖОК ↗</a></li>
+          <li><a href="песочница-что-умеет-и-чего-не-умеет.html"><span>Границы браузерной машины</span> ПЕСОЧНИЦА ↗</a></li>
+          <li><a href="падежи-вместо-операторов.html"><span>Главная идея языка</span> ЯЗЫК ↗</a></li>
+        </ul>
+      </div>
+    </div>
+  </article>
+  <footer class="подвал-сайта">
+    <div class="подвал-сайта-знак"><a class="раздел-логотип" href="../index.html"><span>Л</span> Лексика<i>.</i></a><p>Открытый проект одного разработчика.<br>Русский язык программирования и движок Лексус. MIT.</p></div>
+    <nav aria-label="Ссылки в подвале"><a href="../статьи.html">Статьи</a><a href="../о-проекте.html">О проекте</a><a href="../контакты.html">Контакты</a><a href="../playground.html">Песочница</a><a href="https://github.com/zmlsaggg/Leksika" rel="noopener noreferrer">GitHub ↗</a><a href="https://github.com/zmlsaggg/Leksika/issues" rel="noopener noreferrer">Задачи ↗</a><a href="https://github.com/zmlsaggg/Leksika/blob/main/SECURITY.md" rel="noopener noreferrer">Безопасность ↗</a></nav>
+    <span>ЛЕКСИКА / ЛЕКСУС</span>
+  </footer>
+</main>
+</body>
+</html>
