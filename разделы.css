@@ -65,3 +65,4 @@
 .примеры-страница .шапка { padding:4px 0; margin-bottom:12px; }
 .примеры-страница .шапка h1 { margin:4px 0; font-size:clamp(32px,3vw,42px); }
 .примеры-страница .примеры-сетка button { min-height:43px; }
+.примеры-страница .выбор-примеров { margin-bottom:4px; }
