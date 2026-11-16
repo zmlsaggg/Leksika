@@ -19,11 +19,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Собрать и проверить ядро
+        shell: bash
         run: |
-          cmake -S . -B build-core -DCMAKE_BUILD_TYPE=Release
-          cmake --build build-core --config Release --parallel 2
-          ctest --test-dir build-core -C Release --output-on-failure
-          cmake --install build-core --config Release --prefix "${{ runner.temp }}/leksika-install"
+          set -o pipefail
+          (cmake -S . -B build-core -DCMAKE_BUILD_TYPE=Release &&
+           cmake --build build-core --config Release --parallel 2 &&
+           ctest --test-dir build-core -C Release --output-on-failure &&
+           cmake --install build-core --config Release --prefix "${{ runner.temp }}/leksika-install") 2>&1 | tee "$RUNNER_TEMP/core-log.txt" || {
+             grep -Ei 'error |error:|fatal |failed|MSB[0-9]|C[0-9]{4}' "$RUNNER_TEMP/core-log.txt" | head -20 | while IFS= read -r line; do echo "::error::$line"; done
+             exit 1
+           }
       - name: Проверить установленные C и C++ API
         run: |
           cmake -S проверка/vcpkg -B build-consumer -DCMAKE_PREFIX_PATH="${{ runner.temp }}/leksika-install"
@@ -55,7 +60,13 @@ jobs:
         shell: cmd
       - name: Установить overlay-порт
         shell: bash
-        run: ./vcpkg-tool/vcpkg install leksika --overlay-ports="$GITHUB_WORKSPACE/packaging/vcpkg/ports" --triplet=${{ matrix.triplet }}
+        run: |
+          set -o pipefail
+          ./vcpkg-tool/vcpkg install leksika --overlay-ports="$GITHUB_WORKSPACE/packaging/vcpkg/ports" --triplet=${{ matrix.triplet }} 2>&1 | tee "$RUNNER_TEMP/port-log.txt" || {
+            find vcpkg-tool/buildtrees/leksika -name '*-out.log' -exec cat {} + 2>/dev/null >> "$RUNNER_TEMP/port-log.txt" || true
+            grep -Ei 'error |error:|fatal |failed|MSB[0-9]|C[0-9]{4}' "$RUNNER_TEMP/port-log.txt" | head -20 | while IFS= read -r line; do echo "::error::$line"; done
+            exit 1
+          }
       - name: Собрать и запустить потребителей через vcpkg
         shell: bash
         run: |
