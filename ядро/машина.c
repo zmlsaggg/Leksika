@@ -4,7 +4,7 @@
 #include <string.h>
 static void fail(char*p,size_t n,const char*s){if(p&&n)snprintf(p,n,"%s",s);}
 static void assign(ЛексусЗначение*dst,ЛексусЗначение src){лексус_значение_освободить(dst);*dst=src;}
-static int store_result(ЛексусЗначение*r,uint8_t dst,ЛексусОшибка e,ЛексусЗначение value,char*err,size_t errn){if(e.код!=ЛЕКСУС_ОК){fail(err,errn,e.сообщение ? e.сообщение : "ошибка операции значения");лексус_значение_освободить(&value);return 0;}assign(&r[dst],value);return 1;}
+static int store_result(ЛексусЗначение*r,uint8_t dst,ЛексусОшибка e,ЛексусЗначение value,char*err,size_t errn){if(e.код!=ЛЕКСУС_ОК){fail(err,errn,e.сообщение  ?  e.сообщение : "ошибка операции значения");лексус_значение_освободить(&value);return 0;}assign(&r[dst],value);return 1;}
 static int действие_разрешено(const ЛексусСредаИсполнения *env,uint32_t действие,
                                 const char *ресурс,char *err,size_t errn)
 {
@@ -14,7 +14,7 @@ static int действие_разрешено(const ЛексусСредаИс�
   return 0;
  }
  if(env->проверить_разрешение&&
-    env->проверить_разрешение(env->контекст,действие,ресурс ? ресурс : "")!=1){
+    env->проверить_разрешение(env->контекст,действие,ресурс  ?  ресурс : "")!=1){
   fail(err,errn,"политика VM отклонила ресурс среды");
   return 0;
  }
@@ -31,15 +31,15 @@ static int показать_значение(ЛексусЗначение v,cons
  const char *text=NULL; size_t length=0; char *owned=NULL;
  switch(v.вид){
   case ЛЕКСУС_НИЧТО: text="ничто"; length=strlen(text); break;
-  case ЛЕКСУС_ЛОГИКА: text=v.данные.логика?"да":"нет"; length=strlen(text); break;
+  case ЛЕКСУС_ЛОГИКА: text=v.данные.логика ? "да":"нет"; length=strlen(text); break;
   case ЛЕКСУС_ЧИСЛО: {
    ЛексусОшибка e=лексус_число_запись(v,&owned);
-   if(e.код!=ЛЕКСУС_ОК||!owned){fail(err,errn,e.сообщение?e.сообщение:"не удалось преобразовать число для вывода");return 0;}
+   if(e.код!=ЛЕКСУС_ОК||!owned){fail(err,errn,e.сообщение ? e.сообщение:"не удалось преобразовать число для вывода");return 0;}
    text=owned; length=strlen(owned); break;
   }
   case ЛЕКСУС_РЕЧЬ: {
    ЛексусОшибка e=лексус_речь_текст(v,&text,&length);
-   if(e.код!=ЛЕКСУС_ОК||!text){fail(err,errn,e.сообщение?e.сообщение:"не удалось получить текст речи");return 0;}
+   if(e.код!=ЛЕКСУС_ОК||!text){fail(err,errn,e.сообщение ? e.сообщение:"не удалось получить текст речи");return 0;}
    break;
   }
   default: fail(err,errn,"этот вид значения пока нельзя вывести как речь"); return 0;
@@ -146,12 +146,12 @@ int лексус_машина_исполнить_со_средой(const Лек�
     if(e.код==ЛЕКСУС_ОК) e=лексус_число_сравнить(r[x->а],zero,&comparison);
     лексус_значение_освободить(&zero);
     if(e.код!=ЛЕКСУС_ОК) {
-     fail(err,errn,e.сообщение?e.сообщение:"не удалось проверить количество повторений");
+     fail(err,errn,e.сообщение ? e.сообщение:"не удалось проверить количество повторений");
      ok=0;done=1;break;
     }
     if(comparison<=0) { ip=x->операнд;break; }
     if(cycles_count==cycles_capacity) {
-     size_t next=cycles_capacity?cycles_capacity*2:8;
+     size_t next=cycles_capacity ? cycles_capacity*2:8;
      if(next<cycles_capacity || next>SIZE_MAX/sizeof(*cycles)) {
       fail(err,errn,"слишком много вложенных циклов «повторить»");ok=0;done=1;break;
      }
@@ -181,7 +181,7 @@ int лексус_машина_исполнить_со_средой(const Лек�
     лексус_значение_освободить(&zero);
     if(e.код!=ЛЕКСУС_ОК) {
      лексус_значение_освободить(&next);
-     fail(err,errn,e.сообщение?e.сообщение:"ошибка счётчика цикла");
+     fail(err,errn,e.сообщение ? e.сообщение:"ошибка счётчика цикла");
      ok=0;done=1;break;
     }
     assign(&cycles[cycles_count-1].остаток,next);
@@ -199,9 +199,9 @@ int лексус_машина_исполнить_со_средой(const Лек�
     int comparison=0;
     e=лексус_число_сравнить(r[x->а],r[x->б],&comparison);
     if(e.код==ЛЕКСУС_ОК) {
-     int answer=x->операция==ЛЕКСУС_ОП_БОЛЬШЕ?comparison>0:
-                x->операция==ЛЕКСУС_ОП_МЕНЬШЕ?comparison<0:
-                x->операция==ЛЕКСУС_ОП_НЕБОЛЬШЕ?comparison<=0:comparison>=0;
+     int answer=x->операция==ЛЕКСУС_ОП_БОЛЬШЕ ? comparison>0:
+                x->операция==ЛЕКСУС_ОП_МЕНЬШЕ ? comparison<0:
+                x->операция==ЛЕКСУС_ОП_НЕБОЛЬШЕ ? comparison<=0:comparison>=0;
      value=лексус_логическое(answer);
     }
     if(!store_result(r,x->назначение,e,value,err,errn)){ok=0;done=1;}else ++ip;
@@ -209,13 +209,13 @@ int лексус_машина_исполнить_со_средой(const Лек�
    }
    case ЛЕКСУС_ОП_И:
    case ЛЕКСУС_ОП_ИЛИ:
-    value=лексус_логическое(x->операция==ЛЕКСУС_ОП_И?
+    value=лексус_логическое(x->операция==ЛЕКСУС_ОП_И ? 
       (лексус_правда(r[x->а])&&лексус_правда(r[x->б])):
       (лексус_правда(r[x->а])||лексус_правда(r[x->б])));
     assign(&r[x->назначение],value);++ip;break;
    case ЛЕКСУС_ОП_НЕ:value=лексус_логическое(!лексус_правда(r[x->а]));assign(&r[x->назначение],value);++ip;break;
    case ЛЕКСУС_ОП_ПЕРЕХОД:ip=x->операнд;break;
-   case ЛЕКСУС_ОП_ПЕРЕХОД_ЕСЛИ_ЛОЖЬ:ip=лексус_правда(r[x->а])?ip+1:x->операнд;break;
+   case ЛЕКСУС_ОП_ПЕРЕХОД_ЕСЛИ_ЛОЖЬ:ip=лексус_правда(r[x->а]) ? ip+1:x->операнд;break;
    case ЛЕКСУС_ОП_ВЫЗОВ: {
     const ЛексусВызов *call=&p->вызовы[x->операнд];
     const ЛексусФункция *function=&p->функции[call->функция];
@@ -273,15 +273,15 @@ int лексус_машина_исполнить_со_средой(const Лек�
    }
    case ЛЕКСУС_ОП_ПЕРЕЧЕНЬ_ДОБАВИТЬ:
     e=лексус_перечень_добавить(r[x->а],r[x->б]);
-    if(e.код!=ЛЕКСУС_ОК){fail(err,errn,e.сообщение?e.сообщение:"не удалось добавить элемент в перечень");ok=0;done=1;}else ++ip;
+    if(e.код!=ЛЕКСУС_ОК){fail(err,errn,e.сообщение ? e.сообщение:"не удалось добавить элемент в перечень");ok=0;done=1;}else ++ip;
     break;
    case ЛЕКСУС_ОП_ИТЕРАЦИЯ_НАЧАТЬ: {
     size_t count=0;
     e=лексус_перечень_длина(r[x->а],&count);
-    if(e.код!=ЛЕКСУС_ОК){fail(err,errn,e.сообщение?e.сообщение:"обход требует перечень");ok=0;done=1;break;}
+    if(e.код!=ЛЕКСУС_ОК){fail(err,errn,e.сообщение ? e.сообщение:"обход требует перечень");ok=0;done=1;break;}
     if(!count){ip=x->операнд;break;}
     if(iterators_count==iterators_capacity){
-     size_t next=iterators_capacity?iterators_capacity*2:8;
+     size_t next=iterators_capacity ? iterators_capacity*2:8;
      if(next<iterators_capacity||next>SIZE_MAX/sizeof(*iterators)){fail(err,errn,"слишком много вложенных обходов перечней");ok=0;done=1;break;}
      ЛексусИтератор *grown=(ЛексусИтератор*)realloc(iterators,next*sizeof(*iterators));
      if(!grown){fail(err,errn,"не хватает памяти для стека итераторов");ok=0;done=1;break;}
@@ -297,7 +297,7 @@ int лексус_машина_исполнить_со_средой(const Лек�
     ЛексусИтератор *iterator=&iterators[iterators_count-1];
     size_t count=0;
     e=лексус_перечень_длина(iterator->перечень,&count);
-    if(e.код!=ЛЕКСУС_ОК){fail(err,errn,e.сообщение?e.сообщение:"не удалось прочитать длину перечня");ok=0;done=1;break;}
+    if(e.код!=ЛЕКСУС_ОК){fail(err,errn,e.сообщение ? e.сообщение:"не удалось прочитать длину перечня");ok=0;done=1;break;}
     if(iterator->индекс>=count){uint32_t target=iterator->выход;лексус_значение_освободить(&iterator->перечень);--iterators_count;ip=target;break;}
     value=лексус_ничто();
     e=лексус_перечень_получить(iterator->перечень,iterator->индекс++,&value);
@@ -312,9 +312,9 @@ int лексус_машина_исполнить_со_средой(const Лек�
     if(!лексус_правда(r[x->а])) {
      const char *reason=NULL; size_t reason_length=0;
      e=лексус_речь_текст(r[x->б],&reason,&reason_length);
-     if(e.код!=ЛЕКСУС_ОК||!reason) fail(err,errn,e.сообщение?e.сообщение:"условие не выполнено");
+     if(e.код!=ЛЕКСУС_ОК||!reason) fail(err,errn,e.сообщение ? e.сообщение:"условие не выполнено");
      else if(err&&errn) {
-      size_t limit=reason_length<errn-1?reason_length:errn-1;
+      size_t limit=reason_length<errn-1 ? reason_length:errn-1;
       size_t copy=0;
       while(copy<limit&&reason[copy]!='\0') ++copy;
       while(copy>0&&copy<reason_length&&(((unsigned char)reason[copy]&0xC0u)==0x80u)) --copy;
@@ -330,11 +330,11 @@ int лексус_машина_исполнить_со_средой(const Лек�
     char *buffer=(char*)malloc(capacity);
     if(!buffer){fail(err,errn,"не хватает памяти для ввода");ok=0;done=1;break;}
     size_t length=0;
-    ЛексусВводСреды read_line=env&&env->ввод?env->ввод:ввод_по_умолчанию;
-    int read_status=read_line(env?env->контекст:NULL,buffer,capacity,&length);
+    ЛексусВводСреды read_line=env&&env->ввод ? env->ввод:ввод_по_умолчанию;
+    int read_status=read_line(env ? env->контекст:NULL,buffer,capacity,&length);
     if(read_status!=1||length>=capacity){
      free(buffer);
-     fail(err,errn,read_status==0?"достигнут конец ввода":"среда не смогла предоставить строку ввода");
+     fail(err,errn,read_status==0 ? "достигнут конец ввода":"среда не смогла предоставить строку ввода");
      ok=0;done=1;break;
     }
     ЛексусЗначение input=лексус_ничто();
