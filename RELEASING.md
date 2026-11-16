@@ -43,7 +43,9 @@ Python-совместимый runtime: supported subset работает без 
 2.39 или новее; macOS без подписи и notarization. Android — PIE с системной библиотекой Bionic
 для arm64/API 24+, проверяется в эмуляторе Android 15 с трансляцией ARM64, не в Termux или на
 реальном устройстве: совместимость с ними ещё не подтверждена. Шаблоны Scoop
-и Homebrew и инструкции для отдельных bucket/tap: `packaging/README.md`.
+и Homebrew и инструкции для отдельных bucket/tap: `packaging/README.md`;
+автоматическое обновление tap и bucket описано в разделе
+«Пакетные менеджеры: Homebrew и Scoop».
 
 Windows EXE не подписан сертификатом издателя. Браузер, антивирус или Windows
 SmartScreen могут предупреждать или блокировать его: имя файла и SHA-256 этого
@@ -202,6 +204,75 @@ TestPyPI. Тег `v<версия>` должен уже указывать на �
 он объясняет, из какого коммита собран файл. Пробный выпуск на TestPyPI
 не занимает номер на PyPI.
 
+
+## Пакетные менеджеры: Homebrew и Scoop
+
+Версионный релиз автоматически обновляет два внешних репозитория:
+
+- `zmlsaggg/homebrew-leksika` — `Formula/leksika.rb` (macOS arm64, macOS x64, Linux x64);
+- `zmlsaggg/scoop-leksika` — `bucket/leksika.json` (Windows x64).
+
+За это отвечает задание `update-package-managers` в
+`.github/workflows/release.yml`. Оно запускается только по тегу `v*`, строго
+после успешного `publish-versioned`, и только для стабильной версии: суффиксы
+`-alpha`, `-beta`, `-rc` в tap и bucket не попадают. Задание правит версию,
+ссылки на архивы и SHA-256, затем коммитит и отправляет изменения в `main`
+обоих репозиториев сообщением `chore: update leksika to v<версия>`. Если файлы
+уже описывают нужную версию, коммит не создаётся.
+
+Сами суммы берутся из опубликованного `zz-SHA256SUMS.txt`: сначала задание
+сверяет артефакт, затем скачивает те же файлы из релиза и сравнивает суммы —
+так ссылки в формуле и манифесте указывают на реально существующие архивы.
+Формула и манифест правятся точечно, остальной текст сохраняется; после записи
+проверяются повторным разбором JSON и, если на раннере есть Ruby, командой
+`ruby -c`.
+
+Отдельного запуска не требуется. Повторить обновление для уже вышедшей версии
+можно кнопкой **Re-run failed jobs** у задания: версия берётся из тега, повторный
+запуск идемпотентен.
+
+### Разовая настройка секрета `CROSS_REPO_TOKEN`
+
+Запись в чужие репозитории идёт токеном из секрета `CROSS_REPO_TOKEN`. Это
+fine-grained personal access token, а не `GITHUB_TOKEN`: последний действует
+только внутри `zmlsaggg/Leksika`.
+
+1. Откройте **Settings → Developer settings → Personal access tokens →
+   Fine-grained tokens → Generate new token**.
+2. **Repository access → Only select repositories**: `zmlsaggg/homebrew-leksika`
+   и `zmlsaggg/scoop-leksika`.
+3. **Permissions → Repository permissions → Contents: Read and write.** Больше
+   ничего не нужно: задание коммитит прямо в `main`, pull request не создаёт.
+   `Workflows` не требуется, метаданные доступа только читаются.
+4. Срок действия — по политике проекта; после истечения задание упадёт с
+   сообщением о токене, и его нужно выпустить заново.
+5. Сохраните токен в **zmlsaggg/Leksika → Settings → Secrets and variables →
+   Actions → New repository secret** с именем ровно `CROSS_REPO_TOKEN`.
+   Секрет репозитория, а не окружения: задание не использует `environment`.
+
+Читать релиз токен не нужен — файлы релиза публичные, поэтому в конфигурацию
+клонирования он не попадает и передаётся только аргументом к `git push`.
+Отдельный шаг проверяет, что в `.git/config` клонов не осталось токена.
+
+Если токена нет, задание падает с понятным сообщением до любых изменений;
+публикация на PyPI от этого не зависит: `publish.yml` ждёт только
+`publish-versioned`, а не успех всего `release.yml`.
+
+### Ручное обновление
+
+Скрипт можно запустить локально — он не требует сети, если указать файл сумм:
+
+```sh
+git clone https://github.com/zmlsaggg/homebrew-leksika /tmp/tap
+git clone https://github.com/zmlsaggg/scoop-leksika /tmp/scoop
+python3 packaging/update_package_managers.py 1.0.0 \
+  --sums zz-SHA256SUMS.txt --homebrew /tmp/tap --scoop /tmp/scoop --dry-run
+```
+
+Уберите `--dry-run`, чтобы записать файлы, затем проверьте `git diff` и
+отправьте изменения сами. Флаг `--download` скачивает `zz-SHA256SUMS.txt` из
+GitHub Release нужного тега. Проверка самого скрипта — без сети и секретов —
+запускается в CI: `python3 проверка/менеджеры_пакетов.py`.
 
 ## GitHub Releases и GitHub Packages
 

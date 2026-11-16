@@ -13,9 +13,11 @@ name: Публикация на PyPI
 #   Environment name   pypi          ← для TestPyPI: testpypi
 #
 # Публикация запускается тегом vX.Y.Z[-alpha.N|-beta.N|-rc.N]: тег должен
-# указывать на коммит из main, а проверка релиза (.github/workflows/release.yml)
-# для того же коммита — уже завершиться успешно. Иначе на PyPI попал бы
-# непроверенный выпуск, а версию там нельзя перезаписать.
+# указывать на коммит из main, а в release.yml для того же коммита задание
+# publish-versioned уже должно опубликовать бинарники и zz-SHA256SUMS.txt.
+# Иначе на PyPI попал бы непроверенный выпуск, а версию там нельзя перезаписать.
+# Ждём именно это задание, а не успех всего release.yml: сбой обновления
+# внешних пакетных менеджеров не должен блокировать пакет на PyPI.
 
 on:
   push:
@@ -157,7 +159,7 @@ jobs:
               raise
           raise SystemExit(f"версия {version} уже есть на {host}: {url} — номер выпуска неизменяем")
 
-      - name: Дождаться успешной проверки релиза того же коммита
+      - name: Дождаться публикации бинарников и zz-SHA256SUMS.txt того же коммита
         if: github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -166,24 +168,37 @@ jobs:
         run: |
           set -uo pipefail
           # Автоматический выпуск публикуется только после того, как для этого же
-          # коммита прошли тесты и сборка в release.yml. Ручной запуск
-          # (workflow_dispatch) эту проверку не ждёт: он и есть обходной путь.
+          # коммита в release.yml появился опубликованный версионный релиз с
+          # файлами. Ручной запуск (workflow_dispatch) эту проверку не ждёт.
+          #
+          # Ждём именно задание publish-versioned, а не успех всего release.yml:
+          # обновление внешних пакетных менеджеров (update-package-managers) идёт
+          # после него и может упасть из-за истёкшего CROSS_REPO_TOKEN. Пакет на
+          # PyPI при этом должен выйти: это отдельный канал, а не заложник
+          # чужого токена.
           for attempt in $(seq 1 80); do
             runs=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$SHA&per_page=100" 2>/dev/null || true)
-            state=$(jq -r '[(.workflow_runs // [])[] | select(.path == ".github/workflows/release.yml")][0]
-              | if . == null then "" else "\(.status) \(.conclusion // "")" end' <<<"${runs:-{}}")
+            run_id=$(jq -r '[(.workflow_runs // [])[] | select(.path == ".github/workflows/release.yml")][0]
+              | if . == null then "" else "\(.id)" end' <<<"${runs:-{}}")
+            if [ -z "$run_id" ]; then
+              echo "ожидание release.yml для $SHA (попытка $attempt, запуск не найден)"
+              sleep 45; continue
+            fi
+            jobs=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/jobs?per_page=100" 2>/dev/null || true)
+            state=$(jq -r '[(.jobs // [])[] | select(.name == "publish-versioned")][0]
+              | if . == null then "" else "\(.status) \(.conclusion // "")" end' <<<"${jobs:-{}}")
             case "$state" in
               "completed success")
-                echo "проверка релиза для $SHA завершилась успешно"
+                echo "бинарники и zz-SHA256SUMS.txt для $SHA опубликованы (publish-versioned)"
                 exit 0 ;;
               "completed "*)
-                echo "::error::проверка релиза для $SHA завершилась с итогом ${state#completed }" >&2
+                echo "::error::публикация бинарников для $SHA завершилась с итогом ${state#completed }" >&2
                 exit 1 ;;
             esac
-            echo "ожидание release.yml для $SHA (попытка $attempt, состояние: ${state:-запуск не найден})"
+            echo "ожидание publish-versioned для $SHA (попытка $attempt, состояние: ${state:-задание не найдено})"
             sleep 45
           done
-          echo "::error::release.yml для $SHA не завершился за отведённое время; проверьте сборку и запустите публикацию вручную" >&2
+          echo "::error::публикация бинарников для $SHA не завершилась за отведённое время; проверьте сборку и запустите публикацию вручную" >&2
           exit 1
 
   build:
