@@ -256,6 +256,12 @@ jobs:
           api-level: 35
           target: google_apis
           arch: x86_64
+          # Эмулятор в общих раннерах иногда загружается дольше обычного.
+          # Запас по времени и отключённые анимации убирают часть случайных падений.
+          cores: 2
+          ram-size: 2048M
+          disable-animations: true
+          emulator-boot-timeout: 900
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           script: bash сборка/проверить_android.sh && bash сборка/проверить_apk.sh
 
