@@ -164,12 +164,18 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           SHA: ${{ steps.version.outputs.sha }}
+          TAG: ${{ github.ref_name }}
         shell: bash
         run: |
           set -uo pipefail
           # Автоматический выпуск публикуется только после того, как для этого же
           # коммита в release.yml появился опубликованный версионный релиз с
           # файлами. Ручной запуск (workflow_dispatch) эту проверку не ждёт.
+          #
+          # Ждём запуск, поднятый самим тегом: на том же коммите обычно есть и
+          # запуск от отправки в main, где задание publish-versioned пропущено.
+          # Если смотреть первый попавшийся запуск, публикация падает сразу после
+          # тега, хотя сборка бинарников только началась.
           #
           # Ждём именно задание publish-versioned, а не успех всего release.yml:
           # обновление внешних пакетных менеджеров (update-package-managers) идёт
@@ -178,7 +184,8 @@ jobs:
           # чужого токена.
           for attempt in $(seq 1 80); do
             runs=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$SHA&per_page=100" 2>/dev/null || true)
-            run_id=$(jq -r '[(.workflow_runs // [])[] | select(.path == ".github/workflows/release.yml")][0]
+            run_id=$(jq -r --arg tag "$TAG" '[(.workflow_runs // [])[]
+              | select(.path == ".github/workflows/release.yml" and .head_branch == $tag)][0]
               | if . == null then "" else "\(.id)" end' <<<"${runs:-{}}")
             if [ -z "$run_id" ]; then
               echo "ожидание release.yml для $SHA (попытка $attempt, запуск не найден)"
