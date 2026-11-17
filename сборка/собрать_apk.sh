@@ -13,8 +13,11 @@ cp android/app/src/main/assets/* "$work/assets/"
 cp учебная-машина.js "$work/assets/machine.js"
 # Словарь форм нужен полному исполнителю: при первом запуске приложение
 # разворачивает сжатый файл в свои данные и передаёт ядру путь.
-cp ядро/русские_формы.lxd.gz "$work/assets/dictionary.lxd.gz"
-ls -l "$work/assets/dictionary.lxd.gz"
+# Кладём его в APK самим zip, а не через aapt: aapt считает «.gz» признаком
+# сжатия, распаковывает файл и теряет расширение — в архиве оказывался
+# assets/dictionary.lxd весом 41 МБ вместо 7 МБ сжатого.
+mkdir -p "$work/apk-assets/assets"
+cp ядро/русские_формы.lxd.gz "$work/apk-assets/assets/dictionary.lxd.gz"
 # Нативное ядро кладётся как библиотека: Android распаковывает такие файлы в
 # каталог приложения, откуда их можно запускать как обычную программу.
 # Формат переменной — пары «архитектура=путь» через пробел. Две архитектуры
@@ -42,9 +45,11 @@ javac -encoding UTF-8 -source 8 -target 8 -bootclasspath "$platform" -d "$work/c
 (cd "$work/classes" && jar cf "$work/classes.jar" .)
 "$tools/d8" --min-api 24 --lib "$platform" --output "$work/dex" "$work/classes.jar"
 (cd "$work/dex" && "$tools/aapt" add "$work/app-unsigned.apk" classes.dex)
+# Без сжатия: и словарь, и запускаемые файлы нельзя прятать в deflate — так
+# их читают AssetManager и загрузчик. -p ниже выравнивает библиотеки по
+# странице, как требует упаковка нативного кода.
+(cd "$work/apk-assets" && zip -0 -q "$work/app-unsigned.apk" assets/dictionary.lxd.gz)
 if [ -n "$cores" ]; then
-  # Без сжатия: запускаемый файл нельзя прятать в deflate. -p выравнивает
-  # библиотеки по странице, как требует упаковка нативного кода.
   for pair in $cores; do
     abi=${pair%%=*}
     (cd "$work" && zip -0 -q "$work/app-unsigned.apk" "lib/$abi/libleksus-core.so")
