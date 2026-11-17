@@ -147,7 +147,9 @@ jobs:
             echo "main изменился во время загрузки; метку не обновляем" >&2; exit 1
           fi
           git push origin "$GITHUB_SHA:refs/tags/nightly" --force
-          gh release edit nightly --title 'Leksika — актуальная сборка' --notes "$notes" --draft=false --prerelease=false --latest
+          # Метку «последний выпуск» ночная сборка не забирает: иначе на странице
+          # релизов «последней» оказывается движущаяся nightly, а не версия.
+          gh release edit nightly --title 'Leksika — актуальная сборка' --notes "$notes" --draft=false --prerelease=false
 
   # Один комплект для PR, обновляемой сборки main и версионных релизов.
   native-packages:
@@ -418,7 +420,13 @@ jobs:
             > release-metadata.json
           test "$(jq -r '.id // ""' release-metadata.json)" != ""
           bash сборка/проверить_публикацию.sh release-metadata.json release
-          gh release edit "$TAG" --draft=false
+          # Снимаем черновик и, если это не предварительная версия, ставим метку
+          # «последний выпуск»: её не должна перехватывать ночная сборка.
+          if [[ "$TAG" == *-* ]]; then
+            gh release edit "$TAG" --draft=false
+          else
+            gh release edit "$TAG" --draft=false --latest
+          fi
 
   # Обновление внешних пакетных менеджеров идёт строго после публикации
   # версионного релиза: только там появляются архивы и zz-SHA256SUMS.txt, с
