@@ -69,6 +69,7 @@ packages = ["leksika_engine"]
 "читай.lek" = "leksika_engine/runtime/читай.lek"
 "лексика" = "leksika_engine/runtime/лексика"
 "примеры" = "leksika_engine/runtime/примеры"
+"программы" = "leksika_engine/runtime/программы"
 "словари" = "leksika_engine/runtime/словари"
 "документы" = "leksika_engine/runtime/документы"
 "данные/словарь" = "leksika_engine/runtime/данные/словарь"
@@ -83,6 +84,7 @@ include = [
     "читай.lek",
     "лексика",
     "примеры",
+    "программы",
     "словари",
     "документы",
     "данные/словарь",

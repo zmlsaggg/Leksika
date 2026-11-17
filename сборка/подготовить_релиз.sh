@@ -18,6 +18,11 @@ fi
 sha256sum -c SHA256SUMS.txt
 mv leksika.exe 00-Leksika-Windows.exe
 files[0]=00-Leksika-Windows.exe
+# Расширение редактора необязательно: если оно собрано рядом, оно тоже
+# входит в комплект и в контрольные суммы.
+if [[ -f leksika-language.vsix ]]; then
+  files+=(leksika-language.vsix)
+fi
 sha256sum "${files[@]:2}" > zz-checksums.txt
 sha256sum "${files[@]}" > zz-SHA256SUMS.txt
 rm SHA256SUMS.txt
