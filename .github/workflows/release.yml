@@ -52,6 +52,7 @@ jobs:
         run: |
           node проверка/пакеты.cjs
           python3 проверка/менеджеры_пакетов.py
+          python3 проверка/рабочие_процессы.py
       - name: Установить MinGW-w64
         run: sudo apt-get update && sudo apt-get install -y mingw-w64
       - uses: actions/setup-python@v5
@@ -72,8 +73,8 @@ jobs:
           # Установщик не должен оказаться урезанным: внутри весь движок,
           # примеры, программы, словари, документы, значки, данные словаря и
           # собранное нативное ядро.
-          for часть in лексус.lek читай.lek README.md LICENSE лексика примеры программы словари документы значки ядро данные; do
-            test -e "сборка/груз/$часть" || { echo "::error::в установщике нет: $часть"; exit 1; }
+          for part in лексус.lek читай.lek README.md LICENSE лексика примеры программы словари документы значки ядро данные; do
+            test -e "сборка/груз/$part" || { echo "::error::в установщике нет: $part"; exit 1; }
           done
           test -s "сборка/груз/лексус-ядро.exe" || { echo "::error::нативное ядро не собралось и не попало в установщик"; exit 1; }
           echo "частей в установщике: $(ls сборка/груз | wc -l), нативное ядро на месте"
@@ -156,6 +157,10 @@ jobs:
     # ошибка. Предел не даёт такой джобе висеть час: она падает с внятным
     # «cancelled», а не держит релиз в неизвестности.
     timeout-minutes: 40
+    # В запросах на слияние занятая очередь macOS не должна красить проверку:
+    # задание всё равно перезапускается перед выпуском. В ночной сборке и в
+    # версионном релизе оно обязательно: без архива выпуск неполный.
+    continue-on-error: ${{ github.event_name == 'pull_request' }}
     strategy:
       fail-fast: false
       matrix:
@@ -476,11 +481,11 @@ jobs:
           # Проверяем не только локальный артефакт, но и опубликованный адрес:
           # url в формуле и манифесте должны уже существовать.
           mkdir -p published
-          for имя in leksika-native-macos-arm64.tar.gz leksika-native-macos-x64.tar.gz \
+          for asset in leksika-native-macos-arm64.tar.gz leksika-native-macos-x64.tar.gz \
                       leksika-native-linux-x64.tar.gz leksika-native-windows-x64.zip \
                       zz-SHA256SUMS.txt; do
             gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir published \
-              --pattern "$имя" --clobber
+              --pattern "$asset" --clobber
           done
           cmp published/zz-SHA256SUMS.txt release/zz-SHA256SUMS.txt
 
@@ -535,35 +540,37 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          сообщение="chore: update leksika to v${VERSION}"
+          # Bash не принимает кириллические идентификаторы: имена функций и
+          # переменных только латиницей, русским остаётся текст сообщений.
+          message="chore: update leksika to v${VERSION}"
           # Токен передаётся аргументом, а не через remote: так он не попадает
           # в .git/config и в трассировку ошибок git. Публичный адрес чтения
           # остаётся в конфиге нетронутым.
-          отправить() {
-            каталог="$1"; репозиторий="$2"; файл="$3"
-            if [ -z "$(git -C "$каталог" status --porcelain -- "$файл")" ]; then
-              echo "::notice::$репозиторий уже на версии v${VERSION} — коммит не нужен"
+          push_repo() {
+            local dir="$1" repo="$2" file="$3"
+            if [ -z "$(git -C "$dir" status --porcelain -- "$file")" ]; then
+              echo "::notice::$repo уже на версии v${VERSION} — коммит не нужен"
               return 0
             fi
-            git -C "$каталог" config user.name 'github-actions[bot]'
-            git -C "$каталог" config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git -C "$каталог" add "$файл"
-            git -C "$каталог" commit -m "$сообщение"
-            git -C "$каталог" push \
-              "https://x-access-token:${CROSS_REPO_TOKEN}@github.com/$репозиторий.git" HEAD:main
-            echo "::notice::$репозиторий обновлён до v${VERSION}"
+            git -C "$dir" config user.name 'github-actions[bot]'
+            git -C "$dir" config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git -C "$dir" add "$file"
+            git -C "$dir" commit -m "$message"
+            git -C "$dir" push \
+              "https://x-access-token:${CROSS_REPO_TOKEN}@github.com/$repo.git" HEAD:main
+            echo "::notice::$repo обновлён до v${VERSION}"
           }
-          отправить tap zmlsaggg/homebrew-leksika Formula/leksika.rb
-          отправить scoop-repo zmlsaggg/scoop-leksika bucket/leksika.json
+          push_repo tap zmlsaggg/homebrew-leksika Formula/leksika.rb
+          push_repo scoop-repo zmlsaggg/scoop-leksika bucket/leksika.json
 
       - name: Убедиться, что токен не остался в конфигурации клонов
         if: always()
         shell: bash
         run: |
           set -euo pipefail
-          for каталог in tap scoop-repo; do
-            if [ -d "$каталог/.git" ] && grep -rqE 'x-access-token|ghp_|github_pat_' "$каталог/.git/config"; then
-              echo "::error::в $каталог/.git/config найден токен"
+          for repo_dir in tap scoop-repo; do
+            if [ -d "$repo_dir/.git" ] && grep -rqE 'x-access-token|ghp_|github_pat_' "$repo_dir/.git/config"; then
+              echo "::error::в $repo_dir/.git/config найден токен"
               exit 1
             fi
           done
