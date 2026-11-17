@@ -267,7 +267,17 @@ jobs:
           # APK получает настоящее ядро: приложение становится полным
           # исполнителем, а не только песочницей.
           LEKSUS_CORES: arm64-v8a=ядро/leksus-core-arm64-v8a x86_64=ядро/leksus-core-x86_64
-        run: bash сборка/собрать_apk.sh
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          # Полный журнал сборки лежит во внешнем хранилище и из некоторых
+          # окружений недоступен. Поэтому хвост журнала уходит в аннотации:
+          # иначе о поломке известно только «exit code 1».
+          if ! bash сборка/собрать_apk.sh > apk-build.log 2>&1; then
+            tail -n 6 apk-build.log | sed 's/^/::error::/'
+            exit 1
+          fi
+          tail -n 3 apk-build.log
       - uses: actions/upload-artifact@v4
         with:
           name: leksika-apk-${{ github.sha }}
