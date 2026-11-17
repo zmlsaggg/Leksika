@@ -184,6 +184,8 @@ jobs:
           # чужого токена.
           for attempt in $(seq 1 80); do
             runs=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$SHA&per_page=100" 2>/dev/null || true)
+            # На коммите слияния в main тоже есть запуск release.yml, но в нём
+            # publish-versioned пропущен. Берём запуск, поднятый самим тегом.
             run_id=$(jq -r --arg tag "$TAG" '[(.workflow_runs // [])[]
               | select(.path == ".github/workflows/release.yml" and .head_branch == $tag)][0]
               | if . == null then "" else "\(.id)" end' <<<"${runs:-{}}")
@@ -274,6 +276,9 @@ jobs:
           print(f"файлов в колесе: {len(names)}, версия {version}")
           ПИТОН
 
+      - name: Сверить состав колеса с исходниками
+        run: python3 packaging/pypi/проверить_состав.py dist/*.whl
+
       - name: Проверить установку колеса и запуск примеров
         shell: bash
         run: |
@@ -301,6 +306,43 @@ jobs:
           path: dist/
           if-no-files-found: error
           retention-days: 14
+
+  smoke-python:
+    name: Пакет на Python ${{ matrix.python-version }}
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.8 — нижняя граница из requires-python, 3.14 — то, что стоит у
+        # пользователей Windows из Microsoft Store.
+        python-version: ['3.8', '3.14']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: pypi-dist-${{ needs.prepare.outputs.version }}
+          path: dist
+      - name: Поставить колесо и запустить движок
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m venv "$RUNNER_TEMP/пакет"
+          "$RUNNER_TEMP/пакет/bin/pip" install --quiet --disable-pip-version-check \
+            --no-index --no-deps --find-links dist leksika
+          cd "$RUNNER_TEMP"
+          "$RUNNER_TEMP/пакет/bin/python" -m leksika_engine справка > help.txt
+          grep -q 'язык программирования' help.txt
+          "$RUNNER_TEMP/пакет/bin/python" -m leksika_engine где > where.txt
+          grep -q 'движок' where.txt
+          game="$("$RUNNER_TEMP/пакет/bin/python" -c \
+            "from leksika_engine.cli import ДВИЖОК; import os; print(os.path.join(ДВИЖОК, 'примеры', 'игра_спрайты.lek'))")"
+          "$RUNNER_TEMP/пакет/bin/python" -m leksika_engine запустить "$game" > game.txt
+          grep -q 'Ширина сцены' game.txt
+          test -s "$RUNNER_TEMP/игра_спрайты.png"
 
   publish-testpypi:
     name: Опубликовать на TestPyPI

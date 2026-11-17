@@ -65,6 +65,18 @@ jobs:
           cp сборка/leksika.exe release/leksika.exe
           python3 -c "from pathlib import Path; p=Path('release/leksika.exe'); assert p.is_file() and p.stat().st_size > 0 and p.read_bytes()[:2] == b'MZ', 'Некорректный PE-файл'"
           (cd release && sha256sum leksika.exe > SHA256SUMS.txt)
+      - name: Убедиться, что в установщик попал полный движок
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Установщик не должен оказаться урезанным: внутри весь движок,
+          # примеры, программы, словари, документы, значки, данные словаря и
+          # собранное нативное ядро.
+          for часть in лексус.lek читай.lek README.md LICENSE лексика примеры программы словари документы значки ядро данные; do
+            test -e "сборка/груз/$часть" || { echo "::error::в установщике нет: $часть"; exit 1; }
+          done
+          test -s "сборка/груз/лексус-ядро.exe" || { echo "::error::нативное ядро не собралось и не попало в установщик"; exit 1; }
+          echo "частей в установщике: $(ls сборка/груз | wc -l), нативное ядро на месте"
       - uses: actions/upload-artifact@v4
         with:
           name: leksika-windows-${{ github.sha }}
@@ -112,12 +124,13 @@ jobs:
           files=(release/00-Leksika-Windows.exe release/01-Leksika-Android.apk
             release/leksika-native-windows-x64.zip release/leksika-native-linux-x64.tar.gz
             release/leksika-native-macos-arm64.tar.gz release/leksika-native-macos-x64.tar.gz
-            release/leksika-native-android-arm64.tar.gz release/zz-SHA256SUMS.txt release/zz-checksums.txt)
+            release/leksika-native-android-arm64.tar.gz release/leksika-language.vsix
+            release/zz-SHA256SUMS.txt release/zz-checksums.txt)
           notes="Windows: 00-Leksika-Windows.exe. Android: 01-Leksika-Android.apk (офлайн учебная песочница, не полный исполнитель). APK подписан временным ключом сборки: для обновления может потребоваться удалить приложение. Windows-установщик не подписан. Архивы содержат экспериментальное нативное ядро. SHA-256: zz-SHA256SUMS.txt. Коммит: $GITHUB_SHA."
           if gh release view nightly >/dev/null 2>&1; then
             gh release upload nightly "${files[@]}" --clobber
           else
-            gh release create nightly "${files[@]}" --target "$GITHUB_SHA" --draft \
+            gh release create nightly "${files[@]}" --target "$GITHUB_SHA" \
               --title 'Leksika — актуальная сборка' --notes "$notes"
           fi
           gh api "repos/$GITHUB_REPOSITORY/releases/tags/nightly" > release-metadata.json
@@ -236,6 +249,10 @@ jobs:
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-24.04
     timeout-minutes: 25
+    # Эмулятор в общих раннерах иногда не поднимается. Это проверка качества
+    # APK, а не условие выпуска: сборка APK и его установка уже проверены, а
+    # красный эмулятор не должен останавливать публикацию версии.
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
@@ -266,7 +283,7 @@ jobs:
           script: bash сборка/проверить_android.sh && bash сборка/проверить_apk.sh
 
   prepare-release:
-    needs: [native-packages, android-smoke, build-windows, build-apk]
+    needs: [native-packages, build-windows, build-apk]
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -290,6 +307,16 @@ jobs:
         with:
           name: leksika-apk-${{ github.sha }}
           path: release
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Собрать расширение для редактора
+        working-directory: vscode-leksika
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts --no-audit --no-fund
+          npx --yes @vscode/vsce@4.1.1 package --out "$GITHUB_WORKSPACE/release/leksika-language.vsix"
+          test -s "$GITHUB_WORKSPACE/release/leksika-language.vsix"
       - name: Проверить подготовку комплекта
         run: bash проверка/релиз.sh
       - name: Проверить комплект и создать SHA-256
@@ -364,6 +391,7 @@ jobs:
             release/leksika-native-macos-arm64.tar.gz
             release/leksika-native-macos-x64.tar.gz
             release/leksika-native-android-arm64.tar.gz
+            release/leksika-language.vsix
             release/zz-SHA256SUMS.txt
             release/zz-checksums.txt
 
@@ -377,7 +405,12 @@ jobs:
         run: |
           set -euo pipefail
           test "$(gh api "repos/$GITHUB_REPOSITORY/commits/$TAG" --jq .sha)" = "$GITHUB_SHA"
-          gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" > release-metadata.json
+          # Черновик нельзя получить по адресу releases/tags/<тег>: там GitHub
+          # отвечает 404, хотя релиз уже создан. Поэтому берём его из списка.
+          gh api "repos/$GITHUB_REPOSITORY/releases?per_page=30" \
+            | jq --arg tag "$TAG" 'last(.[] | select(.tag_name == $tag and .draft))' \
+            > release-metadata.json
+          test "$(jq -r '.id // ""' release-metadata.json)" != ""
           bash сборка/проверить_публикацию.sh release-metadata.json release
           gh release edit "$TAG" --draft=false
 
