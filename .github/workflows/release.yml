@@ -243,8 +243,41 @@ jobs:
         run: |
           test -f "$ANDROID_HOME/platforms/android-35/android.jar"
           test -x "$ANDROID_HOME/build-tools/35.0.0/aapt"
+      # Приложение запускает настоящее ядро как отдельный процесс, поэтому в
+      # APK нужны двоичные файлы под телефоны (arm64) и под эмулятор x86_64.
+      - name: Собрать нативное ядро для телефона
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          trap 'echo "::error::Не выполнена команда на строке $LINENO: $BASH_COMMAND"' ERR
+          ndk="${ANDROID_NDK_HOME:?NDK не найден}/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          flags='-std=c11 -O3 -Wall -Wextra -Wpedantic -fPIE -pie'
+          for abi in arm64-v8a x86_64; do
+            case "$abi" in
+              arm64-v8a) compiler="$ndk/aarch64-linux-android24-clang" ;;
+              x86_64) compiler="$ndk/x86_64-linux-android24-clang" ;;
+            esac
+            test -x "$compiler"
+            make -C ядро native TARGET="leksus-core-$abi" CC="$compiler" CFLAGS="$flags"
+          done
+          readelf -h ядро/leksus-core-arm64-v8a | grep -q AArch64
+          readelf -h ядро/leksus-core-x86_64 | grep -q 'X86-64'
       - name: Собрать APK
-        run: bash сборка/собрать_apk.sh
+        env:
+          # APK получает настоящее ядро: приложение становится полным
+          # исполнителем, а не только песочницей.
+          LEKSUS_CORES: arm64-v8a=ядро/leksus-core-arm64-v8a x86_64=ядро/leksus-core-x86_64
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          # Полный журнал сборки лежит во внешнем хранилище и из некоторых
+          # окружений недоступен. Поэтому хвост журнала уходит в аннотации:
+          # иначе о поломке известно только «exit code 1».
+          if ! bash сборка/собрать_apk.sh > apk-build.log 2>&1; then
+            tail -n 6 apk-build.log | sed 's/^/::error::/'
+            exit 1
+          fi
+          tail -n 3 apk-build.log
       - uses: actions/upload-artifact@v4
         with:
           name: leksika-apk-${{ github.sha }}
@@ -389,7 +422,7 @@ jobs:
           overwrite_files: false
           fail_on_unmatched_files: true
           body: |
-            Windows: 00-Leksika-Windows.exe. Android: 01-Leksika-Android.apk — офлайн учебная песочница, не полный исполнитель.
+            Windows: 00-Leksika-Windows.exe. Android: 01-Leksika-Android.apk — офлайн исполнитель на нативном ядре и отдельная учебная песочница в WebView.
             APK подписан временным ключом сборки: для обновления может потребоваться удаление приложения.
             Нативные пакеты исполняют только подмножество языка, не заменяют полный runtime.
             Android проверен в Android-эмуляторе с трансляцией ARM64, но не на физическом устройстве или в Termux; macOS не подписана и не нотариально заверена.
