@@ -14,6 +14,7 @@ cp учебная-машина.js "$work/assets/machine.js"
 # Словарь форм нужен полному исполнителю: при первом запуске приложение
 # разворачивает сжатый файл в свои данные и передаёт ядру путь.
 cp ядро/русские_формы.lxd.gz "$work/assets/dictionary.lxd.gz"
+ls -l "$work/assets/dictionary.lxd.gz"
 # Нативное ядро кладётся как библиотека: Android распаковывает такие файлы в
 # каталог приложения, откуда их можно запускать как обычную программу.
 # Формат переменной — пары «архитектура=путь» через пробел. Две архитектуры
@@ -59,13 +60,7 @@ keytool -genkeypair -keystore "$work/key.jks" -storepass android -keypass androi
 "$tools/aapt" dump badging release/01-Leksika-Android.apk > "$work/badging.txt"
 grep -F "package: name='org.leksika.sandbox'" "$work/badging.txt"
 grep -F 'application-icon-' "$work/badging.txt"
-unzip -l release/01-Leksika-Android.apk | grep -F 'assets/dictionary.lxd.gz'
-if [ -n "$cores" ]; then
-  for pair in $cores; do
-    abi=${pair%%=*}
-    unzip -l release/01-Leksika-Android.apk | grep -F "lib/$abi/libleksus-core.so"
-    unzip -p release/01-Leksika-Android.apk "lib/$abi/libleksus-core.so" > "$work/core-check.so"
-    test "$(head -c 4 "$work/core-check.so")" = "$(printf '\177ELF')"
-    echo "нативное ядро внутри APK: $abi, ELF на месте"
-  done
-fi
+# Содержимое APK проверяем разбором архива: сообщения получаются понятными, а
+# список файлов виден в журнале, если чего-то не хватает.
+LEKSUS_CORES="$cores" python3 сборка/проверить_содержимое_apk.py release/01-Leksika-Android.apk
+echo "размер APK: $(wc -c < release/01-Leksika-Android.apk) байт"
