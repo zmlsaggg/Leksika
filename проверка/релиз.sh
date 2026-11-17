@@ -30,6 +30,11 @@ done
 bash "$root/сборка/проверить_публикацию.sh" metadata.json "$tmp"
 jq 'del(.assets[0])' metadata.json > missing.json
 if bash "$root/сборка/проверить_публикацию.sh" missing.json "$tmp" >/dev/null 2>&1; then echo 'Пропущен отсутствующий ресурс GitHub' >&2; exit 1; fi
+mv "${files[1]}" сохранённый.apk
+if bash "$root/сборка/проверить_публикацию.sh" metadata.json "$tmp" >/dev/null 2>&1; then
+  echo 'Пропущен отсутствующий файл комплекта' >&2; exit 1
+fi
+mv сохранённый.apk "${files[1]}"
 printf corrupt >> "${files[3]}"
 if bash "$root/сборка/проверить_публикацию.sh" metadata.json "$tmp" >/dev/null 2>&1; then echo 'Пропущена неверная сумма GitHub' >&2; exit 1; fi
 if sha256sum -c zz-SHA256SUMS.txt >/dev/null 2>&1; then echo 'Изменённый архив не обнаружен' >&2; exit 1; fi

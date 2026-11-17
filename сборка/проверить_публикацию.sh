@@ -14,6 +14,9 @@ if [[ -f "$dir/leksika-language.vsix" ]]; then
   files+=(leksika-language.vsix)
 fi
 for file in "${files[@]}"; do
+  if [[ ! -f "$dir/$file" ]]; then
+    echo "Нет файла в комплекте: $dir/$file" >&2; exit 1
+  fi
   hash=$(sha256sum "$dir/$file"); hash=${hash%% *}
   size=$(wc -c < "$dir/$file"); size=${size//[[:space:]]/}
   asset_line=$(jq -r --arg name "$file" \
