@@ -41,7 +41,24 @@ public final class MainActivity extends Activity {
             }
         });
         setContentView(view);
+        // Проверка на эмуляторе включает этот флаг, чтобы не искать кнопку по
+        // тексту на экране: разметка и прокрутка меняются, а мост остаётся.
+        // В обычном запуске флага нет, и мост остаётся закрытым.
+        final boolean автозапуск = getIntent().getBooleanExtra("автозапуск", false);
+        if (автозапуск) view.addJavascriptInterface(new Object() {
+            @android.webkit.JavascriptInterface
+            public void запустить() {
+                view.post(new Runnable() { @Override public void run() {
+                    view.evaluateJavascript(
+                        "var k=document.getElementById('run'); if(k){k.click();} else {document.title='нет-кнопки';}",
+                        null);
+                }});
+            }
+        }, "лексика_проверка");
         view.loadUrl("https://" + ORIGIN + "/index.html");
+        if (автозапуск) view.postDelayed(new Runnable() { @Override public void run() {
+            view.evaluateJavascript("лексика_проверка.запустить()", null);
+        }}, 1500);
     }
     @Override protected void onDestroy() { if (view != null) view.destroy(); super.onDestroy(); }
 }
