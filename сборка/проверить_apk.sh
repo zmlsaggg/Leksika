@@ -50,10 +50,35 @@ PY
   exit 1
 )
 
-if attempt || attempt; then
+# Второй экран — полный исполнитель: приложение запускает нативное ядро и
+# показывает то, что оно напечатало. Программа по умолчанию работает со
+# словарями, поэтому проверка ловит и новую возможность языка.
+native_attempt() (
+  set -Eeuo pipefail
+  adb shell am force-stop org.leksika.sandbox >/dev/null 2>&1 || true
+  adb shell am start -W -n org.leksika.sandbox/.NativeRunnerActivity --ez автозапуск true
+  for native_wait in {1..40}; do
+    adb shell uiautomator dump /sdcard/native.xml >/dev/null 2>&1 || true
+    adb exec-out cat /sdcard/native.xml > /tmp/leksika-native-ui.xml 2>/dev/null || true
+    if grep -q 'Выполнено' /tmp/leksika-native-ui.xml && grep -q 'Позиций: 2' /tmp/leksika-native-ui.xml; then
+      echo 'Нативное ядро выполнило программу со словарями.'
+      exit 0
+    fi
+    sleep 2
+  done
+  echo '::warning::нативное ядро не дало результата'
+  adb logcat -d -t 200 | tail -80 || true
+  exit 1
+)
+
+if (attempt && native_attempt) || (attempt && native_attempt); then
   exit 0
 fi
 
+if [ ! -s /tmp/leksika-native-ui.xml ]; then
+  echo 'Нативный экран не отдал разметку' >&2
+  exit 6
+fi
 echo '::warning::запуск APK не дал результата за две попытки'
 # Разные коды возврата различимы в аннотации GitHub, а полный лог лежит в
 # хранилище Azure и из некоторых окружений недоступен. Код 4 — разметки нет,

@@ -14,6 +14,15 @@
 #endif
 #include "словарь_формы.h"
 #include "словарь_индекс.h"
+
+/* Путь к общему словарю форм. На компьютере словарь лежит в каталоге «ядро»,
+   а на телефоне такого каталога нет: там приложение кладёт словарь в свои
+   файлы и сообщает путь переменной окружения LEKSIKA_DICTIONARY. */
+static const char *путь_словаря(void)
+{
+    const char *путь = getenv("LEKSIKA_DICTIONARY");
+    return (путь && путь[0]) ? путь : "ядро/русские_формы.lxd";
+}
 #include "компилятор.h"
 #include "машина.h"
 
@@ -431,7 +440,7 @@ static int основная_программа(int argc,char **argv)
         return ok?0:1;
     }
     if (argc >= 3 && strcmp(argv[1], "слово") == 0) {
-        const char *path = argc >= 4 ? argv[3] : "ядро/русские_формы.lxd";
+        const char *path = argc >= 4 ? argv[3] : путь_словаря();
         ЛексусИндекс index; char error[256];
         if (!лексус_индекс_открыть(&index, path, error, sizeof(error))) {
             fprintf(stderr, "Лексус: %s\n", error); return 2;
@@ -449,7 +458,7 @@ static int основная_программа(int argc,char **argv)
         return found ? 0 : 1;
     }
     if (argc >= 3 && strcmp(argv[1], "подсказки") == 0) {
-        const char *path = argc >= 4 ? argv[3] : "ядро/русские_формы.lxd";
+        const char *path = argc >= 4 ? argv[3] : путь_словаря();
         ЛексусИндекс index; char error[256]; const char *items[20];
         if (!лексус_индекс_открыть(&index, path, error, sizeof(error))) {
             fprintf(stderr, "Лексус: %s\n", error); return 2;
@@ -512,7 +521,7 @@ static int основная_программа(int argc,char **argv)
            служебным формам ядра. Об этом сообщаем тихо, чтобы не пугать
            тех, кто сознательно не собирал внешний словарь. */
             ЛексусИндекс индекс; int индекс_открыт=0; char ошибка_словаря[256];
-            if(лексус_индекс_открыть(&индекс,"ядро/русские_формы.lxd",ошибка_словаря,sizeof(ошибка_словаря)))
+            if(лексус_индекс_открыть(&индекс,путь_словаря(),ошибка_словаря,sizeof(ошибка_словаря)))
                 индекс_открыт=1;
             else
                 fprintf(stderr,"Лексус: общий словарь не подключён, разбираю своим списком форм.\n");

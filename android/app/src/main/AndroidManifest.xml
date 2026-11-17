@@ -1,8 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="org.leksika.sandbox">
     <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="35" />
-    <application android:icon="@drawable/launcher" android:label="Лексика — песочница" android:allowBackup="false" android:usesCleartextTraffic="false" android:theme="@android:style/Theme.Material.Light.NoActionBar">
-        <activity android:name=".MainActivity" android:exported="true" android:windowSoftInputMode="adjustResize">
+    <application android:icon="@drawable/launcher" android:label="Лексика" android:allowBackup="false" android:usesCleartextTraffic="false" android:extractNativeLibs="true" android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        <!-- Главный экран — полный исполнитель: нативное ядро запускает
+             настоящие программы .lek прямо на телефоне. -->
+        <activity android:name=".NativeRunnerActivity" android:exported="true" android:windowSoftInputMode="adjustResize">
             <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
         </activity>
+        <!-- Песочница на JavaScript остаётся отдельным, учебным режимом. -->
+        <activity android:name=".MainActivity" android:exported="true" android:windowSoftInputMode="adjustResize"/>
     </application>
 </manifest>
