@@ -337,6 +337,10 @@ jobs:
     permissions:
       contents: write
     steps:
+      # Checkout идёт до скачивания артефактов: он готовит рабочее дерево и не
+      # должен затирать уже скачанный каталог release/. Раньше checkout стоял
+      # после загрузки и сносил файлы — проверка публикации падала на sha256sum.
+      - uses: actions/checkout@v4
       - name: Проверить существующий тег и запретить перезапись релиза
         id: version
         env:
@@ -395,9 +399,6 @@ jobs:
             release/zz-SHA256SUMS.txt
             release/zz-checksums.txt
 
-      - uses: actions/checkout@v4
-        with:
-          clean: false
       - name: Опубликовать после загрузки всех файлов
         env:
           GH_TOKEN: ${{ github.token }}
