@@ -182,20 +182,28 @@ jobs:
           # после него и может упасть из-за истёкшего CROSS_REPO_TOKEN. Пакет на
           # PyPI при этом должен выйти: это отдельный канал, а не заложник
           # чужого токена.
+          # Пустые ответы API и ошибки jq не должны ронять ожидание: иначе
+          # публикация падает в первую же секунду, когда GitHub ещё не успел
+          # показать запуск. Поэтому список по умолчанию — пустой объект, а
+          # разбор идёт с запасным значением.
+          runs='{}'
+          jobs='{}'
           for attempt in $(seq 1 80); do
-            runs=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$SHA&per_page=100" 2>/dev/null || true)
+            got=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$SHA&per_page=100" 2>/dev/null || true)
+            if [ -n "$got" ]; then runs="$got"; fi
             # На коммите слияния в main тоже есть запуск release.yml, но в нём
             # publish-versioned пропущен. Берём запуск, поднятый самим тегом.
             run_id=$(jq -r --arg tag "$TAG" '[(.workflow_runs // [])[]
               | select(.path == ".github/workflows/release.yml" and .head_branch == $tag)][0]
-              | if . == null then "" else "\(.id)" end' <<<"${runs:-{}}")
+              | if . == null then "" else "\(.id)" end' <<<"$runs" 2>/dev/null || true)
             if [ -z "$run_id" ]; then
               echo "ожидание release.yml для $SHA (попытка $attempt, запуск не найден)"
               sleep 45; continue
             fi
-            jobs=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/jobs?per_page=100" 2>/dev/null || true)
+            got=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/jobs?per_page=100" 2>/dev/null || true)
+            if [ -n "$got" ]; then jobs="$got"; fi
             state=$(jq -r '[(.jobs // [])[] | select(.name == "publish-versioned")][0]
-              | if . == null then "" else "\(.status) \(.conclusion // "")" end' <<<"${jobs:-{}}")
+              | if . == null then "" else "\(.status) \(.conclusion // "")" end' <<<"$jobs" 2>/dev/null || true)
             case "$state" in
               "completed success")
                 echo "бинарники и zz-SHA256SUMS.txt для $SHA опубликованы (publish-versioned)"
