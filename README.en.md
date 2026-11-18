@@ -39,6 +39,42 @@ Technical notes:
 - [Online playground](документы/ОНЛАЙН_ПЕСОЧНИЦА.md)
 - [Runtime migration plan](ПЛАН_ПЕРЕНОСА_РАНТАЙМА.md)
 
+## Install from PyPI with pip
+
+The PyPI package is named `leksika` and requires Python 3.8 or newer. It installs the transitional desktop interpreter; the experimental native runtime binaries and browser playground are distributed separately.
+
+**Windows (PowerShell):**
+
+```powershell
+py -m pip install --upgrade leksika
+leksika справка
+```
+
+**Linux and macOS:**
+
+```sh
+python3 -m pip install --upgrade leksika
+leksika справка
+```
+
+If your system does not allow installing into its system Python, create and activate a virtual environment first:
+
+```powershell
+# Windows
+py -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+
+```sh
+# Linux / macOS
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+Then run `python -m pip install --upgrade leksika`. If the `leksika` command is not on `PATH`, use `py -m leksika_engine справка` on Windows or `python3 -m leksika_engine справка` on Linux/macOS.
+
+Update with `python -m pip install --upgrade leksika`; uninstall with `python -m pip uninstall leksika`.
+
 ## Development
 
 See the Russian [README](README.md) for installation instructions, examples and the current feature list. Contributions are welcome; read [CONTRIBUTING.md](CONTRIBUTING.md) first.
