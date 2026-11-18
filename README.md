@@ -15,6 +15,8 @@
   <a href="#установка"><img src="https://img.shields.io/badge/Linux_и_macOS-установщик-2f6fd0" alt="Установщик для Linux и macOS"></a>
   <img src="https://img.shields.io/badge/Python-3.8+-8957e5" alt="Основному исполнителю нужен Python 3.8 или новее">
   <a href="LICENSE"><img src="https://img.shields.io/badge/лицензия-MIT-blue" alt="Лицензия MIT"></a>
+  <a href="https://pypi.org/project/leksika/"><img src="https://img.shields.io/pypi/v/leksika?style=flat-square&logo=pypi&logoColor=white&label=PyPI&color=A855F7" alt="PyPI version"></a>
+  <a href="https://github.com/zmlsaggg/Leksika/stargazers"><img src="https://img.shields.io/github/stars/zmlsaggg/Leksika?style=flat-square&logo=github&label=stars&color=A855F7" alt="GitHub stars"></a>
 </p>
 
 <p align="center">
@@ -345,3 +347,8 @@ node проверка/реквизиты.cjs
 - [История изменений](CHANGELOG.md), [выпуск релизов](RELEASING.md), [участие в разработке](CONTRIBUTING.md)
 
 Лексика распространяется под [лицензией MIT](LICENSE).
+
+## ✦ История звёзд
+
+<!-- star-history:start -->
+<!-- star-history:end -->
