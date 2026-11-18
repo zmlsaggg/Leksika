@@ -121,7 +121,7 @@ leksika справка
 
 ```powershell
 py -m venv .venv
-.venv\Scripts\Activate.ps1
+.\.venv\Scripts\Activate.ps1
 ```
 
 На Linux и macOS:
@@ -153,6 +153,7 @@ py -m leksika_engine где
 Обновление: `python -m pip install --upgrade leksika`. Удаление: `python -m pip uninstall leksika`.
 
 Пакет проверяется на Python 3.8 и 3.14. Он использует Python для полного настольного режима; нативное ядро развивается отдельно и пока исполняет подмножество языка.
+
 ### Android
 
 В релизе находится `01-Leksika-Android.apk`. Главный экран — **полный
