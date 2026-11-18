@@ -45,6 +45,7 @@ on:
       - 'фон-анимация.gif'
       - 'фон-сайта-статичный.webp'
       - 'проверка/фон_сайта.cjs'
+      - 'инструменты/sitemap.cjs'
       - '.github/workflows/сайт.yml'
   pull_request:
     paths:
@@ -89,6 +90,7 @@ on:
       - 'фон-анимация.gif'
       - 'фон-сайта-статичный.webp'
       - 'проверка/фон_сайта.cjs'
+      - 'инструменты/sitemap.cjs'
       - '.github/workflows/сайт.yml'
 
 permissions:
@@ -99,6 +101,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -107,6 +111,12 @@ jobs:
           npm ci
           npm run build:community
           git diff --exit-code -- сообщество-сборка.js
+      - name: Проверить карту сайта
+        run: |
+          git show HEAD:sitemap.xml | grep -o '<loc>[^<]*</loc>' | sort > /tmp/sitemap-before.txt
+          npm run sitemap
+          grep -o '<loc>[^<]*</loc>' sitemap.xml | sort > /tmp/sitemap-after.txt
+          diff /tmp/sitemap-before.txt /tmp/sitemap-after.txt
       - name: Проверить контакты, автора и разметку страниц
         run: node проверка/сайт_контакты.cjs
       - name: Проверить программы на Лексике

@@ -1,7 +1,7 @@
 {
   "name": "leksika-site",
   "private": true,
-  "scripts": { "проверить:сайт": "node проверка/сайт_контакты.cjs", "build:community": "esbuild сообщество-исходник.js --bundle --format=iife --target=es2020 --minify --outfile=сообщество-сборка.js" },
+  "scripts": { "проверить:сайт": "node проверка/сайт_контакты.cjs", "sitemap": "node инструменты/sitemap.cjs", "build:community": "esbuild сообщество-исходник.js --bundle --format=iife --target=es2020 --minify --outfile=сообщество-сборка.js" },
   "dependencies": { "@supabase/supabase-js": "2.57.4" },
   "devDependencies": { "esbuild": "0.25.10" }
 }
