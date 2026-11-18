@@ -1,0 +1,59 @@
+name: Star Chart
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/star-chart.yml"
+  schedule:
+    - cron: "23 4 * * *"
+  watch:
+    types: [started]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: star-chart
+  cancel-in-progress: true
+
+jobs:
+  update-star-chart:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Generate light and dark star charts
+        uses: leereilly/star-chart@v0.3
+        with:
+          token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          output: assets/star-chart.svg
+          dual_theme: true
+          style: neon-glow
+          animation: once
+          animation_duration: 3s
+          show_total: true
+          show_change: false
+          show_legend: false
+          level_1_color: "#F3E8FF"
+          level_2_color: "#D8B4FE"
+          level_3_color: "#A855F7"
+          level_4_color: "#7E22CE"
+
+      - name: Commit the chart when it changes
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/star-chart-light.svg assets/star-chart-dark.svg
+          if git diff --cached --quiet; then
+            echo "Star chart is already up to date."
+          else
+            git commit -m "chore: update star chart [skip ci]"
+            git push
+          fi
