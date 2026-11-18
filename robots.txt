@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /профиль.html
 
 Sitemap: https://leksika.gleeze.com/sitemap.xml
