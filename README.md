@@ -351,4 +351,11 @@ node проверка/реквизиты.cjs
 ## ✦ История звёзд
 
 <!-- star-history:start -->
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/star-chart-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="assets/star-chart-light.svg">
+  <img src="assets/star-chart-light.svg" alt="История роста звёзд репозитория Лексика" width="900">
+</picture>
 <!-- star-history:end -->
+
+График обновляется автоматически каждый день и при появлении новой звезды.
