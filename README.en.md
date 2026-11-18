@@ -62,7 +62,7 @@ If your system does not allow installing into its system Python, create and acti
 ```powershell
 # Windows
 py -m venv .venv
-.venv\Scripts\Activate.ps1
+.\.venv\Scripts\Activate.ps1
 ```
 
 ```sh
