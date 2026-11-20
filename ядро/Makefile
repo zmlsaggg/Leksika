@@ -60,7 +60,6 @@ morphology-test: $(МОРФОЛОГИЯ_TEST)
 contract-test: $(CONTRACT_TEST)
 	./$(CONTRACT_TEST)
 	./$(МОРФОЛОГИЯ_TEST)
-	./$(BYTECODE_TEST)
 
 $(BYTECODE_TEST): значения.c байткод.c байткод_формат.c машина.c компилятор.c морфология.c байткод_формат_проверка.c значения.h байткод.h машина.h компилятор.h морфология.h
 	$(CC) $(CFLAGS) -o "$@" значения.c байткод.c байткод_формат.c машина.c компилятор.c морфология.c байткод_формат_проверка.c
@@ -90,6 +89,7 @@ test: $(TARGET) $(VALUE_TEST) $(DICT_TEST) $(VM_TEST) $(COMPILER_TEST) $(CONTRAC
 	./$(COMPILER_TEST)
 	./$(CONTRACT_TEST)
 	./$(МОРФОЛОГИЯ_TEST)
+	./$(BYTECODE_TEST)
 
 # Полная проверка с AddressSanitizer и UndefinedBehaviorSanitizer (GCC/Clang).
 sanitize-test:
