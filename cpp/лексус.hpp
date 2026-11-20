@@ -44,7 +44,8 @@ public:
         if (!предел_шагов) throw std::invalid_argument("Предел шагов должен быть положительным");
         ЛексусПрограмма program{compiled_.код, compiled_.число_инструкций,
             compiled_.константы, compiled_.число_констант, compiled_.регистры,
-            compiled_.функции, compiled_.число_функций, compiled_.вызовы, compiled_.число_вызовов};
+            compiled_.функции, compiled_.число_функций, compiled_.вызовы, compiled_.число_вызовов,
+            compiled_.позиции, compiled_.число_позиций};
         char error[512] = {};
         ЛексусЗначение result = лексус_ничто();
         if (!лексус_машина_исполнить_со_средой(&program, предел_шагов, &среда, &result, error, sizeof(error))) {
