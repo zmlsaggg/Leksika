@@ -97,6 +97,7 @@ jobs:
           make clean all test \
             TARGET=leksus-core.exe VALUE_TEST=values-test.exe VM_TEST=vm-test.exe \
             COMPILER_TEST=compiler-test.exe CONTRACT_TEST=contract-test.exe \
+            BYTECODE_TEST=bytecode-format-test.exe \
             МОРФОЛОГИЯ_TEST=morphology-test.exe \
             DICT_BUILDER=dictionary-builder.exe DICT_TEST=dictionary-test.exe \
             DICT_SOURCE=russian-words-source.txt DICT_INDEX=russian-forms.lxd \
@@ -255,8 +256,21 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Не собрался тест морфологии" }
           & .\morphology-test.exe
           if ($LASTEXITCODE -ne 0) { throw "Тест морфологии завершился с ошибкой" }
-          & $compiler @flags /Fe:leksus-core.exe лексус.c значения.c словарь_индекс.c байткод.c машина.c компилятор.c морфология.c shell32.lib
+          & $compiler @flags /Fe:bytecode-format-test.exe значения.c байткод.c байткод_формат.c машина.c компилятор.c морфология.c байткод_формат_проверка.c
+          if ($LASTEXITCODE -ne 0) { throw "Не собрался тест бинарного байткода" }
+          & .\bytecode-format-test.exe
+          if ($LASTEXITCODE -ne 0) { throw "Тест бинарного байткода завершился с ошибкой" }
+          & $compiler @flags /Fe:leksus-core.exe лексус.c значения.c словарь_индекс.c байткод.c байткод_формат.c машина.c компилятор.c морфология.c shell32.lib
           if ($LASTEXITCODE -ne 0) { throw "Не собралось ядро" }
           & .\leksus-core.exe самопроверка
           if ($LASTEXITCODE -ne 0) { throw "Самопроверка ядра завершилась с ошибкой" }
+          $module = ".\native-bytecode-test.lekb"
+          try {
+            & .\leksus-core.exe скомпилировать ..\примеры\нативная_vm.lek $module
+            if ($LASTEXITCODE -ne 0) { throw "Компиляция .lekb завершилась с ошибкой" }
+            & .\leksus-core.exe выполнить-байткод $module
+            if ($LASTEXITCODE -ne 0) { throw "Запуск .lekb завершился с ошибкой" }
+          } finally {
+            Remove-Item $module -ErrorAction SilentlyContinue
+          }
         working-directory: ядро

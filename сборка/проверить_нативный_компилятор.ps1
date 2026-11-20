@@ -46,6 +46,7 @@ $ValuesTest = Join-Path $Kernel "значения-тест.exe"
 $DictionaryTest = Join-Path $Kernel "словарь-тест.exe"
 $VmTest = Join-Path $Kernel "машина-тест.exe"
 $CompilerTest = Join-Path $Kernel "компилятор-тест.exe"
+$BytecodeTest = Join-Path $Kernel "байткод-формат-тест.exe"
 $MorphologyTest = Join-Path $Kernel "морфология-тест.exe"
 
 Write-Host "Компилятор: $Gcc"
@@ -56,6 +57,7 @@ $NativeSources = @(
     (Join-Path $Kernel "значения.c"),
     (Join-Path $Kernel "словарь_индекс.c"),
     (Join-Path $Kernel "байткод.c"),
+    (Join-Path $Kernel "байткод_формат.c"),
     (Join-Path $Kernel "машина.c"),
     (Join-Path $Kernel "компилятор.c"),
     (Join-Path $Kernel "морфология.c")
@@ -81,6 +83,15 @@ Invoke-Gcc ($Common + @("-o", $CompilerTest,
     (Join-Path $Kernel "компилятор.c"),
     (Join-Path $Kernel "морфология.c"),
     (Join-Path $Kernel "компилятор_проверка.c")))
+Invoke-Gcc ($Common + @("-o", $BytecodeTest,
+    (Join-Path $Kernel "значения.c"),
+    (Join-Path $Kernel "байткод.c"),
+    (Join-Path $Kernel "байткод_формат.c"),
+    (Join-Path $Kernel "машина.c"),
+    (Join-Path $Kernel "компилятор.c"),
+    (Join-Path $Kernel "морфология.c"),
+    (Join-Path $Kernel "байткод_формат_проверка.c")))
+
 Invoke-Gcc ($Common + @("-o", $MorphologyTest,
     (Join-Path $Kernel "морфология.c"),
     (Join-Path $Kernel "морфология_проверка.c")))
@@ -91,12 +102,30 @@ Invoke-Test -Path $DictionaryTest
 Invoke-Test -Path $VmTest
 Invoke-Test -Path $CompilerTest
 Invoke-Test -Path $MorphologyTest
+Invoke-Test -Path $BytecodeTest
 
 Write-Host "Выполнение примера .lek"
 $Example = Join-Path $Root "примеры\нативная_vm.lek"
 & $Native "выполнить" $Example
 if ($LASTEXITCODE -ne 0) {
     throw "Нативный запуск примера завершился с кодом $LASTEXITCODE."
+}
+
+Write-Host "Проверка сериализации и запуска .lekb"
+$BytecodeExample = Join-Path $Kernel "временный-тест.lekb"
+try {
+    & $Native "скомпилировать" $Example $BytecodeExample
+    if ($LASTEXITCODE -ne 0) {
+        throw "Компиляция .lekb завершилась с кодом $LASTEXITCODE."
+    }
+    & $Native "выполнить-байткод" $BytecodeExample
+    if ($LASTEXITCODE -ne 0) {
+        throw "Запуск .lekb завершился с кодом $LASTEXITCODE."
+    }
+} finally {
+    if (Test-Path $BytecodeExample) {
+        Remove-Item -LiteralPath $BytecodeExample -Force
+    }
 }
 
 Write-Host "Готово: нативная сборка, проверки и пример завершились успешно."

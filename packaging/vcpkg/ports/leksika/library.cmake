@@ -16,6 +16,11 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ядро/морфология.c")
   list(APPEND leksika_headers ядро/морфология.h)
   list(APPEND leksika_tests морфология)
 endif()
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ядро/байткод_формат.c")
+  # Версионированный сериализатор/загрузчик бинарных .lekb-модулей.
+  list(APPEND leksika_sources ядро/байткод_формат.c)
+  list(APPEND leksika_tests байткод_формат)
+endif()
 
 add_library(leksika STATIC ${leksika_sources})
 add_library(leksika::leksika ALIAS leksika)
