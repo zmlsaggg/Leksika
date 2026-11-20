@@ -427,6 +427,15 @@ int лексус_машина_исполнить_со_средой(const Лек�
   }
  }
  if(ok&&!done){fail(err,errn,"программа завершилась без возврата или остановки");ok=0;}
+ /* При runtime-ошибке возвращаем координаты инструкции из отладочной карты.
+    Верификатор проверил её длину и ненулевые координаты до входа в VM. */
+ if(!ok && err && errn && p->позиции &&
+    p->число_позиций==p->число_инструкций && ip<p->число_позиций) {
+  char исходное[512];
+  snprintf(исходное,sizeof(исходное),"%s",err);
+  snprintf(err,errn,"%s (строка %u, столбец %u)",исходное,
+           p->позиции[ip].строка,p->позиции[ip].столбец);
+ }
  cleanup_cycles(cycles,cycles_count);
  cleanup_iterators(iterators,iterators_count);
  while(frame_count)cleanup(frames[--frame_count].регистры,p->регистры);
