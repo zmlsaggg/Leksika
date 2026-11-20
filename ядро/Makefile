@@ -90,6 +90,7 @@ test: $(TARGET) $(VALUE_TEST) $(DICT_TEST) $(VM_TEST) $(COMPILER_TEST) $(CONTRAC
 	./$(CONTRACT_TEST)
 	./$(МОРФОЛОГИЯ_TEST)
 	./$(BYTECODE_TEST)
+	@set -e; module=".native-bytecode-test.lekb"; trap 'rm -f "$module"' EXIT; ./$(TARGET) скомпилировать ../примеры/нативная_vm.lek "$module"; ./$(TARGET) выполнить-байткод "$module"
 
 # Полная проверка с AddressSanitizer и UndefinedBehaviorSanitizer (GCC/Clang).
 sanitize-test:
