@@ -11,10 +11,11 @@ VALUE_TEST ?= значения-тест$(EXEEXT)
 VM_TEST ?= машина-тест$(EXEEXT)
 COMPILER_TEST ?= компилятор-тест$(EXEEXT)
 CONTRACT_TEST ?= контракт-тест$(EXEEXT)
+BYTECODE_TEST ?= байткод-формат-тест$(EXEEXT)
 TLS_TOOL ?= лексус-сертификаты
 OPENSSL_CFLAGS ?= $(shell pkg-config --cflags openssl 2>/dev/null)
 OPENSSL_LIBS ?= $(shell pkg-config --libs openssl 2>/dev/null || printf '%s' '-lssl -lcrypto')
-SOURCE = лексус.c значения.c словарь_индекс.c байткод.c машина.c компилятор.c морфология.c
+SOURCE = лексус.c значения.c словарь_индекс.c байткод.c байткод_формат.c машина.c компилятор.c морфология.c
 DICT_BUILDER = словарь-сборщик$(EXEEXT)
 DICT_TEST = словарь-тест$(EXEEXT)
 # Внешний CP1251-список — необязательный источник подсказок. Ядро, морфология
@@ -22,7 +23,7 @@ DICT_TEST = словарь-тест$(EXEEXT)
 DICT_SOURCE = ../источники/russian-words/russian.txt
 DICT_INDEX = русские_формы.lxd
 
-.PHONY: all native core test sanitize-test dictionary dictionary-test compiler-test contract-test morphology-test tls-tools tls-test clean
+.PHONY: all native core test sanitize-test dictionary dictionary-test compiler-test contract-test bytecode-test morphology-test tls-tools tls-test clean
 # all собирает ещё и словарь подсказок из внешнего источника; core — только ядро.
 all: $(TARGET) $(DICT_INDEX)
 
@@ -59,6 +60,13 @@ morphology-test: $(МОРФОЛОГИЯ_TEST)
 contract-test: $(CONTRACT_TEST)
 	./$(CONTRACT_TEST)
 	./$(МОРФОЛОГИЯ_TEST)
+	./$(BYTECODE_TEST)
+
+$(BYTECODE_TEST): значения.c байткод.c байткод_формат.c машина.c компилятор.c морфология.c байткод_формат_проверка.c значения.h байткод.h машина.h компилятор.h морфология.h
+	$(CC) $(CFLAGS) -o "$@" значения.c байткод.c байткод_формат.c машина.c компилятор.c морфология.c байткод_формат_проверка.c
+
+bytecode-test: $(BYTECODE_TEST)
+	./$(BYTECODE_TEST)
 
 $(DICT_BUILDER): словарь_сборщик.c
 	$(CC) $(CFLAGS) -o "$@" "$<"
@@ -74,7 +82,7 @@ $(DICT_TEST): словарь_индекс.c словарь_индекс.h сло
 dictionary-test: $(DICT_TEST)
 	./$(DICT_TEST)
 
-test: $(TARGET) $(VALUE_TEST) $(DICT_TEST) $(VM_TEST) $(COMPILER_TEST) $(CONTRACT_TEST) $(МОРФОЛОГИЯ_TEST)
+test: $(TARGET) $(VALUE_TEST) $(DICT_TEST) $(VM_TEST) $(COMPILER_TEST) $(CONTRACT_TEST) $(МОРФОЛОГИЯ_TEST) $(BYTECODE_TEST)
 	./$(TARGET) самопроверка
 	./$(VALUE_TEST)
 	./$(DICT_TEST)
@@ -98,4 +106,4 @@ tls-test: $(TLS_TOOL)
 	sh ./сертификаты_проверка.sh ./$(TLS_TOOL)
 
 clean:
-	rm -f "$(DICT_INDEX)" "$(TARGET)" "$(TARGET).exe" "$(VALUE_TEST)" "$(VALUE_TEST).exe" "$(TLS_TOOL)" "$(TLS_TOOL).exe" "$(DICT_BUILDER)" "$(DICT_TEST)" "$(DICT_TEST).exe" "$(DICT_BUILDER)" "$(DICT_BUILDER).exe" "$(VM_TEST)" "$(VM_TEST).exe" "$(COMPILER_TEST)" "$(COMPILER_TEST).exe" "$(CONTRACT_TEST)" "$(CONTRACT_TEST).exe" "$(МОРФОЛОГИЯ_TEST)" "$(МОРФОЛОГИЯ_TEST).exe"
+	rm -f "$(DICT_INDEX)" "$(TARGET)" "$(TARGET).exe" "$(VALUE_TEST)" "$(VALUE_TEST).exe" "$(TLS_TOOL)" "$(TLS_TOOL).exe" "$(DICT_BUILDER)" "$(DICT_TEST)" "$(DICT_TEST).exe" "$(DICT_BUILDER)" "$(DICT_BUILDER).exe" "$(VM_TEST)" "$(VM_TEST).exe" "$(COMPILER_TEST)" "$(COMPILER_TEST).exe" "$(CONTRACT_TEST)" "$(CONTRACT_TEST).exe" "$(BYTECODE_TEST)" "$(BYTECODE_TEST).exe" "$(МОРФОЛОГИЯ_TEST)" "$(МОРФОЛОГИЯ_TEST).exe"
