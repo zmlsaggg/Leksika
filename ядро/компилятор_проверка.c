@@ -1181,7 +1181,7 @@ int main(void)
            ошибку в интерполяции речи. Вложенный компилятор обязан вернуть
            перевыделенные код/карту внешнему даже при неудачном разборе. */
         char source[4096]={0};
-        for(unsigned i=0;i<32;++i) strcat(source,"сказать один.\\n");
+        for(unsigned i=0;i<32;++i) strcat(source,"сказать один.\n");
         strcat(source,"сказать речь Значение (один плюс два плюс) конец речи.");
         error[0]=0;
         int ok=лексус_скомпилировать(source,strlen(source),&bad,error,sizeof(error));
