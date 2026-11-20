@@ -152,7 +152,7 @@ int main(void)
                 10000, &другое_значение, runtime_error,
                 sizeof(runtime_error));
             built = !executed &&
-                strstr(runtime_error, "деление на ноль") != NULL &&
+                strstr(runtime_error, "делить на ноль нельзя") != NULL &&
                 strstr(runtime_error, "строка ") != NULL &&
                 strstr(runtime_error, "столбец ") != NULL;
             лексус_значение_освободить(&другое_значение);
