@@ -84,7 +84,7 @@ const assert = require('node:assert/strict');
       await page.locator('#код').fill('говорю 42.');
       await page.click('#запустить');
       assert.equal(await page.locator('#вывод').innerText(), '42', 'Разговорный профиль должен понимать личную форму «говорю»');
-      await page.locator('#код').fill('пусть сумма это 5\nувеличиваю сумма на 2\nвернуть сумма');
+      await page.locator('#код').fill('пусть сумма это 5\nувеличиваю сумма на 2\nговорю сумма');
       await page.click('#запустить');
       assert.equal(await page.locator('#вывод').innerText(), '7', 'Разговорный профиль должен понимать форму «увеличиваю»');
       await page.locator('#профиль-разговорный').uncheck();
