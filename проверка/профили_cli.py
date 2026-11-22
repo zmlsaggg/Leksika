@@ -44,6 +44,11 @@ class ПрофилиCLI(unittest.TestCase):
                 capture_output=True, text=True, encoding='utf-8'
             )
             self.assertEqual((result.returncode, result.stdout), (0, '42\n'), result.stderr)
+            disabled_say = subprocess.run(
+                [str(CORE), 'выполнить', str(path)],
+                capture_output=True, text=True, encoding='utf-8'
+            )
+            self.assertNotEqual(disabled_say.returncode, 0, '«говорю» должно требовать разговорный профиль')
             path.write_text('пусть сумма это 5\nувеличиваю сумма на 2\nвернуть сумма', encoding='utf-8')
             arithmetic = subprocess.run(
                 [str(CORE), 'выполнить', '--профиль=разговорный', str(path)],
@@ -54,7 +59,7 @@ class ПрофилиCLI(unittest.TestCase):
                 [str(CORE), 'выполнить', str(path)],
                 capture_output=True, text=True, encoding='utf-8'
             )
-            self.assertNotEqual(disabled.returncode, 0)
+            self.assertNotEqual(disabled.returncode, 0, '«увеличиваю» должно требовать разговорный профиль')
 
 
 
