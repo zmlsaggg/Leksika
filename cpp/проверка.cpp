@@ -15,7 +15,7 @@ int main() {
     env.вывод = вывод;
     env.разрешения = ЛЕКСУС_РАЗРЕШИТЬ_ВЫВОД;
     std::string source = "пусть элементы равно перечень(1, 2). добавить в элементы 3. сказать длина элементы. вернуть 42.";
-    Лексус::Программа program(std::string_view(source));
+    Лексус::Программа program{std::string_view(source)};
     auto result = program.исполнить(env);
     assert(output == "3\n");
     assert(result.данные().вид == ЛЕКСУС_ЧИСЛО);
