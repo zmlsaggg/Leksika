@@ -1242,7 +1242,7 @@ int main(void)
     {
         error[0]=0; actual=лексус_ничто(); expected=лексус_ничто(); equal=0;
         ok=выполнить("пусть дверь будет 7\nвернуть дверью",&actual,error,sizeof(error));
-        expected=лексус_число(7);
+        (void)лексус_число_создать("7",&expected);
         if(ok) (void)лексус_равно(actual,expected,&equal);
         if(!ok) fprintf(stderr,"DEBUG падеж двери: %s\n",error);
         failed+=проверить("инструментальная форма «дверью» разрешает имя «дверь»",ok&&equal);
