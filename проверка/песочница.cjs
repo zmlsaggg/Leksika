@@ -45,7 +45,7 @@ const assert = require('node:assert/strict');
       assert.match(bottles, /Бутылки закончились/);
       assert.equal(bottles.split('\n').length, 100);
       const math = await run('арифметика');
-      assert.match(math, /Выражение: 26/); assert.match(math, /Остаток: 1/); assert.match(math, /Гипотенуза: 5/);
+      assert.equal(math, 'Результат: 9.');
       assert.equal((await run('фибоначчи')).split('\n').slice(0, 7).join(','), '0,1,1,2,3,5,8');
       assert.equal((await run('простые')).split('\n').join(','), '2,3,5,7,11,13,17,19,23,29');
       const fizz = (await run('физбаз')).split('\n');
