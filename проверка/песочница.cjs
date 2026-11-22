@@ -52,7 +52,7 @@ const assert = require('node:assert/strict');
       assert.equal(fizz.length, 100); assert.equal(fizz[2], 'Fizz'); assert.equal(fizz[4], 'Buzz'); assert.equal(fizz[14], 'FizzBuzz'); assert.equal(fizz[99], 'Buzz');
       assert.match(await run('факториал'), /3628800/);
       assert.equal((await run('коллатц')).split('\n').join(','), '13,40,20,10,5,16,8,4,2,1');
-      const pascal = (await run('паскаль')).split('\n'); assert.equal(pascal.length, 7); assert.equal(pascal[6].replace(/^перечень\\(/, '').replace(/\\)$/, '').replace(/,\\s*/g, ' ').trim(), '1 6 15 20 15 6 1');
+      const pascal = (await run('паскаль')).split('\n'); assert.equal(pascal.length, 7); assert.equal(pascal[6].replace(/^перечень\(/, '').replace(/\)$/, '').replace(/,\s*/g, ' ').trim(), '1 6 15 20 15 6 1');
       assert.equal(await run('палиндром'), 'Палиндром');
       await page.locator('#код').fill((await page.locator('#код').inputValue()).replace('топот', 'кошка'));
       await page.click('#запустить'); assert.equal(await page.locator('#вывод').innerText(), 'Не палиндром');
