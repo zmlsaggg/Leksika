@@ -1206,7 +1206,8 @@ int main(void)
         error[0]=0; actual=лексус_ничто(); expected=лексус_ничто(); equal=0;
         ok=выполнить(
             "пусть когда-то это 7\n"
-            "вернуть когда-то",
+            "пусть что-то будет когда-то\n"
+            "вернуть что-то",
             &actual,error,sizeof(error));
         (void)лексус_число_создать("7",&expected);
         if(ok) (void)лексус_равно(actual,expected,&equal);
