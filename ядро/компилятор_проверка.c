@@ -1223,7 +1223,7 @@ int main(void)
         expected=лексус_логическое(1);
         if(ok) (void)лексус_равно(actual,expected,&equal);
         if(!ok) fprintf(stderr,"DEBUG сравнение >=: %s\n",error);
-        failed+=проверить("составное сравнение «больше или равно»",ok&&equal);
+        failed+=проверить("условие с «будет», «больше или равно» и «тогда»",ok&&equal);
         лексус_значение_освободить(&actual); лексус_значение_освободить(&expected);
     }
     {
