@@ -29,3 +29,8 @@ CLI C++ не нужен. Обёртка `Программа` по-прежнем
 является полной песочницей; встраивающее приложение отвечает за изоляцию.
 Значения-контейнеры имеют общие изменяемые данные; копия обёртки копирует
 ссылку, а не данные. Правила потокобезопасности у C-модулей не гарантируются.
+
+
+## C++17 API
+
+The header now accepts `std::string_view`, so callers can compile from an existing string or a view without an intermediate copy. `Лексус::Программа` is movable (move construction and assignment transfer ownership of compiled bytecode); copying remains disabled. `Лексус::Значение` retains value-copy and move semantics.
