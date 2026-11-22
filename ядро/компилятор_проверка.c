@@ -1226,7 +1226,9 @@ int main(void)
             &actual,error,sizeof(error));
         expected=лексус_логическое(1);
         if(ok) (void)лексус_равно(actual,expected,&equal);
-        failed+=проверить("составные сравнения «больше/меньше или равно» в многострочной программе",ok&&equal);
+        if(!ok) fprintf(stderr,"DEBUG сравнение: %s\\n",error);
+        else if(!equal) fprintf(stderr,"DEBUG результат сравнения: вид=%d ожидается=%d\\n",(int)actual.вид,(int)expected.вид);
+        failed+=проверить("составное сравнение «больше или равно» в многострочной программе",ok&&equal);
         лексус_значение_освободить(&actual); лексус_значение_освободить(&expected);
     }
 
