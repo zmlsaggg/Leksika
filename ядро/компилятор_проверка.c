@@ -1217,12 +1217,12 @@ int main(void)
     {
         error[0]=0; actual=лексус_ничто(); expected=лексус_ничто(); equal=0;
         ok=выполнить(
-            "пусть температура это 18\\n"
+            "пусть температура это 18\n"
             "вернуть температура больше или равно 18",
             &actual,error,sizeof(error));
         expected=лексус_логическое(1);
         if(ok) (void)лексус_равно(actual,expected,&equal);
-        if(!ok) fprintf(stderr,"DEBUG сравнение >=: %s\\n",error);
+        if(!ok) fprintf(stderr,"DEBUG сравнение >=: %s\n",error);
         failed+=проверить("составное сравнение «больше или равно»",ok&&equal);
         лексус_значение_освободить(&actual); лексус_значение_освободить(&expected);
     }
@@ -1231,7 +1231,7 @@ int main(void)
         ok=выполнить("вернуть 18 меньше или равно 18",&actual,error,sizeof(error));
         expected=лексус_логическое(1);
         if(ok) (void)лексус_равно(actual,expected,&equal);
-        if(!ok) fprintf(stderr,"DEBUG сравнение <=: %s\\n",error);
+        if(!ok) fprintf(stderr,"DEBUG сравнение <=: %s\n",error);
         failed+=проверить("составное сравнение «меньше или равно»",ok&&equal);
         лексус_значение_освободить(&actual); лексус_значение_освободить(&expected);
     }
