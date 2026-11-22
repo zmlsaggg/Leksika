@@ -43,7 +43,7 @@ class ПрофилиCLI(unittest.TestCase):
                 [str(CORE), 'выполнить', '--профиль=разговорный', str(path)],
                 capture_output=True, text=True, encoding='utf-8'
             )
-            self.assertEqual((result.returncode, result.stdout), (0, '42\\n'), result.stderr)
+            self.assertEqual((result.returncode, result.stdout), (0, '42\n'), result.stderr)
             disabled = subprocess.run(
                 [str(CORE), 'выполнить', str(path)],
                 capture_output=True, text=True, encoding='utf-8'
