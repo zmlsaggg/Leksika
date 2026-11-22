@@ -14,13 +14,20 @@ int main() {
     env.контекст = &output;
     env.вывод = вывод;
     env.разрешения = ЛЕКСУС_РАЗРЕШИТЬ_ВЫВОД;
-    Лексус::Программа program("пусть элементы равно перечень(1, 2). добавить в элементы 3. сказать длина элементы. вернуть 42.");
+    std::string source = "пусть элементы равно перечень(1, 2). добавить в элементы 3. сказать длина элементы. вернуть 42.";
+    Лексус::Программа program{std::string_view(source)};
     auto result = program.исполнить(env);
     assert(output == "3\n");
     assert(result.данные().вид == ЛЕКСУС_ЧИСЛО);
     auto copy = result;
     auto moved = std::move(copy);
     assert(moved.данные().вид == ЛЕКСУС_ЧИСЛО);
+    Лексус::Программа movable("вернуть 7.");
+    Лексус::Программа movedProgram(std::move(movable));
+    Лексус::Программа assigned("вернуть 8.");
+    assigned = std::move(movedProgram);
+    auto movedResult = assigned.исполнить(env);
+    assert(movedResult.данные().вид == ЛЕКСУС_ЧИСЛО);
     env.разрешения = 0;
     bool denied = false;
     try { (void)program.исполнить(env); } catch (const std::runtime_error &) { denied = true; }

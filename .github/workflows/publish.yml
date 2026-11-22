@@ -318,7 +318,7 @@ jobs:
   smoke-python:
     name: Пакет на Python ${{ matrix.python-version }}
     needs: [prepare, build]
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.python-version == '3.8' && 'ubuntu-22.04' || 'ubuntu-latest' }}
     strategy:
       fail-fast: false
       matrix:

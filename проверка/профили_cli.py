@@ -34,6 +34,33 @@ class ПрофилиCLI(unittest.TestCase):
             self.assertIn('неизвестный профиль', result.stderr)
             self.assertEqual(run('выполнить', str(path), str(path)).returncode, 2)
             self.assertEqual(run('выполнить', '--профиль=зумер').returncode, 2)
+    def test_разговорный_профиль(self):
+        self.assertTrue(CORE.is_file(), 'Сначала: make -C ядро native')
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / 'dialogue.lek'
+            path.write_text('говорю 42.', encoding='utf-8')
+            result = subprocess.run(
+                [str(CORE), 'выполнить', '--профиль=разговорный', str(path)],
+                capture_output=True, text=True, encoding='utf-8'
+            )
+            self.assertEqual((result.returncode, result.stdout), (0, '42\n'), result.stderr)
+            disabled_say = subprocess.run(
+                [str(CORE), 'выполнить', str(path)],
+                capture_output=True, text=True, encoding='utf-8'
+            )
+            self.assertNotEqual(disabled_say.returncode, 0, '«говорю» должно требовать разговорный профиль')
+            path.write_text('пусть сумма это 5\nувеличиваю сумма на 2\nговорю сумма', encoding='utf-8')
+            arithmetic = subprocess.run(
+                [str(CORE), 'выполнить', '--профиль=разговорный', str(path)],
+                capture_output=True, text=True, encoding='utf-8'
+            )
+            self.assertEqual((arithmetic.returncode, arithmetic.stdout), (0, '7\n'), arithmetic.stderr)
+            disabled = subprocess.run(
+                [str(CORE), 'выполнить', str(path)],
+                capture_output=True, text=True, encoding='utf-8'
+            )
+            self.assertNotEqual(disabled.returncode, 0, '«увеличиваю» должно требовать разговорный профиль')
+
 
 
 if __name__ == '__main__':

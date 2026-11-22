@@ -7,6 +7,7 @@
 #include "../ядро/машина.h"
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <cstdint>
 
@@ -25,7 +26,7 @@ private:
 
 class Программа {
 public:
-    explicit Программа(const std::string &источник, unsigned профили = ЛЕКСУС_ПРОФИЛЬ_БЕЗ_ИЗМЕНЕНИЙ)
+    explicit Программа(std::string_view источник, unsigned профили = ЛЕКСУС_ПРОФИЛЬ_БЕЗ_ИЗМЕНЕНИЙ)
         : compiled_{} {
         char error[512] = {};
         if (!лексус_скомпилировать_с_профилями(источник.data(), источник.size(), профили,
@@ -36,8 +37,17 @@ public:
     ~Программа() { лексус_скомпиляцию_освободить(&compiled_); }
     Программа(const Программа &) = delete;
     Программа &operator=(const Программа &) = delete;
-    Программа(Программа &&) = delete;
-    Программа &operator=(Программа &&) = delete;
+    Программа(Программа &&other) noexcept : compiled_(other.compiled_) {
+        other.compiled_ = {};
+    }
+    Программа &operator=(Программа &&other) noexcept {
+        if (this != &other) {
+            лексус_скомпиляцию_освободить(&compiled_);
+            compiled_ = other.compiled_;
+            other.compiled_ = {};
+        }
+        return *this;
+    }
 
     // Среда обязательна: вызывающая программа явно задаёт разрешения VM.
     Значение исполнить(const ЛексусСредаИсполнения &среда, std::uint64_t предел_шагов = 1000000) const {
