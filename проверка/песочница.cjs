@@ -85,7 +85,7 @@ const assert = require('node:assert/strict');
       await page.click('#запустить');
       assert.equal(await page.locator('#вывод').innerText(), '42', 'Разговорный профиль должен понимать личную форму «говорю»');
       await page.locator('#профиль-разговорный').uncheck();
-      await page.locator('#код').fill('пусть когда-то это 7\\nвернуть когда-то');
+      await page.locator('#код').fill('пусть когда-то это 7\nвернуть когда-то');
       await page.click('#запустить');
       assert.equal(await page.locator('#вывод').innerText(), '7', 'Составное имя с дефисом должно разбираться в браузере');
       assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'Горизонтальная прокрутка');
